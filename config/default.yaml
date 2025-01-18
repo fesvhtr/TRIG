@@ -1,0 +1,67 @@
+# 当前评估的模型配置
+model:
+  name: "dalle3"
+  output_dir: "data/output/dalle3"
+
+dimensions:
+  IQ-R:
+    name: "Realism"
+    module: "metrics.fid_metric"
+    class: "FIDMetric"
+    params: {}
+  IQ-O:
+    name: "Originality"
+    module: "metrics.fid_metric"
+    class: "FIDMetric"
+    params: {}
+  IQ-A:
+    name: "Aesthetics"
+    module: "metrics.clip_metric"
+    class: "CLIPMetric"
+    params:
+      top_k: 5
+  TA-C:
+    name: "Content Alignment"
+    module: "metrics.lpips_metric"
+    class: "LPIPSMetric"
+    params: {}
+  TA-R:
+    name: "Relation Alignment"
+    module: "metrics.complexity_metric"
+    class: "ComplexityMetric"
+    params: {}
+  TA-S:
+    name: "Style Alignment"
+    module: "metrics.complexity_metric"
+    class: "ComplexityMetric"
+    params: {}
+  D-M:
+    name: "Multilingual"
+    module: "metrics.complexity_metric"
+    class: "ComplexityMetric"
+    params: {}
+  D-K:
+    name: "Knowledge"
+    module: "metrics.complexity_metric"
+    class: "ComplexityMetric"
+    params: {}
+  D-A:
+    name: "Ambiguous"
+    module: "metrics.complexity_metric"
+    class: "ComplexityMetric"
+    params: {}
+  R-T:
+    name: "Toxicity"
+    module: "metrics.complexity_metric"
+    class: "ComplexityMetric"
+    params: {}
+  R-B:
+    name: "Bias"
+    module: "metrics.complexity_metric"
+    class: "ComplexityMetric"
+    params: {}
+  R-E:
+    name: "Efficiency"
+    module: "metrics.complexity_metric"
+    class: "ComplexityMetric"
+    params: {}
