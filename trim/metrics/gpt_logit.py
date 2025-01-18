@@ -1,9 +1,6 @@
 import openai
 import json
-import re
-from PIL import Image
 from io import BytesIO
-import base64
 import numpy as np
 from trim.metrics.base import BaseMetric
 from trim.utils.utils import encode_image
@@ -20,7 +17,8 @@ class GPTLogitMetric(BaseMetric):
         self.client = openai
         self.model_name = "gpt-4"
 
-    def compute_single(self, question, image):
+    def compute_single(self, image_path, prompt):
+        image = encode_image(image_path)
         try:
             completion = self.client.chat.completions.create(
                 model=self.model_name,
@@ -59,9 +57,7 @@ class GPTLogitMetric(BaseMetric):
             print(completion.choices[0].logprobs.content[0].top_logprobs)
             return torch.Tensor([0.0])
 
-    def compute(self, images, prompts, dimension):
+    def compute_batch(self, images, prompts, dimension):
         results = []
-        for idx, (image, prompt) in enumerate(zip(images, prompts)):
-            question = default_question_template.format(dimension)
-            answer = default_answer_template
-            results.append(self.compute_single(prompt))
+        for idx, (image_path, prompt) in enumerate(zip(images, prompts)):
+            results.append(self.compute_single(prompt, image_path))
