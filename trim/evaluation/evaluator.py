@@ -2,11 +2,19 @@ from collections import defaultdict
 import yaml
 import os
 import importlib
+from pathlib import Path
+import json
+from natsort import natsorted
+
+project_root = Path(__file__).resolve().parents[2]
+
+
 class Evaluator:
     def __init__(self, config_path="config/default.yaml"):
         self.prompt_dic = None
         self.config = self.load_config(config_path)
         self.metrics = self.instantiate_metrics()
+        self.prompt_dic = self.load_prompts()
 
     @staticmethod
     def load_config(config_path):
@@ -14,7 +22,8 @@ class Evaluator:
             return yaml.safe_load(f)
 
     def load_prompts(self):
-        prompt_path = 'data/dataset/prompts/trim_{}.json'.format(self.config["evaluation"]["task"])
+        prompt_path = os.path.join(project_root, 'data', 'dataset', 'prompts',
+                                   'trim_{}.json'.format(self.config["evaluation"]["task"]))
         with open(prompt_path, "r") as f:
             data = json.load(f)
         prompt_dic = {}
@@ -24,11 +33,12 @@ class Evaluator:
                 'sub_prompt': i['dimension_prompt'],
                 'img_id': i['img_id']  # ground truth image
             }
-        self.prompt_dic = prompt_dic
+        return prompt_dic
 
     def instantiate_metrics(self):
         metrics = {}
         dimensions = self.config["dimensions"]
+        api_key = self.config["API_KEY"]
         for dim, config in dimensions.items():
             module_name = config["module"]
             class_name = config["class"]
@@ -38,7 +48,7 @@ class Evaluator:
             module = importlib.import_module(module_name)
             metric_class = getattr(module, class_name)
             metrics[dim] = metric_class(**params)
-
+        print(f"Metrics loaded: {list(metrics.keys())}")
         return metrics
 
     def parse_dimensions(self, filename):
@@ -47,83 +57,57 @@ class Evaluator:
         return dimensions
 
     def save_results(self, results):
-        output_dir = os.path.join(self.config["evaluation"]["output_dir"], self.config["evaluation"]["name"])
-        os.makedirs(output_dir, exist_ok=True)
-        for result in results:
-            image_name = result["image"]
-            output_path = os.path.join(output_dir, image_name + ".json")
-            with open(output_path, "w") as f:
-                json.dump(result, f, indent=4)
+        output_path = os.path.join(project_root, self.config['evaluation']['result_dir'], f"{self.config['evaluation']['name']}.json")
+        with open(output_path, "w") as f:
+            json.dump(results, f, indent=4)
+        print(f"Results Saved:'{output_path}'")
 
     def group_images_by_combination(self, image_dir):
-        grouped = defaultdict(lambda: {"image_paths": [], "prompts": []})
-        images = [f for f in os.listdir(image_dir) if f.endswith(".jpg")]
+        grouped = defaultdict(lambda: {"data_ids": [], "image_paths": [], "prompts": []})
+        images = natsorted([f for f in os.listdir(image_dir)])
+        print(f"Found {len(images)} images in '{image_dir}'")
 
         for filename in images:
-            combination = "_".join(self.parse_filename(filename))
+            combination = "_".join(self.parse_dimensions(filename))
             image_path = os.path.join(image_dir, filename)
-
             # 从文件名提取 data_id，并从 prompt_dic 中获取对应的 prompt
             data_id = os.path.splitext(filename)[0]  # 去掉扩展名作为 data_id
-            if data_id not in self.prompt_dic:
-                raise KeyError(f"Prompt for data_id '{data_id}' not found in prompt_dic!")
-
             prompt = self.prompt_dic[data_id]
+            grouped[combination]["data_ids"].append(data_id)
             grouped[combination]["image_paths"].append(image_path)
             grouped[combination]["prompts"].append(prompt)
 
         return grouped
 
-    def evaluate_batch(self, combination, image_paths, prompts):
-
-        results = {}
-        dimensions = combination.split("_")
-
-        for dim in dimensions:
+    def evaluate_dim_pair(self, combination, data):
+        combined_scores = defaultdict(list)
+        for dim in combination.split("_"):
             if dim not in self.metrics:
                 raise ValueError(f"Dimension '{dim}' not found in metrics!")
             metric = self.metrics[dim]
-
-            scores = metric.compute_batch(prompts, image_paths)
-            results[dim] = scores
-
-        return results
+            scores = metric.compute_batch(data["data_ids"], data["image_paths"], data["prompts"])
+            for key, value in scores.items():
+                combined_scores[key].append(value)
+        return combined_scores
 
     def evaluate_all(self):
-        image_dir = self.config["model"]["output_dir"]
-        grouped_images = self.group_images_by_combination(image_dir)
-        final_results = []
+        image_dir = self.config["evaluation"]["image_dir"]
+        grouped = self.group_images_by_combination(image_dir)
+        # print(grouped)
 
-        for combination, data in grouped_images.items():
-            print(f"Evaluating combination {combination} with {len(data['image_paths'])} images...")
-
-            batch_results = self.evaluate_batch(
-                combination,
-                data["image_paths"],
-                data["prompts"]
-            )
-
-            for img_path, prompt in zip(data["image_paths"], data["prompts"]):
-                image_name = os.path.basename(img_path)
-                image_results = {dim: batch_results[dim][i] for i, dim in enumerate(combination.split("_"))}
-                final_results.append({
-                    "image": image_name,
-                    "prompt": prompt,
-                    "results": image_results
-                })
-
+        final_results = {}
+        for combination, prompts in grouped.items():
+            print(f"Evaluating combination {combination} with {len(prompts['image_paths'])} images...")
+            combined_scores = self.evaluate_dim_pair(combination, prompts)
+            # print(combined_scores)
+            final_results[combination] = combined_scores
+        self.save_results(final_results)
         return final_results
 
 
 # 示例主逻辑
 if __name__ == "__main__":
-
-    evaluator = Evaluator(config_path=r"H:\ProjectsPro\TRIM\config\test.yaml")
+    evaluator = Evaluator(config_path=r"H:\ProjectsPro\TRIM\config\demo.yaml")
 
     final_results = evaluator.evaluate_all()
-
-    import json
-    with open("evaluation_results.json", "w") as f:
-        json.dump(final_results, f, indent=4)
-
-    print("Evaluation completed. Results saved to 'evaluation_results.json'.")
+    print(final_results)

@@ -6,11 +6,11 @@ import numpy as np
 from trim.metrics.base import BaseMetric
 from trim.utils.utils import encode_image
 import torch
-from trim.utils.config import gpt_logit_system_msg, default_answer_template
-
+from trim.utils.config import gpt_logit_system_msg
+from tqdm import tqdm
 
 class GPTLogitMetric(BaseMetric):
-    def __init__(self, API_KEY, top_logprobs, dimension, **kwargs):
+    def __init__(self, API_KEY, dimension,top_logprobs=5, **kwargs):
         super().__init__(**kwargs)
         self.dimension = dimension
         self.top_logprobs = top_logprobs
@@ -18,6 +18,7 @@ class GPTLogitMetric(BaseMetric):
         self.model_name = "gpt-4o"
 
     def compute(self, image_path, prompt):
+        return 0.5
         image = encode_image(image_path)
         sys_msg = [{
             "role": "developer",
@@ -41,26 +42,25 @@ class GPTLogitMetric(BaseMetric):
             print(f"Error: {e}")
             return torch.Tensor([0.0])
         print(completion.choices[0].logprobs.content[0].top_logprobs)
-        print(completion.usage.prompt_tokens)
-        print(completion.usage.completion_tokens)
-        print()
+        usage_tokens = [completion.usage.prompt_tokens, completion.usage.completion_tokens, completion.usage.prompt_tokens + completion.usage.completion_tokens]
+        print('usage_tokens:', usage_tokens)
         # for top_logprob in completion.choices[0].logprobs.content[0].top_logprobs:
         #     if top_logprob.token == answer:
-        #         return torch.Tensor([top_logprob.logprob]).exp()
+        #         return ([top_logprob.logprob]).exp()
         #     else:
         #         return torch.Tensor([0.0])
 
-    def compute_batch(self, images, prompts, dimension):
-        results = []
-        for idx, (image_path, prompt) in enumerate(zip(images, prompts)):
-            results.append(self.compute(prompt, image_path))
+    def compute_batch(self, data_ids, images, prompts):
+        results = {}
+        for idx, (data_id, image_path, prompt) in tqdm(enumerate(zip(data_ids, images, prompts))):
+            results[data_id] = self.compute(image_path, prompt['prompt'])
         return results
 
 
 if __name__ == "__main__":
     API_KEY = "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"
     # Example usage
-    metric = GPTLogitMetric(API_KEY, top_logprobs=5, dimension='A')
+    metric = GPTLogitMetric(API_KEY, top_logprobs=5, dimension='IQ-R')
     image_path = r"H:\ProjectsPro\TRIM\demo.jpg"
     prompt = "A historic building, probably the main building of some university"
     result = metric.compute(image_path, prompt)

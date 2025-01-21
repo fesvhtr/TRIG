@@ -8,11 +8,11 @@ You should evaluate the image by a scale from: excellent, good, medium, bad, ter
 '''
 
 gpt_logit_dimension_msg = {
-    'IQ-R': '',
-    'IQ-O': '',
+    'IQ-R': 'Realism: Similarity between the generated images and those in the real world.',
+    'IQ-O': 'Originality: Novelty and uniqueness in the generated images.',
     'IQ-A': '',
     'TA-C': '',
-    'TA-R': '',
+    'TA-R': 'Relation Alignment: Alignment of the image’s spatial and semantic logical relationships between human and objects with those specified in the prompt',
     'TA-S': '',
     'D-M': '',
     'D-K': '',
@@ -22,4 +22,5 @@ gpt_logit_dimension_msg = {
     'R-E': '',
 }
 
-default_answer_template = 'Yes'
+default_answer = 'Yes'
+default_answer_set = {'excellent': 1.0, 'good': 0.5, 'medium': 0, 'bad': -0.5, 'terrible': -1.0}
