@@ -1,0 +1,32 @@
+evaluation:
+    name: "demo"
+    model: "dalle3"
+    task: "t2i"
+    image_dir: "H:/ProjectsPro/TRIM/data/output/demo"
+    result_dir: "H:/ProjectsPro/TRIM/data/result"
+
+
+API_KEY: &global_api_key "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"
+
+dimensions:
+    IQ-O:
+        name: "Content"
+        module: "trim.metrics.gpt_logit"
+        class: "GPTLogitMetric"
+        params:
+            dimension: "IQ-O"
+            API_KEY: *global_api_key
+    TA-R:
+        name: "Content"
+        module: "trim.metrics.gpt_logit"
+        class: "GPTLogitMetric"
+        params:
+            dimension: "TA-R"
+            API_KEY: *global_api_key
+    TA-S:
+        name: "Content"
+        module: "trim.metrics.gpt_logit"
+        class: "GPTLogitMetric"
+        params:
+            dimension: "TA-S"
+            API_KEY: *global_api_key
