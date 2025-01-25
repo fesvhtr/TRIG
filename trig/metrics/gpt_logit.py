@@ -3,10 +3,10 @@ from openai import OpenAI
 import json
 from io import BytesIO
 import numpy as np
-from trim.metrics.base import BaseMetric
-from trim.utils.utils import encode_image
+from trig.metrics.base import BaseMetric
+from trig.utils.utils import encode_image
 import torch
-from trim.utils.config import gpt_logit_system_msg
+from trig.utils.config import gpt_logit_system_msg
 from tqdm import tqdm
 
 class GPTLogitMetric(BaseMetric):
