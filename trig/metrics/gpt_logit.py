@@ -6,7 +6,7 @@ import numpy as np
 from trig.metrics.base import BaseMetric
 from trig.utils.utils import encode_image
 import torch
-from trig.utils.config import gpt_logit_system_msg
+from trig.utils.config import gpt_logit_system_msg,gpt_logit_dimension_msg
 from tqdm import tqdm
 import math
 
@@ -23,7 +23,7 @@ class GPTLogitMetric(BaseMetric):
         image = encode_image(image_path)
         sys_msg = [{
             "role": "developer",
-            "content": gpt_logit_system_msg.format(self.dimension)
+            "content": gpt_logit_system_msg.format(gpt_logit_dimension_msg[self.dimension])
         }]
         user_msg = [{
             "role": "user",
@@ -51,35 +51,51 @@ class GPTLogitMetric(BaseMetric):
         score = self.logprobs_score(top_logprobs)
         return score
 
+    import math
+
     def logprobs_score(self, top_logprobs):
         score = 0.0
-        tokens = [item.token for item in top_logprobs]
-        logprobs = [item.logprob for item in top_logprobs]
+        # 定义程度词列表
+        valid_tokens = ["excellent", "Excellent", "good", "Good", "medium", "Medium", "bad", "Bad", "terr", "Terr"]
 
-        # 转换为线性概率（防御性编程）
+        # 筛选出程度词及其对应的 log 概率
+        filtered_tokens = []
+        filtered_logprobs = []
+
+        for item in top_logprobs:
+            if item.token in valid_tokens:
+                filtered_tokens.append(item.token)
+                filtered_logprobs.append(float(item.logprob))
+
+        # 如果没有匹配的 token，直接返回 0 分
+        if not filtered_tokens:
+            return 0.0
+
+        # 将 log 概率转化为线性概率，处理极端数值
         try:
-            linear_probs = [math.exp(float(lp)) for lp in logprobs]
+            linear_probs = [math.exp(lp) for lp in filtered_logprobs]
         except OverflowError:
-            linear_probs = [0.0] * len(logprobs)  # 处理极端数值
+            linear_probs = [0.0] * len(filtered_logprobs)
 
-        # 概率归一化（防止除零）
+        # 对概率重新归一化
         total = sum(linear_probs) + 1e-10
-        normalized = [p / total for p in linear_probs]
+        normalized_probs = [p / total for p in linear_probs]
 
-        for token, prob in zip(tokens, normalized):
+        # 计算得分
+        for token, prob in zip(filtered_tokens, normalized_probs):
+            print(token, prob)
             if token in ["excellent", "Excellent"]:
-                score += 1.0 * math.exp(prob)
-            elif token == ["good", "Good"]:
-                score += 0.75 * math.exp(prob)
-            elif token == ["medium", "Medium"]:
-                score += 0.5 * math.exp(prob)
-            elif token == ["bad", "Bad"]:
-                score += 0.25 * math.exp(prob)
-            elif token == ["terr", "Terr"]:
-                score += 0 * math.exp(prob)
-            else:
-                score += 0.5 * math.exp(prob)
-        return score/5.0
+                score += 1.0 * prob
+            elif token in ["good", "Good"]:
+                score += 0.75 * prob
+            elif token in ["medium", "Medium"]:
+                score += 0.5 * prob
+            elif token in ["bad", "Bad"]:
+                score += 0.25 * prob
+            elif token in ["terr", "Terr"]:
+                score += 0 * prob
+
+        return score
 
     def compute_batch(self, data_ids, images, prompts):
         results = {}
@@ -91,7 +107,7 @@ class GPTLogitMetric(BaseMetric):
 if __name__ == "__main__":
     API_KEY = "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"
     # Example usage
-    metric = GPTLogitMetric(API_KEY, top_logprobs=5, dimension='IQ-C')
+    metric = GPTLogitMetric(API_KEY, top_logprobs=5, dimension='TA-C')
     image_path = r"H:\ProjectsPro\TRIG\demo.jpg"
     prompt = ["A old building like a main building of a university",
               "A old building like a main building of a university with green grass and blue sky",
