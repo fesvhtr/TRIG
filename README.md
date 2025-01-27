@@ -13,7 +13,7 @@ pip install -r requirements.txt
 ```
 
 ### Datset Zoo
-```json
+```bash
 datasets
 ├── Trig
 │   ├── Trig-image-editing
@@ -34,7 +34,7 @@ datasets
 ```
 
 ### Model Zoo
-```json
+```bash
 models
 ├── BLIP-Diffusion
 ├── ELITE
