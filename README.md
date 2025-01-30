@@ -1,8 +1,6 @@
 # TRIG
 Trade-offs and Relationships in IMage Generation
 
-
-
 ## Setup
 ### Installation
 ```bash
@@ -17,7 +15,6 @@ pip install -r requirements.txt
 datasets
 ├── Trig
 │   ├── Trig-image-editing
-│   │   └── prompts
 │   ├── Trig-subject-driven
 │   └── Trig-text-to-image
 └── raw_datasets
