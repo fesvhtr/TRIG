@@ -8,8 +8,8 @@ from PIL import Image
 
 import torch
 from openai import OpenAI
-from codebase.OmniGen import OmniGenPipeline
-from codebase.onediffusion.diffusion.pipelines.onediffusion import OneDiffusionPipeline
+from trig.models.OmniGen import OmniGenPipeline
+from trig.models.onediffusion.diffusion.pipelines.onediffusion import OneDiffusionPipeline
 from diffusers import SanaPipeline
 from diffusers import DiffusionPipeline
 from diffusers import Transformer2DModel, PixArtSigmaPipeline
@@ -43,7 +43,7 @@ def load_pipeline(model):
         OmniGen: Unified Image Generation
         https://github.com/VectorSpaceLab/OmniGen
         """
-        pipe = OmniGenPipeline.from_pretrained("models/OmniGen")
+        pipe = OmniGenPipeline.from_pretrained("Shitao/OmniGen-v1")
     
     elif model == 'OneDiffusion':
         """
@@ -59,7 +59,9 @@ def load_pipeline(model):
         Sana: Efficient High-Resolution Image Synthesis with Linear Diffusion Transformer
         https://github.com/NVlabs/Sana
         """
-        pipe = SanaPipeline.from_pretrained("models/Sana/Sana_1600M_1024px_MultiLing_diffusers", variant="fp16", torch_dtype=torch.float16,)
+        
+
+        pipe = SanaPipeline.from_pretrained("Efficient-Large-Model/Sana_1600M_1024px_MultiLing_diffusers", variant="fp16", torch_dtype=torch.float16,)
         pipe.to("cuda")
 
         pipe.vae.to(torch.bfloat16)
@@ -73,13 +75,13 @@ def load_pipeline(model):
         """
         weight_dtype = torch.float16
         transformer = Transformer2DModel.from_pretrained(
-            "models/PixArt-Sigma/PixArt-Sigma-XL-2-1024-MS", 
+            "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS", 
             subfolder='transformer', 
             torch_dtype=weight_dtype,
             use_safetensors=True,
         )
         pipe = PixArtSigmaPipeline.from_pretrained(
-            "models/PixArt-Sigma/pixart_sigma_sdxlvae_T5_diffusers",
+            "PixArt-alpha/pixart_sigma_sdxlvae_T5_diffusers",
             transformer=transformer,
             torch_dtype=weight_dtype,
             use_safetensors=True,
@@ -94,7 +96,7 @@ def load_pipeline(model):
         """
 
         pipe = DiffusionPipeline.from_pretrained(
-            "models/stable-diffusion/stable-diffusion-xl-base-1.0", 
+            "stabilityai/stable-diffusion-xl-base-1.0", 
             torch_dtype=torch.float16, 
             use_safetensors=True,
             variant="fp16"
