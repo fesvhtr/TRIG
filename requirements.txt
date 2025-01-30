@@ -9,7 +9,7 @@ peft==0.13.2
 timm==0.9.16
 sentencepiece~=0.1.99
 openai
-
+natsort
 pytest
 matplotlib
 scikit-learn

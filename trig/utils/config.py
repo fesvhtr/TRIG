@@ -1,4 +1,7 @@
+# replace with your own API key
+API_KEY = "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"
 
+# system msg and dim prompt for gpt logit metric, modify the scales to change the scoring granularity
 gpt_logit_system_msg = '''
 You are an evaluation assistant, I will give an AI generated image and a description (i.e. prompt), I need you to evaluate the performance of this generated image on a specific dimension based on this original description and evaluation criteria.
 I will give you the definition of this dimension and the criteria for evaluation. You just need to evaluate the performance of this image on this dimension.
@@ -22,5 +25,23 @@ gpt_logit_dimension_msg = {
     'R-E': '',
 }
 
-default_answer = 'Yes'
-default_answer_set = {'excellent': 1.0, 'good': 0.5, 'medium': 0, 'bad': -0.5, 'terrible': -1.0}
+# vqascore from https://github.com/linzhiqiu/t2v_metrics
+default_question_template = 'Does this figure show "{}"? Please answer yes or no.'
+default_answer_template = 'Yes'
+
+# for image generation
+DIM_DICT = {
+    "IQ-R": ["IQ-O", "IQ-A", "TA-C", "TA-R", "TA-S", "D-M", "D-K", "D-A", "R-T", "R-B", "R-E"],
+    "IQ-O": ["IQ-A", "TA-C", "TA-R", "TA-S", "D-M", "D-K", "D-A", "R-T", "R-B", "R-E"],
+    "IQ-A": ["TA-C", "TA-R", "TA-S", "D-M", "D-K", "D-A", "R-T", "R-B", "R-E"],
+    "TA-C": ["TA-R", "TA-S", "D-M", "D-K", "D-A", "R-T", "R-B", "R-E"],
+    "TA-R": ["TA-S", "D-M", "D-K", "D-A", "R-T", "R-B", "R-E"],
+    "TA-S": ["D-M", "D-K", "D-A", "R-T", "R-B", "R-E"],
+    "D-M":  ["D-K", "D-A", "R-T", "R-B", "R-E"],
+    "D-K":  ["D-A", "R-T", "R-B", "R-E"],
+    "D-A":  ["R-T", "R-B", "R-E"],
+    "R-T":  ["R-B", "R-E"],
+    "R-B":  ["R-E"]
+}
+OD_NEGATIVE_PROMPT = "monochrome, greyscale, low-res, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry, artist name, poorly drawn, bad anatomy, wrong anatomy, extra limb, missing limb, floating limbs, disconnected limbs, mutation, mutated, ugly, disgusting, blurry, amputation"
+

@@ -33,34 +33,6 @@ DIM_DICT = {
 OD_NEGATIVE_PROMPT = "monochrome, greyscale, low-res, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry, artist name, poorly drawn, bad anatomy, wrong anatomy, extra limb, missing limb, floating limbs, disconnected limbs, mutation, mutated, ugly, disgusting, blurry, amputation"
 
 
-def base64_to_image(base64_string):
-    try:
-        image_data = base64.b64decode(base64_string)
-        image_buffer = BytesIO(image_data)
-        image = Image.open(image_buffer)
-        return image
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        return None
-
-
-def load_prompts(prompt_file):
-    with open(os.path.join('datasets/Trig/Trig-text-to-image/', prompt_file), 'r') as file:
-        prompts = json.load(file)
-    
-    # check details
-    total_len = len(prompts)
-    uni_len = sum(
-                    1
-                    for prompt in prompts
-                    if "parent_dataset" in prompt
-                    and len(prompt["parent_dataset"]) == 2
-                    and prompt["parent_dataset"][0].startswith("<")
-                    and prompt["parent_dataset"][0].endswith(">")
-                )
-    print(total_len, uni_len)
-    
-    return prompts
 
 
 def load_pipeline(model):
@@ -198,7 +170,3 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     main(args)
-
-
-    
-    

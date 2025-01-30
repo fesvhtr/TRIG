@@ -6,20 +6,24 @@ import numpy as np
 from trig.metrics.base import BaseMetric
 from trig.utils.utils import encode_image
 import torch
-from trig.utils.config import gpt_logit_system_msg,gpt_logit_dimension_msg
+from trig.utils.config import gpt_logit_system_msg,gpt_logit_dimension_msg, API_KEY
 from tqdm import tqdm
 import math
 
 
 class GPTLogitMetric(BaseMetric):
-    def __init__(self, API_KEY, dimension, top_logprobs=5, **kwargs):
-        super().__init__(**kwargs)
+    # TODO: add task logic
+    def __init__(self, dimension, task="t2i", top_logprobs=5, model_name="gpt-4o"):
+        super().__init__()
         self.dimension = dimension
         self.top_logprobs = top_logprobs
+        self.task = task
         self.client = openai.Client(api_key=API_KEY)
-        self.model_name = "gpt-4o"
+        self.model_name = model_name
 
     def compute(self, image_path, prompt):
+        # TODO: delete this line
+        return 0.5
         image = encode_image(image_path)
         sys_msg = [{
             "role": "developer",
@@ -105,9 +109,8 @@ class GPTLogitMetric(BaseMetric):
 
 
 if __name__ == "__main__":
-    API_KEY = "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"
     # Example usage
-    metric = GPTLogitMetric(API_KEY, top_logprobs=5, dimension='TA-C')
+    metric = GPTLogitMetric(dimension='TA-C', top_logprobs=5)
     image_path = r"H:\ProjectsPro\TRIG\demo.jpg"
     prompt = ["A old building like a main building of a university",
               "A old building like a main building of a university with green grass and blue sky",

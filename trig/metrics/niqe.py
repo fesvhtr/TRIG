@@ -258,7 +258,7 @@ def niqe(img,
                 feat.append(compute_feature(block))
 
         distparam.append(np.array(feat))
-        # TODO: matlab bicubic downsample with anti-aliasing
+        #  matlab bicubic downsample with anti-aliasing
         # for simplicity, now we use opencv instead, which will result in
         # a slight difference.
         if scale == 1:

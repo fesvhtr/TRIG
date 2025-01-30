@@ -5,6 +5,7 @@ import importlib
 from pathlib import Path
 import json
 from natsort import natsorted
+from trig.metrics import import_model
 
 project_root = Path(__file__).resolve().parents[2]
 
@@ -36,20 +37,24 @@ class Evaluator:
         return prompt_dic
 
     def instantiate_metrics(self):
-        metrics = {}
+        """
+        Dynamically instantiate multiple metrics for each dimension.
+        """
+        dim_metrics = {}
         dimensions = self.config["dimensions"]
-        api_key = self.config["API_KEY"]
-        for dim, config in dimensions.items():
-            module_name = config["module"]
-            class_name = config["class"]
-            params = config.get("params", {})
 
-            # 动态加载模块和类
-            module = importlib.import_module(module_name)
-            metric_class = getattr(module, class_name)
-            metrics[dim] = metric_class(**params)
-        print(f"Metrics loaded: {list(metrics.keys())}")
-        return metrics
+        for dim, config in dimensions.items():
+            metrics = config.get("metrics", [])
+            dim_metrics = []
+
+            for metric_name in metrics:
+                metric_class = import_model(metric_name)
+                dim_metrics.append(metric_class())
+
+            dim_metrics[dim] = dim_metrics  # metrics list for each dimension
+
+        print(f"Metrics loaded for dimensions: {dim_metrics.keys()}")
+        return dim_metrics
 
     def parse_dimensions(self, filename):
         base_name = os.path.splitext(filename)[0]
@@ -57,21 +62,20 @@ class Evaluator:
         return dimensions
 
     def save_results(self, results):
-        output_path = os.path.join(project_root, self.config['evaluation']['result_dir'], f"{self.config['evaluation']['name']}.json")
+        output_path = os.path.join(project_root, self.config['evaluation']['result_dir'], f"{self.config['name']}.json")
         with open(output_path, "w") as f:
             json.dump(results, f, indent=4)
         print(f"Results Saved:'{output_path}'")
 
     def group_images_by_combination(self, image_dir):
         grouped = defaultdict(lambda: {"data_ids": [], "image_paths": [], "prompts": []})
-        images = natsorted([f for f in os.listdir(image_dir)])
+        images = natsorted([f for f in os.listdir(os.path.join(project_root, image_dir))])
         print(f"Found {len(images)} images in '{image_dir}'")
 
         for filename in images:
             combination = "_".join(self.parse_dimensions(filename))
             image_path = os.path.join(image_dir, filename)
-            # 从文件名提取 data_id，并从 prompt_dic 中获取对应的 prompt
-            data_id = os.path.splitext(filename)[0]  # 去掉扩展名作为 data_id
+            data_id = os.path.splitext(filename)[0]
             prompt = self.prompt_dic[data_id]
             grouped[combination]["data_ids"].append(data_id)
             grouped[combination]["image_paths"].append(image_path)
@@ -107,7 +111,7 @@ class Evaluator:
 
 # 示例主逻辑
 if __name__ == "__main__":
-    evaluator = Evaluator(config_path=r"H:\ProjectsPro\TRIM\config\demo.yaml")
+    evaluator = Evaluator(config_path=r"H:\ProjectsPro\TRIG\config\demo.yaml")
 
     final_results = evaluator.evaluate_all()
     print(final_results)
