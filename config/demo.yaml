@@ -1,20 +1,19 @@
 name: "demo"
 task: "t2i"
+prompt_path: "data/dataset/prompts/trim_t2i.json"
 
 generation:
-    run: True
-    model: "dalle3"
-    prompt_file: "data/dataset/prompts/trim_t2i.json"
+    models: ["dalle3",]
+    output_dir: ["data/output/dalle",]
 
 evaluation:
-    run: True
-    image_dir: "data/output/demo"
+    image_dir: ["data/output/demo",]
     result_dir: "data/result"
 
 dimensions:
     IQ-O:
-        metrics: ["BaseMetric", "GPTLogitMetric"]
+        metrics: ["GPTLogitMetric"]
     TA-R:
-        metrics: ["BaseMetric"]
+        metrics: ["GPTLogitMetric"]
     TA-S:
         metrics: ["GPTLogitMetric", "AnotherMetric"]

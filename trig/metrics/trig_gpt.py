@@ -6,7 +6,7 @@ import numpy as np
 from trig.metrics.base import BaseMetric
 from trig.utils.utils import encode_image
 import torch
-from trig.utils.config import gpt_logit_system_msg,gpt_logit_dimension_msg
+from trig.config import gpt_logit_system_msg,gpt_logit_dimension_msg
 from tqdm import tqdm
 import math
 

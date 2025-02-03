@@ -12,7 +12,7 @@ AVAILABLE_Metric = {
 
 
 
-def import_model(metric_name):
+def import_metric(metric_name):
     """
     Dynamically import a specific class based on its name.
 

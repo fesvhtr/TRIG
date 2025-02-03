@@ -1,0 +1,6 @@
+name: "dalle3"
+task: "t2i"
+prompt_path: "H:/ProjectsPro/TRIG/dataset/Trig/Trig-text-to-image/text-to-imgae-new1.json"
+
+generation:
+    models: ["dalle3",]

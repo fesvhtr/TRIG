@@ -1,0 +1,1 @@
+from diffusion.pipelines.onediffusion import OneDiffusionPipeline

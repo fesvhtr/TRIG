@@ -17,22 +17,6 @@ from diffusers import Transformer2DModel, PixArtSigmaPipeline
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-DIM_DICT = {
-    "IQ-R": ["IQ-O", "IQ-A", "TA-C", "TA-R", "TA-S", "D-M", "D-K", "D-A", "R-T", "R-B", "R-E"],
-    "IQ-O": ["IQ-A", "TA-C", "TA-R", "TA-S", "D-M", "D-K", "D-A", "R-T", "R-B", "R-E"],
-    "IQ-A": ["TA-C", "TA-R", "TA-S", "D-M", "D-K", "D-A", "R-T", "R-B", "R-E"],
-    "TA-C": ["TA-R", "TA-S", "D-M", "D-K", "D-A", "R-T", "R-B", "R-E"],
-    "TA-R": ["TA-S", "D-M", "D-K", "D-A", "R-T", "R-B", "R-E"],
-    "TA-S": ["D-M", "D-K", "D-A", "R-T", "R-B", "R-E"],
-    "D-M":  ["D-K", "D-A", "R-T", "R-B", "R-E"],
-    "D-K":  ["D-A", "R-T", "R-B", "R-E"],
-    "D-A":  ["R-T", "R-B", "R-E"],
-    "R-T":  ["R-B", "R-E"],
-    "R-B":  ["R-E"]
-}
-OD_NEGATIVE_PROMPT = "monochrome, greyscale, low-res, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry, artist name, poorly drawn, bad anatomy, wrong anatomy, extra limb, missing limb, floating limbs, disconnected limbs, mutation, mutated, ugly, disgusting, blurry, amputation"
-
-
 
 
 def load_pipeline(model):

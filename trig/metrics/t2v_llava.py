@@ -1,4 +1,4 @@
-# modified from t2v metric: 
+# modified from t2v metric: https://github.com/linzhiqiu/t2v_metrics
 from typing import List, Optional, Tuple, Union
 import torch
 import copy
@@ -8,6 +8,7 @@ from trig.metrics.llava.model import LlavaLlamaForCausalLM
 from transformers import AutoTokenizer
 from PIL import Image
 from trig.metrics.base import BaseMetric
+import os
 
 
 CONTEXT_LEN = 2048
@@ -18,6 +19,31 @@ DEFAULT_IMAGE_TOKEN = "<image>"
 
 default_question_template = 'Does this figure show "{}"? Please answer yes or no.'
 default_answer_template = "Yes"
+cache_dir = None
+
+
+LLAVA_MODELS = {
+    'llava-v1.5-13b': {
+        'tokenizer' : {
+            'path': 'liuhaotian/llava-v1.5-13b',
+        },
+        'model': {
+            'path': 'liuhaotian/llava-v1.5-13b',
+            'conversation': 'chat',
+            'image_aspect_ratio': 'pad',
+        },
+    },
+    'llava-v1.5-7b': {
+        'tokenizer' : {
+            'path': 'liuhaotian/llava-v1.5-7b',
+        },
+        'model': {
+            'path': 'liuhaotian/llava-v1.5-7b',
+            'conversation': 'chat',
+            'image_aspect_ratio': 'pad',
+        },
+    },
+}
 
 @dataclass
 class ModelArguments:
@@ -88,56 +114,36 @@ def load_pretrained_model(model_cls,
     model = model.eval()
     return tokenizer, model, image_processor
 
-def format_question(question, conversation_style='chat'):
-    if conversation_style == 'plain': # for 1st stage model
-        question = DEFAULT_IMAGE_TOKEN + question
-    elif conversation_style == 'chat': # for 2nd stage model
-        question = SYSTEM_MSG + " USER: " + DEFAULT_IMAGE_TOKEN + "\n" + question + " ASSISTANT: "
-    else:
-        raise NotImplementedError()
-    return question
-
-def format_answer(answer, conversation_style='chat'):
-    if conversation_style == 'plain': # for 1st stage model
-        answer = answer + "\n"
-    elif conversation_style == 'chat': # for 2nd stage model
-        answer = answer + "</s>"
-    else:
-        raise NotImplementedError()
-    return answer
-
-LLAVA_MODELS = {
-    'llava-v1.5-13b': {
-        'tokenizer' : {
-            'path': 'liuhaotian/llava-v1.5-13b',
-        },
-        'model': {
-            'path': 'liuhaotian/llava-v1.5-13b',
-            'conversation': 'chat',
-            'image_aspect_ratio': 'pad',
-        },
-    },
-    'llava-v1.5-7b': {
-        'tokenizer' : {
-            'path': 'liuhaotian/llava-v1.5-7b',
-        },
-        'model': {
-            'path': 'liuhaotian/llava-v1.5-7b',
-            'conversation': 'chat',
-            'image_aspect_ratio': 'pad',
-        },
-    },
-}
-
-
 class LLaVAMetric(BaseMetric):
     """Implementation of t2v metric (LLaVA-1.5)"""
+
+
+
     def __init__(self,
                  model_name='llava-v1.5-13b',
                  device='cuda'):
         assert model_name in LLAVA_MODELS
         self.model_name = model_name
         self.device = device
+        self.load_model()
+
+    def format_question(question, conversation_style='chat'):
+        if conversation_style == 'plain':  # for 1st stage model
+            question = DEFAULT_IMAGE_TOKEN + question
+        elif conversation_style == 'chat':  # for 2nd stage model
+            question = SYSTEM_MSG + " USER: " + DEFAULT_IMAGE_TOKEN + "\n" + question + " ASSISTANT: "
+        else:
+            raise NotImplementedError()
+        return question
+
+    def format_answer(answer, conversation_style='chat'):
+        if conversation_style == 'plain':  # for 1st stage model
+            answer = answer + "\n"
+        elif conversation_style == 'chat':  # for 2nd stage model
+            answer = answer + "</s>"
+        else:
+            raise NotImplementedError()
+        return answer
 
     def load_model(self):
         """Load the model, tokenizer, image transform
@@ -276,6 +282,12 @@ class LLaVAMetric(BaseMetric):
         for k in range(lm_prob.shape[0]):
             lm_prob[k] = (-loss_fct(shift_logits[k], shift_labels[k])).exp()
         return lm_prob
+
+    def compute(self, image_path, prompt):
+        pass
+
+    def compute_batch(self, image_path_list, prompt_list):
+        pass
 
 if __name__ == '__main__':
     model = LLaVAMetric()

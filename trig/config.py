@@ -43,5 +43,18 @@ DIM_DICT = {
     "R-T":  ["R-B", "R-E"],
     "R-B":  ["R-E"]
 }
+
+DIM_DICT_WITHOUT_M_E = {
+    "IQ-R": ["IQ-O", "IQ-A", "TA-C", "TA-R", "TA-S", "D-K", "D-A", "R-T", "R-B"],
+    "IQ-O": ["IQ-A", "TA-C", "TA-R", "TA-S", "D-K", "D-A", "R-T", "R-B"],
+    "IQ-A": ["TA-C", "TA-R", "TA-S", "D-K", "D-A", "R-T", "R-B"],
+    "TA-C": ["TA-R", "TA-S",  "D-K", "D-A", "R-T", "R-B"],
+    "TA-R": ["TA-S", "D-K", "D-A", "R-T", "R-B"],
+    "TA-S": ["D-K", "D-A", "R-T", "R-B"],
+    "D-K":  ["D-A", "R-T", "R-B"],
+    "D-A":  ["R-T", "R-B"],
+    "R-T":  ["R-B"],
+}
+
 OD_NEGATIVE_PROMPT = "monochrome, greyscale, low-res, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry, artist name, poorly drawn, bad anatomy, wrong anatomy, extra limb, missing limb, floating limbs, disconnected limbs, mutation, mutated, ugly, disgusting, blurry, amputation"
 

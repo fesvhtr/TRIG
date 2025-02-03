@@ -5,7 +5,7 @@ import importlib
 from pathlib import Path
 import json
 from natsort import natsorted
-from trig.metrics import import_model
+from trig.metrics import import_metric
 
 project_root = Path(__file__).resolve().parents[2]
 
@@ -23,8 +23,7 @@ class Evaluator:
             return yaml.safe_load(f)
 
     def load_prompts(self):
-        prompt_path = os.path.join(project_root, 'data', 'dataset', 'prompts',
-                                   'trim_{}.json'.format(self.config["evaluation"]["task"]))
+        prompt_path = self.config["evaluation"]["prompt_path"]
         with open(prompt_path, "r") as f:
             data = json.load(f)
         prompt_dic = {}
@@ -48,7 +47,7 @@ class Evaluator:
             dim_metrics = []
 
             for metric_name in metrics:
-                metric_class = import_model(metric_name)
+                metric_class = import_metric(metric_name)
                 dim_metrics.append(metric_class())
 
             dim_metrics[dim] = dim_metrics  # metrics list for each dimension
@@ -106,12 +105,11 @@ class Evaluator:
             # print(combined_scores)
             final_results[combination] = combined_scores
         self.save_results(final_results)
-        return final_results
+        print("Evaluation complete!")
 
 
 # 示例主逻辑
 if __name__ == "__main__":
     evaluator = Evaluator(config_path=r"H:\ProjectsPro\TRIG\config\demo.yaml")
 
-    final_results = evaluator.evaluate_all()
-    print(final_results)
+    evaluator.evaluate_all()
