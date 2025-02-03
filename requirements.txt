@@ -29,8 +29,5 @@ mediapipe
 bitsandbytes==0.45.0
 
 tensorflow-cpu==2.11.0
-flash-attn==2.6.3
-git+https://github.com/Dao-AILab/flash-attention@v2.6.3#subdirectory=csrc/fused_dense_lib
 jaxtyping
 gradio
-git+https://github.com/facebookresearch/pytorch3d.git

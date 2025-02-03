@@ -3,6 +3,13 @@ import yaml
 from PIL import Image
 from io import BytesIO
 
+from PIL import Image
+
+def get_image_resolution(image_path):
+    with Image.open(image_path) as img:
+        width, height = img.size
+    return width, height
+
 def get_image_type(image_path):
     image_type = image_path.split('.')[-1]
     assert image_type in ['png', 'jpeg', 'jpg', 'gif', 'bmp', 'webp']
@@ -29,3 +36,6 @@ def base64_to_image(base64_string):
     except Exception as e:
         print(f"An error occurred: {e}")
         return None
+
+if __name__ == "__main__":
+    print(get_image_resolution('/home/zsc/TRIG/data/output/t2i/sana/IQ-R_IQ-A_87.png'))

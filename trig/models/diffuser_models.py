@@ -29,7 +29,7 @@ class SDXLModel(BaseModel):
             print(f"Error generating image with {self.model_name}: {e}")
             return None
 
-class OmniGen(BaseModel):
+class OmniGenModel(BaseModel):
     """
     Arxiv 2024
     OmniGen: Unified Image Generation
@@ -44,7 +44,7 @@ class OmniGen(BaseModel):
         image = self.pipe(prompt=prompt, height=1024, width=1024, guidance_scale=2.5, seed=0)[0]
         return image
 
-class PixartSigma(BaseModel):
+class PixartSigmaModel(BaseModel):
     """
     ECCV 2024
     PixArt-Σ: Weak-to-Strong Training of Diffusion Transformer for 4K Text-to-Image Generation
@@ -73,7 +73,7 @@ class PixartSigma(BaseModel):
         image = self.pipe(prompt).images[0]
         return image
 
-class OneDiffusion(BaseModel):
+class OneDiffusionModel(BaseModel):
     """
     Arxiv 2024
     One Diffusion to Generate Them All
@@ -82,14 +82,17 @@ class OneDiffusion(BaseModel):
     def __init__(self):
         self.model_name = "OneDiffusion"
         from trig.models.onediffusion import OneDiffusionPipeline
-        self.pipe = OneDiffusionPipeline.from_pretrained("models/One-Diffusion").to(device=device, dtype=torch.bfloat16)
+        self.pipe = OneDiffusionPipeline.from_pretrained("lehduong/OneDiffusion").to(device=device, dtype=torch.bfloat16)
 
     def generate(self, prompt):
         image = self.pipe(prompt=f"[[text2image]] {prompt}", negative_prompt=OD_NEGATIVE_PROMPT, num_inference_steps=50,
                      guidance_scale=4, height=1024, width=1024, ).images[0]
         return image
 
-class Sana(BaseModel):
+    def generate_p2p(self, prompt):
+        pass
+        
+class SanaModel(BaseModel):
     """
     Arxiv 2024
     Sana: Efficient High-Resolution Image Synthesis with Linear Diffusion Transformer
@@ -108,4 +111,49 @@ class Sana(BaseModel):
         image = self.pipe(prompt=prompt, height=1024, width=1024, guidance_scale=4.5, num_inference_steps=20,
                      generator=torch.Generator(device="cuda").manual_seed(42))[0]
         image = image[0]
+        return image
+
+class FLUXModel(BaseModel):
+    """
+    FLUX from Black Forest Labs
+    https://github.com/black-forest-labs/flux
+    """
+    def __init__(self):
+        self.model_name = "FLUX"
+        self.model_id = "black-forest-labs/FLUX.1-dev"
+        from diffusers import FluxPipeline
+        self.pipe = FluxPipeline.from_pretrained("black-forest-labs/FLUX.1-dev", torch_dtype=torch.bfloat16)
+
+        # uncomment if you want to use less GPU memory
+        # self.pipe.enable_model_cpu_offload()
+    
+    def generate(self, prompt):
+        image = self.pipe(
+            prompt,
+            height=1024,
+            width=1024,
+            guidance_scale=3.5,
+            num_inference_steps=50,
+            max_sequence_length=512,
+            generator=torch.Generator(device=device).manual_seed(0)
+        ).images[0]
+        return image
+    
+class SD35Model(BaseModel):
+    """
+    Stable Diffusion 3.5
+    https://github.com/Stability-AI/sd3.5
+    """
+    def __init__(self):
+        self.model_name = "SD3.5"
+        self.model_id = "stabilityai/stable-diffusion-3.5-large"
+        from diffusers import StableDiffusion3Pipeline
+        self.pipe = StableDiffusion3Pipeline.from_pretrained("stabilityai/stable-diffusion-3.5-large", torch_dtype=torch.bfloat16)
+        self.pipe = self.pipe.to(device)
+
+        # uncomment if you want to use less GPU memory
+        # self.enable_model_cpu_offload()
+
+    def generate(self, prompt):
+        image = self.pipe(prompt, num_inference_steps=28, guidance_scale=3.5,).images[0]
         return image
