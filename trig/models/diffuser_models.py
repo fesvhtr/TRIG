@@ -43,6 +43,9 @@ class OmniGenModel(BaseModel):
     def generate(self, prompt):
         image = self.pipe(prompt=prompt, height=1024, width=1024, guidance_scale=2.5, seed=0)[0]
         return image
+    
+    def generate_p2p(self, prompt):
+        pass
 
 class PixartSigmaModel(BaseModel):
     """
@@ -155,5 +158,5 @@ class SD35Model(BaseModel):
         # self.enable_model_cpu_offload()
 
     def generate(self, prompt):
-        image = self.pipe(prompt, num_inference_steps=28, guidance_scale=3.5,).images[0]
+        image = self.pipe(prompt=prompt, prompt_3=prompt, num_inference_steps=28, guidance_scale=4.5,max_sequence_length=512).images[0]
         return image

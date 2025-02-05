@@ -12,6 +12,7 @@ AVAILABLE_Model = {
     'sana': 'diffuser_models.SanaModel', # 20h - 1024px, A6000, 20step
     'sd35': 'diffuser_models.SD35Model', # 
     'flux': 'diffuser_models.FLUXModel', # 400h - 1024px, A6000, 50step
+    'janus': 'januspro.JanusModel', # 
     # p2p models
     # subjects models
 }

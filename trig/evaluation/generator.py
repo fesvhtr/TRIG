@@ -44,6 +44,7 @@ class Generator:
             and len(prompt["parent_dataset"]) == 2
             and prompt["parent_dataset"][0].startswith("<")
             and prompt["parent_dataset"][0].endswith(">")
+            and prompt["parent_dataset"][1] == "Origin"
         )
         print(total_len, uni_len)
 
