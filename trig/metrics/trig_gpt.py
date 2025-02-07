@@ -55,10 +55,9 @@ class GPTLogitMetric(BaseMetric):
 
     def logprobs_score(self, top_logprobs):
         score = 0.0
-        # 定义程度词列表
+
         valid_tokens = ["excellent", "Excellent", "good", "Good", "medium", "Medium", "bad", "Bad", "terr", "Terr"]
 
-        # 筛选出程度词及其对应的 log 概率
         filtered_tokens = []
         filtered_logprobs = []
 

@@ -6,9 +6,50 @@ Trade-offs and Relationships in IMage Generation
 ```bash
 conda create -n trig python=3.10 -y
 conda activate trig
-conda install pytorch==2.3.1 torchvision==0.18.1 torchaudio==2.3.1 pytorch-cuda=11.8 -c pytorch -c nvidia
+conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
 pip install -r requirements.txt
 ```
+
+## Experiment
+### TRIG Benchmark
+#### Auto Evaluation
+1. First Please set up a yaml file in config folder to run an experiment, as the format below:
+```yaml
+name: "test" # name for this experiment
+task: "t2i" # chosen from t2i/p2p/sub, Support one task at a time
+# json path for the selected task
+prompt_path: "/home/zsc/TRIG/dataset/Trig/Trig-text-to-image/text-to-imgae-new1.json"
+
+generation:
+    # selected models
+    models: ["flux",]
+    
+evaluation:
+    image_dir: ["data/output/demo",]
+    result_dir: "data/result"
+
+dimensions:
+    IQ-O:
+        metrics: ["GPTLogitMetric"]
+    TA-R:
+        metrics: ["GPTLogitMetric"]
+    TA-S:
+        metrics: ["GPTLogitMetric", "AnotherMetric"]
+    Other Dimensions:
+        metrics: ["OtherMetric"]
+```
+All the available models & metrics & relation functions could be found [there]().
+
+2. Run the main.py
+```
+python main.py --config/your_config.yaml
+```
+3. 
+   - Generated images will be saved to data/output/chosen_task/chosen_model
+   - Evaluation result will be saved to
+   - Relation result will be saved to
+
+#### Manual Evaluation
 
 ### Dataset Zoo
 ```bash
@@ -56,11 +97,6 @@ models
 ```
 
 
-### Inference
-Text-to-Image Generation
-```bash
-python text_to_image.py --model OmniGen
-```
 
 
 

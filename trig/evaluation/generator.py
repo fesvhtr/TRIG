@@ -10,6 +10,7 @@ from tqdm import tqdm
 
 project_root = Path(__file__).resolve().parents[2]
 
+# export PYTHONPATH=/home/zsc/TRIG:$PYTHONPATH
 
 class Generator:
     def __init__(self, config_path="config/default.yaml"):
@@ -17,6 +18,7 @@ class Generator:
         print("-" * 50)
         print("Experiment name:", self.config["name"])
         print("Task:", self.config["task"])
+        print("Models:", self.config["generation"]["models"])
         self.prompts_data = self.load_prompts(self.config["prompt_path"])
         print("-" * 50)
 
@@ -42,6 +44,7 @@ class Generator:
             and len(prompt["parent_dataset"]) == 2
             and prompt["parent_dataset"][0].startswith("<")
             and prompt["parent_dataset"][0].endswith(">")
+            and prompt["parent_dataset"][1] == "Origin"
         )
         print(total_len, uni_len)
 
@@ -90,5 +93,5 @@ class Generator:
 
 
 if __name__ == "__main__":
-    generator = Generator(config_path=r"H:\ProjectsPro\TRIG\config\gen.yaml")
+    generator = Generator(config_path=r"/home/zsc/TRIG/config/gen.yaml")
     generator.generate_batch_models()

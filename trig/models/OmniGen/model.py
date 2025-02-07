@@ -10,7 +10,8 @@ from diffusers.loaders import PeftAdapterMixin
 from timm.models.vision_transformer import PatchEmbed, Attention, Mlp
 from huggingface_hub import snapshot_download
 from safetensors.torch import load_file
-
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from OmniGen.transformer import Phi3Config, Phi3Transformer
 
 

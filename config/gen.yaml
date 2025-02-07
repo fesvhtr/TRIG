@@ -1,6 +1,7 @@
-name: "dalle3"
+name: "test"
 task: "t2i"
-prompt_path: "H:/ProjectsPro/TRIG/dataset/Trig/Trig-text-to-image/text-to-imgae-new1.json"
+prompt_path: "/home/zsc/TRIG/dataset/Trig/Trig-text-to-image/text-to-imgae-without-m-e-v7.json"
 
 generation:
-    models: ["dalle3",]
+    # all models: ["base", "dalle3", "sdxl", "omnigen", "pixart_sigma", "onediffusion", "sana", "sd35", 'flux']
+    models: ["sana",]
