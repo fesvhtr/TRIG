@@ -42,3 +42,4 @@ runs/
 # custom paths
 output
 dataset/Trig/Trig-text-to-image/docci_descriptions.jsonlines
+local_data/
