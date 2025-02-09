@@ -125,7 +125,7 @@ class FLUXModel(BaseModel):
         self.model_name = "FLUX"
         self.model_id = "black-forest-labs/FLUX.1-dev"
         from diffusers import FluxPipeline
-        self.pipe = FluxPipeline.from_pretrained("black-forest-labs/FLUX.1-dev", torch_dtype=torch.bfloat16)
+        self.pipe = FluxPipeline.from_pretrained("black-forest-labs/FLUX.1-dev", torch_dtype=torch.bfloat16).to(device)
 
         # uncomment if you want to use less GPU memory
         # self.pipe.enable_model_cpu_offload()
@@ -138,7 +138,7 @@ class FLUXModel(BaseModel):
             guidance_scale=3.5,
             num_inference_steps=50,
             max_sequence_length=512,
-            generator=torch.Generator(device=device).manual_seed(0)
+            generator=torch.Generator(device="cpu").manual_seed(0)
         ).images[0]
         return image
     

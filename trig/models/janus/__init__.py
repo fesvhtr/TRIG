@@ -20,6 +20,8 @@
 
 # check if python version is above 3.10
 import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 if sys.version_info >= (3, 10):
     print("Python version is above 3.10, patching the collections module.")

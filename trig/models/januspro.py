@@ -31,7 +31,7 @@ from trig.models.janus.utils.io import load_pil_images
 class JanusModel(BaseModel):
     def __init__(self):
         self.model_name = "janus"
-        self.model_id = "deepseek-ai/Janus-1.3B"
+        self.model_id = "deepseek/janus-7b-pro"
         self.vl_chat_processor = VLChatProcessor.from_pretrained(self.model_id)
         self.tokenizer = self.vl_chat_processor.tokenizer
 
@@ -43,11 +43,12 @@ class JanusModel(BaseModel):
 
     @torch.inference_mode()
     def janus_generate(
+        self,
         mmgpt: MultiModalityCausalLM,
         vl_chat_processor: VLChatProcessor,
         prompt: str,
         temperature: float = 1,
-        parallel_size: int = 16,
+        parallel_size: int = 1,
         cfg_weight: float = 5,
         image_token_num_per_image: int = 576,
         img_size: int = 384,
@@ -92,7 +93,7 @@ class JanusModel(BaseModel):
 
         visual_img = np.zeros((parallel_size, img_size, img_size, 3), dtype=np.uint8)
         visual_img[:, :, :] = dec
-        image = PIL.Image.fromarray(visual_img[i])
+        image = PIL.Image.fromarray(visual_img[0])
         return image
 
         # os.makedirs('generated_samples', exist_ok=True)
@@ -109,12 +110,12 @@ class JanusModel(BaseModel):
             {"role": "<|Assistant|>", "content": ""},
         ]
 
-        sft_format = vl_chat_processor.apply_sft_template_for_multi_turn_prompts(
+        sft_format = self.vl_chat_processor.apply_sft_template_for_multi_turn_prompts(
             conversations=conversation,
-            sft_format=vl_chat_processor.sft_format,
+            sft_format=self.vl_chat_processor.sft_format,
             system_prompt="",
         )
-        prompt = sft_format + vl_chat_processor.image_start_tag
+        prompt = sft_format + self.vl_chat_processor.image_start_tag
         image = janus_generate(self.vl_gpt, self.vl_chat_processor, prompt)
         return image
         

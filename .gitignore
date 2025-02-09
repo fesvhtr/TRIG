@@ -30,6 +30,7 @@ model_ts*.txt
 *.swn
 *.swo
 *.swp
+*.log
 *~
 
 # editor settings
