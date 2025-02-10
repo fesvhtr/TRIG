@@ -1,5 +1,6 @@
 from trig.evaluation.evaluator import Evaluator
 from trig.evaluation.generator import Generator
+from trig.evaluation.relationator import Relationator
 import yaml
 
 import os
@@ -8,7 +9,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 if __name__ == "__main__":
 
-    config_path = r"/home/muzammal/Projects/TRIG/config/gen.yaml"
+    config_path = '/Users/binzhu/Desktop/Paper/GGBench/TRIG/config/relation.yaml'
     # read yaml file in config folder
     with open(config_path, "r") as file:
         config = yaml.safe_load(file)
@@ -25,4 +26,5 @@ if __name__ == "__main__":
 
     # step 3: build relation
     if "relation" in config:
-        pass
+        relation = Relationator(config_path=config_path)
+        relation.build_relation()

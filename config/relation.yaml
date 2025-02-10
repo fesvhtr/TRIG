@@ -1,0 +1,10 @@
+name: "relation" # name for this experiment
+task: "t2i" # chosen from t2i/p2p/sub, Support one task at a time
+# json path for the selected task
+
+relation:
+  models: ["test"]
+  res: "demo"
+  metric: "spearman_corr"  # [pearson_corr, spearman_corr, paretoF]
+  plot: true  # Set to true to generate scatter plots
+  heatmap: true
