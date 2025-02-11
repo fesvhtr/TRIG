@@ -8,6 +8,11 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.figure import Figure
 from typing import List, Dict, Tuple
+from sklearn.manifold import TSNE
+import networkx as nx
+import random
+from matplotlib.lines import Line2D
+from matplotlib.patches import FancyArrowPatch
 
 class Relationator:
     def __init__(self, config=None, config_path=None):
@@ -34,6 +39,9 @@ class Relationator:
         self.metric = self.relation_config.get("metric", "pearson_corr")
         self.plot = self.relation_config.get("plot", False)  # Add plot configuration
         self.heatmap = self.relation_config.get("heatmap", False)  # Add heatmap configuration
+        self.tsne = self.relation_config.get("tsne", False)  # Add t-SNE configuration
+        self.tradeoff = self.relation_config.get("tradeoff", False)  # Add trade-off configuration
+        self.node_colors = self.relation_config.get("node_colors", {})
         
     def calculate_pearson_correlation(self, scores1, scores2):
         """Calculate Pearson correlation coefficient between two sets of scores.
@@ -170,8 +178,8 @@ class Relationator:
             ax = fig.add_subplot(n_rows, n_cols, idx + 1)
             
             # Split dimension pair name to get individual metrics
-            # Example: "IQ-O_TA-R" -> ["IQ-O", "TA-R"]
-            metrics = dim_pair.split("_")
+            # Example: "IQ-O_TA-R" -> ["IQ-O", "TA-R"]  (using underscore, not hyphen)
+            metrics = dim_pair.split('_')  # Changed from split('-') to split('_')
             if len(metrics) != 2:
                 print(f"Warning: Unexpected dimension pair format: {dim_pair}")
                 continue
@@ -308,6 +316,318 @@ class Relationator:
         
         return plt.gcf()
 
+    def plot_tsne(self, correlation_matrix: np.ndarray, metrics: List[str], save_dir: Path) -> Figure:
+        """Generate t-SNE visualization of the correlation matrix.
+        
+        Args:
+            correlation_matrix: Matrix of correlations between metrics
+            metrics: List of metric names
+            save_dir: Directory to save the plot
+            
+        Returns:
+            matplotlib figure
+        """
+        # Extract individual metric names from pairs
+        individual_metrics = set()
+        for metric_pair in metrics:
+            m1, m2 = metric_pair.split('_')
+            individual_metrics.add(m1)
+            individual_metrics.add(m2)
+        individual_metrics = sorted(list(individual_metrics))
+        
+        # Create similarity matrix for individual metrics
+        n = len(individual_metrics)
+        similarity_matrix = np.zeros((n, n))
+        metric_to_idx = {m: i for i, m in enumerate(individual_metrics)}
+        
+        # Fill similarity matrix using correlation values
+        for i, metric_pair in enumerate(metrics):
+            m1, m2 = metric_pair.split('_')
+            idx1, idx2 = metric_to_idx[m1], metric_to_idx[m2]
+            similarity_matrix[idx1, idx2] = correlation_matrix[i, i]
+            similarity_matrix[idx2, idx1] = correlation_matrix[i, i]  # Symmetric
+        
+        # Set diagonal to 1
+        np.fill_diagonal(similarity_matrix, 1.0)
+        
+        # Apply t-SNE
+        n_samples = len(individual_metrics)
+        perplexity = min(30, n_samples - 1)  # Ensure perplexity < n_samples
+        tsne = TSNE(
+            n_components=2,
+            metric='precomputed',
+            random_state=42,
+            perplexity=perplexity,  # Adjust perplexity based on sample size
+            n_iter=1000,  # Increase iterations for better convergence
+            learning_rate='auto'  # Let TSNE choose the best learning rate
+        )
+        
+        # Convert similarity to distance: distance = 1 - similarity
+        distances = 1 - np.abs(similarity_matrix)
+        embedding = tsne.fit_transform(distances)
+        
+        # Create plot
+        plt.figure(figsize=(10, 10))
+        
+        # Plot points
+        plt.scatter(embedding[:, 0], embedding[:, 1], alpha=0.8)
+        
+        # Add labels
+        for i, metric in enumerate(individual_metrics):
+            plt.annotate(
+                metric,
+                (embedding[i, 0], embedding[i, 1]),
+                xytext=(5, 5),
+                textcoords='offset points',
+                bbox=dict(facecolor='white', edgecolor='none', alpha=0.7)
+            )
+        
+        # Customize plot
+        plt.title('Metric Relationship Visualization (t-SNE)')
+        plt.xlabel('t-SNE Position X')
+        plt.ylabel('t-SNE Position Y')
+        plt.grid(True, linestyle='--', alpha=0.7)
+        
+        # Save plot
+        models_str = "-".join(self.models)
+        plot_name = f'{models_str}-{self.res}-{self.metric}-tsne.png'
+        plt.savefig(save_dir / plot_name, dpi=300, bbox_inches='tight')
+        
+        return plt.gcf()
+
+    def calculate_tradeoff(self, scores1, scores2):
+        """Calculate trade-off relationship based on correlation value."""
+        try:
+            # Calculate correlation using the configured method
+            correlation_method = self.get_correlation_method()
+            correlation = correlation_method(scores1, scores2)
+            
+            # Use correlation value to determine relationship type
+            if correlation > 0:  # Positive correlation indicates dominating relationship
+                return {
+                    "relationship_type": "dominating",
+                    "strength": abs(correlation),
+                    "direction": 1
+                }
+            else:  # Negative correlation indicates contradicting relationship
+                return {
+                    "relationship_type": "contradicting",
+                    "strength": abs(correlation),
+                    "direction": -1
+                }
+            
+        except Exception as e:
+            print(f"Error calculating trade-off: {e}")
+            return {
+                "relationship_type": "error",
+                "strength": 0,
+                "direction": 0
+            }
+
+    def detect_dominance_cycles(self, G):
+        """Detect cycles in dominance relationships."""
+        cycles = []
+        for node in G.nodes():
+            try:
+                # Get all cycles containing this node
+                cycle = nx.find_cycle(G, node, orientation="original")
+                
+                # Check if this is a new cycle and all edges are dominating
+                if cycle not in cycles:
+                    # Get edge data for each edge in the cycle
+                    is_dominating_cycle = True
+                    for u, v, _ in cycle:
+                        edge_data = G.get_edge_data(u, v)
+                        if edge_data["relationship_type"] != "dominating":
+                            is_dominating_cycle = False
+                            break
+                    
+                    if is_dominating_cycle:
+                        cycles.append(cycle)
+                    
+            except nx.NetworkXNoCycle:
+                continue
+        return cycles
+
+    def calculate_effective_dominance(self, G, cycles):
+        """Calculate effective dominance considering cycles."""
+        effective_dominance = {}
+        for node in G.nodes():
+            # Count direct dominance
+            dominating = sum(1 for _, _, d in G.edges(node, data=True) 
+                            if d["relationship_type"] == "dominating")
+            dominated = sum(1 for _, _, d in G.edges(node, data=True) 
+                           if d["relationship_type"] == "dominating" and 
+                           node == list(d.keys())[1])
+            
+            # Reduce dominance score for nodes in cycles
+            cycle_penalty = 0
+            for cycle in cycles:
+                if any(node in edge for edge in cycle):
+                    cycle_penalty += 0.5  # Reduce dominance effect for cyclic relationships
+            
+            effective_dominance[node] = dominating - dominated - cycle_penalty
+        return effective_dominance
+
+    def plot_tradeoff(self, data: Dict, save_dir: Path) -> Figure:
+        """Generate trade-off visualization between metrics."""
+        # Load the pre-calculated correlation values from CSV
+        models_str = "-".join(self.models)
+        csv_filename = f"{models_str}-{self.res}-{self.metric}.csv"
+        csv_path = Path("data/relation/csv") / csv_filename
+        
+        # Read correlation matrix from CSV
+        with open(csv_path, 'r') as f:
+            lines = f.readlines()
+            metrics = lines[0].strip().split(',')[1:]  # Get metric names
+            matrix = {}
+            
+            # Only read upper triangular part of the matrix
+            for i, line in enumerate(lines[1:], 1):
+                values = line.strip().split(',')
+                metric1 = values[0]
+                for j, val in enumerate(values[1:], 1):
+                    if val.strip() and j >= i:  # Only read upper triangular part
+                        metric2 = metrics[j-1]
+                        matrix[f"{metric1}_{metric2}"] = float(val)
+
+        # Create network graph
+        G = nx.DiGraph()  # Use directed graph for arrows
+        
+        # Set fixed node size for all nodes
+        node_sizes = {metric: 1000 for metric in metrics}
+        
+        # Add nodes
+        for metric in metrics:
+            G.add_node(metric)
+        
+        # Add edges based on correlations
+        for pair, correlation in matrix.items():
+            if correlation != 1.0:  # Skip diagonal values
+                m1, m2 = pair.split('_')
+                if correlation > 0:
+                    G.add_edge(m1, m2, relationship_type="dominating")
+                else:  # correlation < 0
+                    G.add_edge(m1, m2, relationship_type="contradicting")
+
+        # Create weighted graph for layout
+        G_layout = nx.Graph()
+        for metric in metrics:
+            G_layout.add_node(metric)
+        
+        # Add edges with higher weights for positive correlations
+        for pair, correlation in matrix.items():
+            if correlation != 1.0:  # Skip diagonal values
+                m1, m2 = pair.split('_')
+                if correlation > 0:
+                    # Higher weight means stronger attraction
+                    G_layout.add_edge(m1, m2, weight=2.0)
+                else:
+                    # Lower weight means weaker attraction
+                    G_layout.add_edge(m1, m2, weight=0.5)
+
+        # Calculate layout with weighted edges
+        pos = nx.spring_layout(G_layout, k=0.5, weight='weight', iterations=50)
+        
+        # Create visualization
+        plt.figure(figsize=(12, 8))
+        
+        # Generate colors for nodes
+        node_colors = {}
+        for metric in metrics:
+            if metric in self.node_colors:
+                node_colors[metric] = self.node_colors[metric]
+            else:
+                hue = random.random()
+                node_colors[metric] = plt.cm.hsv(hue)
+        
+        # Create legend elements
+        legend_elements = [
+            Line2D([0], [0], color='green', 
+                   label='Dominating', linestyle='-',
+                   linewidth=2),  # Simple green line for dominating
+            Line2D([0], [0], color='orange',
+                   label='Contradicting', linestyle='-',
+                   linewidth=2)   # Simple orange line for contradicting
+        ]
+
+        # Define arrow properties
+        ARROW_WIDTH = 0.02
+        ARROW_HEAD_WIDTH = 0.05
+        ARROW_HEAD_LENGTH = 0.1
+        ARROW_ALPHA = 0.8
+        ARROW_LINE_WIDTH = 120
+
+        # Draw edges
+        for (m1, m2, data) in G.edges(data=True):
+            # Calculate positions
+            dx = pos[m2][0] - pos[m1][0]
+            dy = pos[m2][1] - pos[m1][1]
+            angle = np.arctan2(dy, dx)
+            
+            # Calculate exact circle radii
+            source_radius = np.sqrt(node_sizes[m1] / np.pi) / 30
+            target_radius = np.sqrt(node_sizes[m2] / np.pi) / 30
+            
+            # Calculate exact points on circle edges
+            start_x = pos[m1][0] + source_radius * np.cos(angle)
+            start_y = pos[m1][1] + source_radius * np.sin(angle)
+            end_x = pos[m2][0] - target_radius * np.cos(angle)
+            end_y = pos[m2][1] - target_radius * np.sin(angle)
+            
+            if data["relationship_type"] == "dominating":
+                # Use annotation for dominating relationship with inward arrows
+                plt.annotate("",
+                            xy=(end_x, end_y), xycoords='data',
+                            xytext=(start_x, start_y), textcoords='data',
+                            arrowprops=dict(arrowstyle='-',
+                                          color='green',
+                                          lw=ARROW_WIDTH*ARROW_LINE_WIDTH,
+                                          alpha=ARROW_ALPHA,
+                                          shrinkA=0, shrinkB=0),
+                            zorder=1)
+            else:  # contradicting relationship
+                plt.annotate("",
+                            xy=(end_x, end_y), xycoords='data',
+                            xytext=(start_x, start_y), textcoords='data',
+                            arrowprops=dict(arrowstyle="<->",
+                                          color="orange",
+                                          lw=ARROW_WIDTH*ARROW_LINE_WIDTH,
+                                          alpha=ARROW_ALPHA,
+                                          shrinkA=0, shrinkB=0),
+                            zorder=1)
+
+        # Draw nodes
+        for metric in G.nodes():
+            plt.scatter(pos[metric][0], pos[metric][1],
+                       s=node_sizes[metric],
+                       c=[node_colors[metric]],
+                       alpha=0.8,
+                       zorder=2)
+        
+        # Draw labels
+        for metric in G.nodes():
+            plt.annotate(metric,
+                        (pos[metric][0], pos[metric][1]),
+                        xytext=(0, 0),
+                        textcoords='offset points',
+                        ha='center',
+                        va='center',
+                        zorder=3)
+        
+        # Add legend
+        plt.legend(handles=legend_elements, loc='upper right')
+        
+        # Customize plot
+        plt.title("Metric Trade-off Relationships")
+        plt.axis('equal')
+        
+        # Save plot
+        plot_name = f'{models_str}-{self.res}-{self.metric}-tradeoff.png'
+        plt.savefig(save_dir / plot_name, dpi=300, bbox_inches='tight')
+        
+        return plt.gcf()
+
     def build_relation(self):
         """Build relation between different metrics"""
         # 1. Load result data
@@ -398,28 +718,36 @@ class Relationator:
             
             # Write each row
             for i, metric1 in enumerate(individual_metrics):
-                row = [metric1]  # First column is metric name
+                row = [metric1]
                 for j, metric2 in enumerate(individual_metrics):
                     if j < i:  # Lower triangle
-                        # Look for the opposite pair and negate its correlation
-                        pair = f"{metric2}_{metric1}"  # Reverse the pair order
+                        pair = f"{metric2}_{metric1}"
                         if pair in metrics:
                             idx = metrics.index(pair)
-                            correlation = -correlation_matrix[idx][idx]  # Negate the correlation
+                            correlation = correlation_matrix[idx][idx]
+                            
+                            # Handle correlation based on metric type
+                            if self.metric in ['pearson_corr', 'spearman_corr']:
+                                # For Pearson and Spearman correlations, negate the value
+                                correlation = -correlation
+                            elif self.metric == 'paretoF':
+                                # For Pareto frontier score, use 1 - correlation
+                                # This maintains the [0,1] range while showing opposite relationship
+                                correlation = 1 - correlation
+                            
                             row.append(f"{correlation:.3f}")
                         else:
-                            row.append("")  # No correlation found
+                            row.append("")
                     elif metric1 == metric2:  # Diagonal
                         row.append("1.000")
                     else:  # Upper triangle
-                        # Look for this pair in the metrics list
                         pair = f"{metric1}_{metric2}"
                         if pair in metrics:
                             idx = metrics.index(pair)
                             correlation = correlation_matrix[idx][idx]
                             row.append(f"{correlation:.3f}")
                         else:
-                            row.append("")  # No correlation found
+                            row.append("")
                 
                 f.write(",".join(row) + "\n")
 
@@ -428,6 +756,18 @@ class Relationator:
             heatmap_save_dir = Path("data/relation/heatmap")
             heatmap_save_dir.mkdir(parents=True, exist_ok=True)
             self.plot_heatmap(csv_path, heatmap_save_dir)
+
+        # Generate t-SNE visualization if enabled
+        if self.tsne:
+            tsne_save_dir = Path("data/relation/tsne")
+            tsne_save_dir.mkdir(parents=True, exist_ok=True)
+            self.plot_tsne(correlation_matrix, metrics, tsne_save_dir)
+
+        # Generate trade-off analysis if enabled
+        if self.tradeoff:
+            tradeoff_save_dir = Path("data/relation/tradeoff")
+            tradeoff_save_dir.mkdir(parents=True, exist_ok=True)
+            self.plot_tradeoff(data, tradeoff_save_dir)
 
         return output
 
