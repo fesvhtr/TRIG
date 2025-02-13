@@ -108,8 +108,7 @@ class Evaluator:
         print("Evaluation complete!")
 
 
-# 示例主逻辑
 if __name__ == "__main__":
-    evaluator = Evaluator(config_path=r"H:\ProjectsPro\TRIG\config\demo.yaml")
+    evaluator = Evaluator(config_path=r"/home/muzammal/Projects/TRIG/config/eval.yaml")
 
     evaluator.evaluate_all()

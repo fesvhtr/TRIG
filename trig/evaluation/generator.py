@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 project_root = Path(__file__).resolve().parents[2]
 
-# export PYTHONPATH=/home/zsc/TRIG:$PYTHONPATH
+# export PYTHONPATH=/home/muzammal/Projects/TRIG:$PYTHONPATH
 
 class Generator:
     def __init__(self, config_path="config/default.yaml"):

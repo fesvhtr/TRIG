@@ -6,7 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 if __name__ == "__main__":
 
-    config_path = '/home/zsc/TRIG/config/gen.yaml'
+    config_path = '/home/muzammal/Projects/TRIG/config/gen.yaml'
     # read yaml file in config folder
     with open(config_path, "r") as file:
         config = yaml.safe_load(file)
