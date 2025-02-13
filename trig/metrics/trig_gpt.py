@@ -11,7 +11,7 @@ from tqdm import tqdm
 import math
 
 
-class GPTLogitMetric(BaseMetric):
+class TRIGGPTMetric(BaseMetric):
     def __init__(self, API_KEY, dimension, top_logprobs=5, **kwargs):
         super().__init__(**kwargs)
         self.dimension = dimension
@@ -42,9 +42,9 @@ class GPTLogitMetric(BaseMetric):
         except Exception as e:
             print(f"Error: {e}")
             return 0.0
-        print(completion.choices[0].message.content)
+        # print(completion.choices[0].message.content)
         top_logprobs = completion.choices[0].logprobs.content[0].top_logprobs
-        print('top_logprobs:', top_logprobs)
+        # print('top_logprobs:', top_logprobs)
         usage_tokens = [completion.usage.prompt_tokens, completion.usage.completion_tokens,
                         completion.usage.prompt_tokens + completion.usage.completion_tokens]
         print('usage_tokens:', usage_tokens)
@@ -66,23 +66,22 @@ class GPTLogitMetric(BaseMetric):
                 filtered_tokens.append(item.token)
                 filtered_logprobs.append(float(item.logprob))
 
-        # 如果没有匹配的 token，直接返回 0 分
+        # If there is no matching token, directly return 0 points
         if not filtered_tokens:
             return 0.0
 
-        # 将 log 概率转化为线性概率，处理极端数值
+        # Convert log probabilities to linear probabilities, dealing with extreme values
         try:
             linear_probs = [math.exp(lp) for lp in filtered_logprobs]
         except OverflowError:
             linear_probs = [0.0] * len(filtered_logprobs)
 
-        # 对概率重新归一化
+        # Renormalise probabilities
         total = sum(linear_probs) + 1e-10
         normalized_probs = [p / total for p in linear_probs]
 
-        # 计算得分
         for token, prob in zip(filtered_tokens, normalized_probs):
-            print(token, prob)
+            # print(token, prob)
             if token in ["excellent", "Excellent"]:
                 score += 1.0 * prob
             elif token in ["good", "Good"]:
@@ -106,8 +105,8 @@ class GPTLogitMetric(BaseMetric):
 if __name__ == "__main__":
     API_KEY = "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"
     # Example usage
-    metric = GPTLogitMetric(API_KEY, top_logprobs=5, dimension='TA-C')
-    image_path = r"H:\ProjectsPro\TRIG\demo.jpg"
+    metric = TRIGGPTMetric(API_KEY, top_logprobs=5, dimension='TA-C')
+    image_path = r"/home/muzammal/Projects/TRIG/demo.jpg"
     prompt = ["A old building like a main building of a university",
               "A old building like a main building of a university with green grass and blue sky",
               "A dog swimming in the water",
