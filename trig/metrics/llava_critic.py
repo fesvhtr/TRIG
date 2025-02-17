@@ -8,10 +8,7 @@ from PIL import Image
 import requests
 import copy
 import torch
-
-import sys
 import warnings
-import os
 
 
 warnings.filterwarnings("ignore")
@@ -23,18 +20,17 @@ tokenizer, model, image_processor, max_length = load_pretrained_model(pretrained
 
 model.eval()
 
-url = "https://github.com/LLaVA-VL/blog/blob/main/2024-10-03-llava-critic/static/images/critic_img_seven.png?raw=True"
-image = Image.open(requests.get(url, stream=True).raw)
+image = Image.open("/home/muzammal/Projects/TRIG/demo.jpg")
 image_tensor = process_images([image], image_processor, model.config)
 image_tensor = [_image.to(dtype=torch.float16, device=device) for _image in image_tensor]
 
 conv_template = "qwen_1_5"  # Make sure you use correct chat template for different models
 
 # pairwise ranking
-critic_prompt = "Given an image and a corresponding question, please serve as an unbiased and fair judge to evaluate the quality of the answers provided by a Large Multimodal Model (LMM). Determine which answer is better and explain your reasoning with specific details. Your task is provided as follows:\nQuestion: [What this image presents?]\nThe first response: [The image is a black and white sketch of a line that appears to be in the shape of a cross. The line is a simple and straightforward representation of the cross shape, with two straight lines intersecting at a point.]\nThe second response: [This is a handwritten number seven.]\nASSISTANT:\n"
+# critic_prompt = "Given an image and a corresponding question, please serve as an unbiased and fair judge to evaluate the quality of the answers provided by a Large Multimodal Model (LMM). Determine which answer is better and explain your reasoning with specific details. Your task is provided as follows:\nQuestion: [What this image presents?]\nThe first response: [The image is a black and white sketch of a line that appears to be in the shape of a cross. The line is a simple and straightforward representation of the cross shape, with two straight lines intersecting at a point.]\nThe second response: [This is a handwritten number seven.]\nASSISTANT:\n"
 
 # pointwise scoring
-# critic_prompt = "Given an image and a corresponding question, please serve as an unbiased and fair judge to evaluate the quality of answer answers provided by a Large Multimodal Model (LMM). Score the response out of 100 and explain your reasoning with specific details. Your task is provided as follows:\nQuestion: [What this image presents?]\nThe LMM response: [This is a handwritten number seven.]\nASSISTANT:\n "
+critic_prompt = "Given an image and a corresponding question, please serve as an unbiased and fair judge to evaluate the quality of answer answers provided by a Large Multimodal Model (LMM). Score the response out of 100 and explain your reasoning with specific details. Your task is provided as follows:\nQuestion: [What this image presents?]\nThe LMM response: [This is a handwritten number seven.]\nASSISTANT:\n "
 
 question = DEFAULT_IMAGE_TOKEN + "\n" + critic_prompt
 conv = copy.deepcopy(conv_templates[conv_template])

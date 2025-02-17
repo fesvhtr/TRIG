@@ -25,6 +25,15 @@ gpt_logit_dimension_msg = {
     'R-E': '',
 }
 
+## for i2i
+gpt_logit_system_msg_i2i = '''
+You are an evaluation assistant, I will give an AI generated image and a description (i.e. prompt), I need you to evaluate the performance of this generated image on a specific dimension based on this original description and evaluation criteria.
+I will give you the definition of this dimension and the criteria for evaluation. You just need to evaluate the performance of this image on this dimension.
+The information about the dimension is as follows:
+{}
+You should evaluate the image by a scale from: excellent, good, medium, bad, terrible. You must give me one of these first words as your evaluation.
+'''
+
 # vqascore from https://github.com/linzhiqiu/t2v_metrics
 default_question_template = 'Does this figure show "{}"? Please answer yes or no.'
 default_answer_template = 'Yes'

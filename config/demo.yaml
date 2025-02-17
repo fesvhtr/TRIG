@@ -1,19 +1,22 @@
 name: "demo"
 task: "t2i"
-prompt_path: "data/dataset/prompts/trim_t2i.json"
-
-generation:
-    models: ["dalle3",]
-    output_dir: ["data/output/dalle",]
+prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-text-to-image/text-to-imgae-without-m-e-v8.json"
 
 evaluation:
-    image_dir: ["data/output/demo",]
+    image_dir: "/home/muzammal/Projects/TRIG/data/output/t2i/demo"
     result_dir: "data/result"
 
 dimensions:
-    IQ-O:
-        metrics: ["GPTLogitMetric"]
-    TA-R:
-        metrics: ["GPTLogitMetric"]
-    TA-S:
-        metrics: ["GPTLogitMetric", "AnotherMetric"]
+  IQ-O:
+    metrics:
+      - name: trig_api
+        top_logprobs: 7
+        dimension: IQ-A
+      - name: trig_api
+        dimension: IQ-O
+  TA-R:
+    metrics:
+      - trig_api
+  TA-S:
+    metrics:
+      - trig_api

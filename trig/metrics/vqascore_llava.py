@@ -223,11 +223,10 @@ class VQAScoreLLaVAMetric(BaseMetric):
         
         images = self.load_images(images)
 
-        
+        # format prompts
         prompts = [qs + ans for qs, ans in zip(questions, answers)]
         
         input_ids = [tokenizer_image_token(prompt, self.tokenizer, return_tensors='pt') for prompt in prompts]
-        pdb.set_trace()
         labels = copy.deepcopy(input_ids)
         for label, qs in zip(labels, questions):
             tokenized_len = len(tokenizer_image_token(qs, self.tokenizer))
@@ -297,7 +296,7 @@ class VQAScoreLLaVAMetric(BaseMetric):
 
 if __name__ == '__main__':
     llava_metric = VQAScoreLLaVAMetric()
-    images = ['/home/muzammal/Projects/TRIG/demo.jpg']
-    texts = ['a classic white building']
+    images = ['/home/muzammal/Projects/TRIG/demo.jpg','/home/muzammal/Projects/TRIG/demo.jpg']
+    texts = ['a classic white building','a technical drawing of a building']
     scores = llava_metric.compute_batch(images, texts)
     print(scores)

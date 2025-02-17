@@ -3,10 +3,18 @@ import importlib
 
 AVAILABLE_Metric = {
     'base': 'base.BaseMetric',
-    'gpt_logit': 'gpt_logit.GPTLogitMetric',
-    'gpt_text': 'gpt_text.GPTTextMetric',
+    # TRIG Metrics
+    'trig_gpt': 'trig_gpt.TRIGGPTMetric',
+    'trig_api': 'trig_api.TRIGAPIMetric',
+    'trig_qwen_vl': 'trig_qwen_vl.TRIGQwenMetric',
+    # VQAScore Metrics
+    'vqascore_llava': 'vqascore_llava.VQAScoreLLaVAMetric',
+    'vqascore_gpt': 'vqascore_gpt.VQAScoreGPTMetric',
+    # classic Metrics
     'niqe': 'niqe.NIQEMetric',
     'aes_predictor': 'aes_predictor.AESPredictorMetric',
+    
+
 }
 
 

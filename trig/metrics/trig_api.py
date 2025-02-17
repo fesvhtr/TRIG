@@ -1,5 +1,3 @@
-## This file could still be used but deprecated, please use the trig_api.py file instead and setup with gpt model
-
 import openai
 from openai import OpenAI
 import json
@@ -8,52 +6,84 @@ import numpy as np
 from trig.metrics.base import BaseMetric
 from trig.utils.utils import encode_image
 import torch
-from trig.config import gpt_logit_system_msg,gpt_logit_dimension_msg, API_KEY
+from trig.config import gpt_logit_system_msg,gpt_logit_dimension_msg
 from tqdm import tqdm
 import math
 
 
-class TRIGGPTMetric(BaseMetric):
-    def __init__(self, API_KEY, dimension, top_logprobs=5, **kwargs):
-        print("Initializing TRIGGPTMetric, params: API_KEY: {}, dimension: {}, top_logprobs: {}".format(API_KEY, dimension, top_logprobs))
+class TRIGAPIMetric(BaseMetric):
+    def __init__(self, API_KEY="EMPTY", endpoint="http://localhost:8000/v1/", model_name="None", dimension="None", top_logprobs=5, **kwargs):
+        print("Initializing TRIGGPTMetric, params: API_KEY: {}, endpoint: {}, model_name:{}, dimension: {}, top_logprobs: {}".format(API_KEY, endpoint, model_name, dimension, top_logprobs))
         self.dimension = dimension
         self.top_logprobs = top_logprobs
-        self.client = openai.Client(api_key=API_KEY)
-        self.model_name = "gpt-4o"
+        self.client = openai.Client(api_key=API_KEY, base_url=endpoint)
+        self.model_name = model_name
+
+
+    def get_conv_template(self):
+        if 'qwen' in self.model_name.lower():
+            conv_temp = 'qwen'
+        elif 'gpt' in self.model_name.lower():
+            conv_temp = 'gpt'
+        elif 'llava' in self.model_name.lower():
+            conv_temp = 'llava'
+        else:
+            raise ValueError(f"Model '{self.model_name}' is not supported!")
+        return conv_temp
+
+
+    def format_msg(self, conv_temp, prompt, image):
+        # FIXME: combine
+        if conv_temp == 'qwen' or conv_temp == 'llava':
+            sys_msg = [{
+                "role": "system",
+                "content": gpt_logit_system_msg.format(gpt_logit_dimension_msg[self.dimension])
+            }]
+            user_msg = [{
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url",
+                    "image_url": {"url": f"data:image/{image['type']};base64,{image['base64']}"}}]
+            }]
+            return sys_msg + user_msg
+        elif conv_temp == 'gpt':
+            sys_msg = [{
+            "role": "developer",
+            "content": gpt_logit_system_msg.format(gpt_logit_dimension_msg[self.dimension])
+            }]
+            user_msg = [{
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url",
+                    "image_url": {"url": f"data:image/{image['type']};base64,{image['base64']}"}}]
+            }]
+            return sys_msg + user_msg
+
 
     def compute(self, image_path, prompt):
         image = encode_image(image_path)
-        sys_msg = [{
-            "role": "developer",
-            "content": gpt_logit_system_msg.format(gpt_logit_dimension_msg[self.dimension])
-        }]
-        user_msg = [{
-            "role": "user",
-            "content": [
-                {"type": "text", "text": prompt},
-                {"type": "image_url",
-                 "image_url": {"url": f"data:image/{image['type']};base64,{image['base64']}"}}]
-        }]
+        msg = self.format_msg(self.get_conv_template(), prompt, image)
         try:
             completion = self.client.chat.completions.create(
                 model=self.model_name,
-                messages=sys_msg + user_msg,
+                messages=msg,
                 logprobs=True,
                 top_logprobs=self.top_logprobs,
             )
         except Exception as e:
             print(f"Error: {e}")
             return 0.0
-        # print(completion.choices[0].message.content)
+        print(completion.choices[0].message.content)
         top_logprobs = completion.choices[0].logprobs.content[0].top_logprobs
-        # print('top_logprobs:', top_logprobs)
+        print('top_logprobs:', top_logprobs)
         usage_tokens = [completion.usage.prompt_tokens, completion.usage.completion_tokens,
                         completion.usage.prompt_tokens + completion.usage.completion_tokens]
-        print('usage_tokens:', usage_tokens)
+        # print('usage_tokens:', usage_tokens)
         score = self.logprobs_score(top_logprobs)
         return score
 
-    import math
 
     def logprobs_score(self, top_logprobs):
         score = 0.0
@@ -110,11 +140,10 @@ class TRIGGPTMetric(BaseMetric):
                 results[data_id] = self.compute(image_path, prompt['prompt'])
             return results
 
-
 if __name__ == "__main__":
     API_KEY = "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"
     # Example usage
-    metric = TRIGGPTMetric(API_KEY, top_logprobs=5, dimension='TA-C')
+    metric = TRIGAPIMetric(model_name="Qwen/Qwen2.5-VL-7B-Instruct", dimension='TA-C', top_logprobs=5,)
     image_path = r"/home/muzammal/Projects/TRIG/demo.jpg"
     prompt = ["A old building like a main building of a university",
               "A old building like a main building of a university with green grass and blue sky",

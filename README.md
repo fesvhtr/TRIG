@@ -1,6 +1,10 @@
 # TRIG
 Trade-offs and Relationships in IMage Generation
 
+## About
+Here is a fast and easy-to-use library for image generation model inference and evaluation.
+
+
 ## Setup
 ### Installation
 ```bash
@@ -9,8 +13,20 @@ conda activate trig
 conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
 pip install -r requirements.txt
 ```
+We recommand to use TRIG evaluation toolset by [vllm](https://github.com/vllm-project/vllm). Please install with
+```
+# for Qwen2.5vl, please update your transformers
+pip install git+https://github.com/huggingface/transformers@f3f6c86582611976e72be054675e2bf0abb5f775
+pip install accelerate
+pip install 'vllm>=0.7.2'
+```
+Then deploy the selected VLM models, currently the TRIG score support GPT series, Qwen2.5-VL series, and LLaVA-NeXT Series. For more information, please visit vllm document.
+```
+# use Qwen2.5-VL-72B to reproduce the result in our paper
+vllm serve Qwen/Qwen2.5-VL-72B-Instruct --port 8000 --device cuda --host 0.0.0.0 --dtype bfloat16 --limit-mm-per-prompt image=5,video=5
+```
 
-## Experiment
+## Getting Started
 ### TRIG Benchmark
 #### Auto Evaluation
 1. First Please set up a yaml file in config folder to run an experiment, as the format below:
@@ -40,37 +56,46 @@ dimensions:
 ```
 All the available models & metrics & relation functions could be found [there]().
 
-2. Run the main.py
+2. Run the eval.py
 ```
-python main.py --config/your_config.yaml
+pythoneval.py --config/your_config.yaml
 ```
 3. 
-   - Generated images will be saved to data/output/chosen_task/chosen_model
-   - Evaluation result will be saved to
-   - Relation result will be saved to
+   - Generated images will be saved to data/output/your_task/your_model
+   - Evaluation result will be saved to 
+   - Relation result will be saved to 
 
 #### Manual Evaluation
 
-### Dataset Zoo
-```bash
-datasets
-├── Trig
-│   ├── Trig-image-editing
-│   ├── Trig-subject-driven
-│   └── Trig-text-to-image
-└── raw_datasets
-    ├── image-editing
-    │   ├── OmniEdit-Filtered
-    │   └── X2I-mm-instruction
-    ├── subject-driven
-    │   ├── Subjects200K-Total
-    │   ├── X2I-subject-driven
-    │   └── dreambooth
-    └── text-to-image
-        ├── DOCCI
-        └── X2I-text-to-image
-```
+### Metric Tool Set
+## Support List
+### Metric Zoo
+**A. Omni Metric**  
+**TRIG Score**
 
+**B. General Metric**
+1. CLIPScore
+
+**C. Specific Metric**  
+Image Quality - Relism
+1. FID ()
+2. IS ()
+3. dasdad ()
+
+Image Quality - Originality
+1. FID ()
+2. IS ()
+3. dasdad ()
+
+Image Quality - Aesthetics
+1. FID ()
+2. IS ()
+3. dasdad ()
+
+Task Alignment - Content Alignment
+1. FID ()
+2. IS ()
+3. dasdad ()
 ### Model Zoo
 ```bash
 models
@@ -95,6 +120,30 @@ models
     ├── stable-diffusion-xl-base-1.0
     └── stable-diffusion-xl-refiner-1.0
 ```
+
+### Dataset Zoo
+```bash
+datasets
+├── Trig
+│   ├── Trig-image-editing
+│   ├── Trig-subject-driven
+│   └── Trig-text-to-image
+└── raw_datasets
+    ├── image-editing
+    │   ├── OmniEdit-Filtered
+    │   └── X2I-mm-instruction
+    ├── subject-driven
+    │   ├── Subjects200K-Total
+    │   ├── X2I-subject-driven
+    │   └── dreambooth
+    └── text-to-image
+        ├── DOCCI
+        └── X2I-text-to-image
+```
+
+
+
+### Citation
 
 
 
