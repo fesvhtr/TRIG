@@ -1,16 +1,22 @@
-name: "relation" # name for this experiment
-task: "t2i" # chosen from t2i/p2p/sub, Support one task at a time
-# json path for the selected task
+# python eval.py --config config/relation.yaml
 
+name: "relation"
+task: "t2i"
 relation:
-  models: ["test"]
-  res: "demo"
-  metric: "pearson_corr"  # [pearson_corr, spearman_corr, paretoF]
-  plot: true  # Set to true to generate scatter plots
+  models: ["flux"]
+  res: "formatted_flux"
+  metric: "spearman_corr"  # 可选值: pearson_corr, spearman_corr, paretoF
+  plot: true
   heatmap: true
   tsne: true
-  tradeoff: true  # Enable trade-off analysis
-  node_colors:  # Optional: specify colors for specific metrics
-    "IQ-O": "#ff7f0e"  # Orange
-    "TA-R": "#1f77b4"  # Blue
-    "TA-S": "#2ca02c"  # Green
+  tradeoff: true
+  quadrant_analysis: true
+  thresholds:
+    synergy: 0.8      # 协同区阈值
+    bottleneck: 0.5   # 瓶颈区阈值
+    
+  insight_thresholds:
+    synergy_density: 0.4    # 协同区密度阈值
+    bottleneck_density: 0.4 # 瓶颈区密度阈值
+    dominance_ratio: 0.8    # 主导比例阈值（0.5表示比例阈值为2）
+    tradeoff_corr: 0.6      # 零和博弈判定的相关系数阈值

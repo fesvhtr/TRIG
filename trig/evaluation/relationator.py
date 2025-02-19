@@ -12,7 +12,10 @@ from sklearn.manifold import TSNE
 import networkx as nx
 import random
 from matplotlib.lines import Line2D
-from matplotlib.patches import FancyArrowPatch
+from matplotlib.patches import FancyArrowPatch, Patch
+from sklearn.linear_model import LinearRegression
+from sklearn.gaussian_process.kernels import RBF
+from scipy.stats import gaussian_kde
 
 class Relationator:
     def __init__(self, config=None, config_path=None):
@@ -23,7 +26,6 @@ class Relationator:
             config_path: Path to configuration YAML file
         """
         if config_path is not None:
-            # Load config from YAML file
             with open(config_path, 'r') as f:
                 config = yaml.safe_load(f)
         
@@ -37,739 +39,545 @@ class Relationator:
         self.models = self.relation_config.get("models", ["test"])
         self.res = self.relation_config.get("res", "demo")
         self.metric = self.relation_config.get("metric", "pearson_corr")
-        self.plot = self.relation_config.get("plot", False)  # Add plot configuration
-        self.heatmap = self.relation_config.get("heatmap", False)  # Add heatmap configuration
-        self.tsne = self.relation_config.get("tsne", False)  # Add t-SNE configuration
-        self.tradeoff = self.relation_config.get("tradeoff", False)  # Add trade-off configuration
+        self.plot = self.relation_config.get("plot", False)
+        self.heatmap = self.relation_config.get("heatmap", False)
+        self.tsne = self.relation_config.get("tsne", False)
+        self.tradeoff = self.relation_config.get("tradeoff", False)
+        self.quadrant_analysis = self.relation_config.get("quadrant_analysis", True)
         self.node_colors = self.relation_config.get("node_colors", {})
+        self.insight_thresholds = self.relation_config.get("insight_thresholds", {
+            "synergy_density": 0.4,     # 协同区密度阈值
+            "bottleneck_density": 0.4,  # 瓶颈区密度阈值
+            "dominance_ratio": 0.4,     # 主导比例阈值
+            "tradeoff_corr": 0.6        # 零和博弈判定的相关系数阈值
+        })
+        self.dominance_threshold = self.relation_config.get("dominance_threshold", 0.3)
+        self.bottleneck_threshold = self.relation_config.get("bottleneck_threshold", 0.5)
         
+        # 从配置文件读取阈值，如果没有则使用默认值
+        self.thresholds = self.relation_config.get("thresholds", {
+            "synergy": 0.8,      # 协同区阈值
+            "bottleneck": 0.5    # 瓶颈区阈值
+        })
+        
+        self.base_dir = Path("data/relation") / "-".join(self.models) / self.res / self.metric
+        self.base_dir.mkdir(parents=True, exist_ok=True)
+        self.data = None
+
     def calculate_pearson_correlation(self, scores1, scores2):
-        """Calculate Pearson correlation coefficient between two sets of scores.
-        
-        Args:
-            scores1: First array of scores
-            scores2: Second array of scores
-            
-        Returns:
-            float: Pearson correlation coefficient
-        """
+        """Calculate Pearson correlation coefficient between two sets of scores."""
         try:
-            # Check if either array is constant
             if np.std(scores1) == 0 or np.std(scores2) == 0:
-                print(f"Warning: Constant array detected, correlation coefficient undefined")
                 return 0.0
-            correlation, _ = stats.pearsonr(scores1, scores2)
-            return correlation
-        except Exception as e:
-            print(f"Error calculating Pearson correlation: {e}")
+            return stats.pearsonr(scores1, scores2)[0]
+        except:
             return 0.0
-            
+
     def calculate_spearman_correlation(self, scores1, scores2):
-        """Calculate Spearman correlation coefficient between two sets of scores.
-        
-        Args:
-            scores1: First array of scores
-            scores2: Second array of scores
-            
-        Returns:
-            float: Spearman correlation coefficient
-        """
+        """Calculate Spearman correlation coefficient between two sets of scores."""
         try:
-            correlation, _ = stats.spearmanr(scores1, scores2)
-            return correlation
-        except Exception as e:
-            print(f"Error calculating Spearman correlation: {e}")
+            return stats.spearmanr(scores1, scores2)[0]
+        except:
             return 0.0
-            
+
     def calculate_pareto_frontier(self, scores1, scores2):
-        """Calculate Pareto frontier score between two sets of scores.
-        
-        Args:
-            scores1: First array of scores
-            scores2: Second array of scores
-            
-        Returns:
-            float: Pareto frontier score
-        """
+        """Calculate Pareto frontier score between two sets of scores."""
         try:
-            # Convert to numpy arrays
-            scores1_arr = np.array(scores1)
-            scores2_arr = np.array(scores2)
-            
-            # Find Pareto optimal points
             pareto_points = []
             for i in range(len(scores1)):
                 dominated = False
                 for j in range(len(scores1)):
-                    if i != j:
-                        if (scores1[j] >= scores1[i] and scores2[j] >= scores2[i] and 
-                            (scores1[j] > scores1[i] or scores2[j] > scores2[i])):
-                            dominated = True
-                            break
+                    if i != j and scores1[j] >= scores1[i] and scores2[j] >= scores2[i]:
+                        dominated = True
+                        break
                 if not dominated:
                     pareto_points.append((scores1[i], scores2[i]))
             
-            # Calculate area under Pareto frontier as a score
             if len(pareto_points) < 2:
                 return 0.0
-            
-            # Sort points by x-coordinate
+                
             pareto_points.sort()
-            x_coords, y_coords = zip(*pareto_points)
-            
-            # Calculate area under curve (normalized)
-            area = np.trapz(y_coords, x_coords)
-            max_area = max(scores1_arr) * max(scores2_arr)
-            pareto_score = area / max_area if max_area > 0 else 0.0
-            
-            return pareto_score
-        
-        except Exception as e:
-            print(f"Error calculating Pareto frontier score: {e}")
+            x, y = zip(*pareto_points)
+            area = np.trapz(y, x)
+            max_area = np.max(scores1) * np.max(scores2)
+            return area / max_area if max_area > 0 else 0.0
+        except:
             return 0.0
 
     def get_correlation_method(self):
-        """Get the correlation calculation method based on metric config.
-        
-        Returns:
-            function: Correlation calculation function
-        """
-        correlation_methods = {
+        """Get the correlation calculation method based on metric config."""
+        methods = {
             'pearson_corr': self.calculate_pearson_correlation,
             'spearman_corr': self.calculate_spearman_correlation,
             'paretoF': self.calculate_pareto_frontier
         }
-        
-        method = correlation_methods.get(self.metric)
-        if method is None:
-            raise ValueError(f"Unsupported correlation method: {self.metric}")
-        return method
-        
+        return methods[self.metric]
+
     def plot_scatter(self, data: Dict, metrics: List[str] = None, save_dir: str = None) -> Figure:
-        """Generate scatter plots for each dimension pair, showing relationship between its two metrics.
-        
-        Args:
-            data: Dictionary containing metric scores
-            metrics: List of metrics to plot. If None, use all metrics
-            save_dir: Directory to save plots. If None, don't save
-            
-        Returns:
-            matplotlib figure
-        """
-        # Get dimension pairs
+        """Generate enhanced scatter plots with quadrant analysis."""
         dimension_pairs = list(data.keys())
         n_pairs = len(dimension_pairs)
+        n_cols = min(2, n_pairs)
+        n_rows = (n_pairs + n_cols - 1) // n_cols
         
-        # Calculate grid size
-        n_cols = min(2, n_pairs)  # Maximum 2 columns
-        n_rows = (n_pairs + n_cols - 1) // n_cols  # Ceiling division
-        
-        # Create figure with subplots
         fig = plt.figure(figsize=(8*n_cols, 6*n_rows))
         
-        # Create save directory if needed
         if save_dir:
             save_path = Path(save_dir)
             save_path.mkdir(parents=True, exist_ok=True)
         
-        # Generate plots for each dimension pair
         for idx, dim_pair in enumerate(dimension_pairs):
-            # Create subplot
             ax = fig.add_subplot(n_rows, n_cols, idx + 1)
+            metric1, metric2 = dim_pair.split('_')
             
-            # Split dimension pair name to get individual metrics
-            # Example: "IQ-O_TA-R" -> ["IQ-O", "TA-R"]  (using underscore, not hyphen)
-            metrics = dim_pair.split('_')  # Changed from split('-') to split('_')
-            if len(metrics) != 2:
-                print(f"Warning: Unexpected dimension pair format: {dim_pair}")
-                continue
+            scores1 = np.array([v[0] for v in data[dim_pair].values()])
+            scores2 = np.array([v[1] for v in data[dim_pair].values()])
             
-            metric1, metric2 = metrics
+            # 使用配置的阈值，synergy阈值x和y相同
+            synergy_thresh = self.thresholds["synergy"]      # 0.8
+            bottleneck_thresh = self.thresholds["bottleneck"] # 0.5
             
-            # Collect scores for both metrics
-            scores1 = []  # First metric scores (e.g., IQ-O)
-            scores2 = []  # Second metric scores (e.g., TA-R)
+            # Plotting
+            sns.scatterplot(x=scores1, y=scores2, ax=ax)
+            try:
+                sns.regplot(x=scores1, y=scores2, scatter=False, ax=ax, 
+                          color='red', line_kws={'linestyle': '--'})
+                correlation = self.get_correlation_method()(scores1, scores2)
+                ax.text(0.05, 0.95, f'{self.metric}: {correlation:.3f}', 
+                       transform=ax.transAxes, bbox=dict(facecolor='white', alpha=0.8))
+            except:
+                pass
             
-            # Get all samples
-            for key in data[dim_pair].keys():
-                # Each sample has two scores
-                score_pair = data[dim_pair][key]
-                scores1.append(score_pair[0])  # First score for metric1
-                scores2.append(score_pair[1])  # Second score for metric2
+            # Quadrant visualization
+            ax.axhline(synergy_thresh, color='gray', linestyle='--', alpha=0.5)
+            ax.axvline(synergy_thresh, color='gray', linestyle='--', alpha=0.5)
             
-            # Convert to numpy arrays
-            scores1 = np.array(scores1)
-            scores2 = np.array(scores2)
+            # 1. Synergy zone (右上角矩形，得分都大于0.8)
+            ax.fill_between([synergy_thresh, 1], synergy_thresh, 1, color='green', alpha=0.1)
             
-            # Check if we have non-constant data
-            if np.std(scores1) > 0 or np.std(scores2) > 0:
-                # Create scatter plot
-                sns.scatterplot(x=scores1, y=scores2, ax=ax)
-                
-                # Add trend line
-                try:
-                    sns.regplot(x=scores1, y=scores2, scatter=False, ax=ax, 
-                              color='red', line_kws={'linestyle': '--'})
-                    
-                    # Calculate and display correlation
-                    correlation_method = self.get_correlation_method()
-                    correlation = correlation_method(scores1, scores2)
-                    ax.text(0.05, 0.95, f'{self.metric}: {correlation:.3f}', 
-                           transform=ax.transAxes, 
-                           bbox=dict(facecolor='white', alpha=0.8))
-                except Exception as e:
-                    print(f"Warning: Could not add trend line for {dim_pair}: {e}")
-            else:
-                ax.scatter(scores1, scores2)
-                print(f"Warning: Constant scores for {dim_pair}")
+            # 2. Bottleneck zone (左下角矩形，得分都小于0.5)
+            ax.fill_between([0, bottleneck_thresh], 0, bottleneck_thresh, color='red', alpha=0.1)
             
-            # Customize plot
-            ax.set_xlabel(metric1)  # e.g., "IQ-O"
-            ax.set_ylabel(metric2)  # e.g., "TA-R"
+            # 3. Tradeoff zones (三个区域)
+            # 左上角区域：[0,bottleneck_thresh] × [bottleneck_thresh, 1]
+            ax.fill_between([0, bottleneck_thresh], bottleneck_thresh, 1, color='yellow', alpha=0.1)
+            
+            # 右下角区域：[synergy_thresh, 1] × [0, synergy_thresh]
+            ax.fill_between([synergy_thresh, 1], 0, synergy_thresh, color='yellow', alpha=0.1)
+            
+            # 中间区域：[bottleneck_thresh, synergy_thresh] × [0, 1]
+            ax.fill_between([bottleneck_thresh, synergy_thresh], 0, 1, color='yellow', alpha=0.1)
+            
+            # Legend
+            legend_elements = [
+                Patch(facecolor='green', alpha=0.1, label='Synergy Zone'),
+                Patch(facecolor='yellow', alpha=0.1, label='Tradeoff Zone'),
+                Patch(facecolor='red', alpha=0.1, label='Bottleneck Zone')
+            ]
+            ax.legend(handles=legend_elements)
+            
+            ax.set_xlabel(metric1)
+            ax.set_ylabel(metric2)
             ax.set_title(f'{dim_pair}')
-            
-            # Add grid
             ax.grid(True, linestyle='--', alpha=0.7)
-            
-            if self.metric == 'paretoF':
-                # Add Pareto frontier line
-                pareto_points = []
-                for i in range(len(scores1)):
-                    dominated = False
-                    for j in range(len(scores1)):
-                        if i != j:
-                            if (scores1[j] >= scores1[i] and scores2[j] >= scores2[i] and 
-                                (scores1[j] > scores1[i] or scores2[j] > scores2[i])):
-                                dominated = True
-                                break
-                        if not dominated:
-                            pareto_points.append((scores1[i], scores2[i]))
-                
-                if pareto_points:
-                    # Sort points and plot frontier
-                    pareto_points.sort()
-                    pareto_x, pareto_y = zip(*pareto_points)
-                    ax.plot(pareto_x, pareto_y, 'r--', label='Pareto Frontier')
-                    ax.legend()
         
-        # Adjust layout
         plt.tight_layout()
-        
-        # Save plot if directory is specified
         if save_dir:
             models_str = "-".join(self.models)
-            plot_name = f'{models_str}-{self.res}-{self.metric}-plot.png'
+            plot_name = f'{models_str}-{self.res}-{self.metric}-scatter.png'
             fig.savefig(save_path / plot_name, dpi=300, bbox_inches='tight')
-        
         return fig
 
-    def plot_heatmap(self, csv_path: Path, save_dir: Path) -> Figure:
-        """Generate a heatmap visualization of the correlation matrix.
+    def calculate_quadrant_metrics(self, scores1, scores2):
+        """Calculate quadrant analysis metrics."""
+        metrics = {}
         
-        Args:
-            csv_path: Path to the CSV file containing correlation matrix
-            save_dir: Directory to save the heatmap
+        # 使用配置的阈值，synergy阈值x和y相同
+        synergy_thresh = self.thresholds["synergy"]      # 0.8
+        bottleneck_thresh = self.thresholds["bottleneck"] # 0.5
+        
+        # Region masks - 三个互不相交的区域
+        # 1. Synergy: 右上角的矩形区域 (>0.8)
+        synergy_mask = (scores1 > synergy_thresh) & (scores2 > synergy_thresh)
+        
+        # 2. Bottleneck: 左下角的区域 (<0.5)
+        bottleneck_mask = (scores1 < bottleneck_thresh) & (scores2 < bottleneck_thresh)
+        
+        # 3. Tradeoff: 所有其他区域
+        tradeoff_mask = ~(synergy_mask | bottleneck_mask)
+        
+        # Synergy metrics
+        metrics['synergy_density'] = np.mean(synergy_mask)
+        metrics['synergy_gain'] = (np.mean(scores1[synergy_mask]) + 
+                                  np.mean(scores2[synergy_mask])) / np.sqrt(2)
+        
+        # Bottleneck metrics
+        metrics['bottleneck_density'] = np.mean(bottleneck_mask)
+        bottleneck_scores = np.stack([scores1[bottleneck_mask], scores2[bottleneck_mask]])
+        metrics['defect_coupling'] = 1 - (np.max(bottleneck_scores, axis=0) - 
+                                     np.min(bottleneck_scores, axis=0)).mean()
+        
+        # Tradeoff metrics
+        tradeoff_corr = self.calculate_pearson_correlation(scores1[tradeoff_mask], scores2[tradeoff_mask])
+        metrics['tradeoff_strength'] = abs(tradeoff_corr) * (
+            np.var(scores1[tradeoff_mask]) + np.var(scores2[tradeoff_mask]))
+        
+        return metrics
+
+    def determine_relationship_code(self, dim_pair):
+        """按照优先级顺序判断关系模式"""
+        scores1 = np.array([v[0] for v in self.data[dim_pair].values()])
+        scores2 = np.array([v[1] for v in self.data[dim_pair].values()])
+        
+        # 1. 计算各区域密度
+        synergy_mask = (scores1 > self.thresholds["synergy"]) & \
+                    (scores2 > self.thresholds["synergy"])
+        bottleneck_mask = (scores1 < self.thresholds["bottleneck"]) & \
+                        (scores2 < self.thresholds["bottleneck"])
+        tradeoff_mask = ~(synergy_mask | bottleneck_mask)
+        
+        synergy_density = np.mean(synergy_mask)
+        bottleneck_density = np.mean(bottleneck_mask)
+        
+        # 2. 按优先级判断模式
+        # 优先级1：正向协同
+        if synergy_density >= self.insight_thresholds["synergy_density"]:
+            return 0  # 协同
+        
+        # 优先级2：系统瓶颈
+        if bottleneck_density >= self.insight_thresholds["bottleneck_density"]:
+            return 3  # 瓶颈
+        
+        # 优先级3：维度主导
+        if np.sum(tradeoff_mask) >= 10:  # 确保有足够的点进行分析
+            # 只分析博弈区域的点
+            tradeoff_scores1 = scores1[tradeoff_mask]
+            tradeoff_scores2 = scores2[tradeoff_mask]
             
-        Returns:
-            matplotlib figure
-        """
-        # Read CSV data
+            # 拟合回归线
+            reg = LinearRegression().fit(tradeoff_scores1.reshape(-1,1), tradeoff_scores2)
+            pred_y = reg.predict(tradeoff_scores1.reshape(-1,1))
+            
+            # 计算点在回归线上下的数量
+            above_count = np.sum(tradeoff_scores2 > pred_y)
+            below_count = np.sum(tradeoff_scores2 <= pred_y)
+            
+            # 计算大数/小数的比例，判断主导关系
+            ratio = max(above_count, below_count) / min(above_count, below_count)
+            dominance_ratio = 1 / self.insight_thresholds["dominance_ratio"]  # 例如 1/0.5 = 2
+            if ratio > dominance_ratio:  # 使用配置文件中的阈值
+                if above_count > below_count:
+                    return -2  # Y主导X（上方点数多）
+                else:
+                    return 2   # X主导Y（下方点数多）
+        
+        # 优先级4：零和博弈
+        # 只考虑相关系数
+        corr = self.get_correlation_method()(scores1, scores2)
+        if corr < self.insight_thresholds["tradeoff_corr"]:  # 例如 -0.6
+            return 1  # 零和博弈
+        
+        # 如果没有匹配任何模式
+        return -1  # 未定义
+
+    def generate_insights(self, individual_metrics, correlation_matrix, quadrant_analysis, relationship_codes):
+        """Generate insights from analysis results."""
+        insights = []
+        
+        # 遍历所有可能的指标对
+        for i, metric1 in enumerate(individual_metrics):
+            for j, metric2 in enumerate(individual_metrics):
+                if i >= j:  # 跳过对角线和重复的对
+                    continue
+            
+                pair = f"{metric1}_{metric2}"
+                if pair not in relationship_codes:
+                    continue
+            
+                code = relationship_codes[pair]
+            
+                # 根据不同的关系代码生成洞察
+                if code == 3:  # 瓶颈关系
+                    insights.append({
+                        'type': 'bottleneck',
+                        'metrics': (metric1, metric2),
+                        'description': f"发现瓶颈关系：{metric1} 和 {metric2} 在低分区域存在显著耦合",
+                        'suggestion': "建议关注这两个指标的共同改进"
+                    })
+                elif code == 2 or code == -2:  # 主导关系
+                    dominant = metric1 if code == 2 else metric2
+                    dependent = metric2 if code == 2 else metric1
+                    insights.append({
+                        'type': 'dominance',
+                        'metrics': (metric1, metric2),
+                        'description': f"发现主导关系：{dominant} 对 {dependent} 具有显著影响力",
+                        'suggestion': f"建议优先优化 {dominant} 以带动 {dependent} 的提升"
+                    })
+                elif code == 1:  # 权衡关系
+                    insights.append({
+                        'type': 'tradeoff',
+                        'metrics': (metric1, metric2),
+                        'description': f"发现权衡关系：{metric1} 和 {metric2} 存在负相关",
+                        'suggestion': "需要在这两个指标之间寻找平衡点"
+                    })
+                elif code == 0:  # 协同关系
+                    insights.append({
+                        'type': 'synergy',
+                        'metrics': (metric1, metric2),
+                        'description': f"发现协同关系：{metric1} 和 {metric2} 可以共同提升",
+                        'suggestion': "可以同时优化这两个指标"
+                    })
+                elif code == -1:  # 无明显关系
+                    insights.append({
+                        'type': 'undefined',
+                        'metrics': (metric1, metric2),
+                        'description': f"{metric1} 和 {metric2} 之间没有明显的关系模式",
+                        'suggestion': "需要进一步分析这两个指标之间的关系"
+                    })
+        
+        return insights
+
+    def plot_heatmap(self, code_matrix: np.ndarray, individual_metrics: List[str], save_dir: Path = None) -> Figure:
+        """Generate heatmap visualization for relationship codes."""
+        # 创建颜色映射 - 高饱和度的热力图风格
+        colors = {
+            2: '#1a53ff',   # 深蓝色 - 主导
+            -1: '#f0f0f0',  # 浅灰色 - 未定义关系
+            0: '#00cc44',   # 翠绿色 - 协同
+            1: '#00a0dc',   # 亮蓝色 - 权衡
+            -2: '#ff3333',  # 鲜红色 - 被主导
+            3: '#9933ff'    # 亮紫色 - 瓶颈
+        }
+        
+        # 创建自定义colormap，添加白色用于左下角和对角线
+        cmap = plt.cm.colors.ListedColormap(['white'] + [colors[i] for i in [2, -1, 0, 1, -2, 3]])
+        bounds = [-3] + [-2.5, -1.5, -0.5, 0.5, 1.5, 2.5, 3.5]
+        norm = plt.cm.colors.BoundaryNorm(bounds, cmap.N)
+        
+        # 创建图形
+        plt.figure(figsize=(12, 10))
+        
+        # 创建一个新的矩阵，左下角和对角线设为白色
+        display_matrix = code_matrix.copy()
+        for i in range(len(individual_metrics)):
+            for j in range(i + 1):  # 包括对角线
+                display_matrix[i,j] = -3
+        
+        # 绘制热力图
+        im = plt.imshow(display_matrix, cmap=cmap, norm=norm)
+        
+        # 添加关系类型标签（只包含右上角的关系）
+        labels = {
+            2: 'Dominated',
+            -1: 'Undefined',
+            0: 'Synergy',
+            1: 'Trade-off',
+            -2: 'Dominant',
+            3: 'Bottleneck'
+        }
+        
+        # 创建colorbar（只显示右上角的关系颜色）
+        cbar = plt.colorbar(im, ticks=[2, -1, 0, 1, -2, 3])
+        cbar.set_ticklabels([labels[i] for i in [2, -1, 0, 1, -2, 3]])
+        
+        # 设置坐标轴
+        plt.xticks(range(len(individual_metrics)), individual_metrics, rotation=45, ha='right')
+        plt.yticks(range(len(individual_metrics)), individual_metrics)
+        
+        # 读取CSV文件获取左下角的数值
+        csv_path = self.base_dir / "relationship_codes.csv"
+        csv_data = []
         with open(csv_path, 'r') as f:
-            lines = f.readlines()
+            next(f)  # 跳过标题行
+            for line in f:
+                csv_data.append(line.strip().split(',')[1:])  # 跳过第一列
         
-        # Parse header and metrics
-        metrics = lines[0].strip().split(',')[1:]  # Skip first empty cell
+        # 添加数值标签
+        for i in range(len(individual_metrics)):
+            for j in range(len(individual_metrics)):
+                if i == j:  # 对角线
+                    text = csv_data[i][j]
+                    color = 'black'
+                elif j > i:  # 右上角：关系代码
+                    val = code_matrix[i, j]
+                    text = str(int(val))
+                    color = 'white' if val in [2, -2, 3, 1] else 'black'
+                else:  # 左下角：CSV中的数值
+                    text = csv_data[i][j]
+                    if text != "NULL":  # 只有在不是NULL时才处理格式
+                        text = text.strip('[]').replace('-', '\n')
+                    color = 'black'
+                
+                plt.text(j, i, text,
+                        ha="center", va="center", color=color,
+                        fontweight='bold', fontsize=12)
         
-        # Parse correlation matrix
-        matrix = []
-        for line in lines[1:]:
-            # Convert empty strings to 0 and strings to floats
-            row = [float(x) if x.strip() else 0 for x in line.strip().split(',')[1:]]
-            matrix.append(row)
-        
-        # Create figure
-        plt.figure(figsize=(10, 8))
-        
-        # Create heatmap
-        sns.heatmap(
-            matrix,
-            xticklabels=metrics,
-            yticklabels=metrics,
-            cmap='YlGnBu',  # Changed from 'RdBu_r' to 'YlGnBu'
-            center=None,    # Remove center as we're using a sequential colormap
-            vmin=-1,
-            vmax=1,
-            annot=True,
-            fmt='.2f',
-            square=True,
-            cbar_kws={'label': f'{self.metric} correlation'}
-        )
-        
-        # Customize plot
-        plt.title('Correlation Matrix Heatmap')
+        plt.title("Relationship Type Heatmap", pad=20, fontsize=14, fontweight='bold')
         plt.tight_layout()
         
-        # Save plot
-        models_str = "-".join(self.models)
-        plot_name = f'{models_str}-{self.res}-{self.metric}-heatmap.png'
-        plt.savefig(save_dir / plot_name, dpi=300, bbox_inches='tight')
-        
-        return plt.gcf()
-
-    def plot_tsne(self, correlation_matrix: np.ndarray, metrics: List[str], save_dir: Path) -> Figure:
-        """Generate t-SNE visualization of the correlation matrix.
-        
-        Args:
-            correlation_matrix: Matrix of correlations between metrics
-            metrics: List of metric names
-            save_dir: Directory to save the plot
-            
-        Returns:
-            matplotlib figure
-        """
-        # Extract individual metric names from pairs
-        individual_metrics = set()
-        for metric_pair in metrics:
-            m1, m2 = metric_pair.split('_')
-            individual_metrics.add(m1)
-            individual_metrics.add(m2)
-        individual_metrics = sorted(list(individual_metrics))
-        
-        # Create similarity matrix for individual metrics
-        n = len(individual_metrics)
-        similarity_matrix = np.zeros((n, n))
-        metric_to_idx = {m: i for i, m in enumerate(individual_metrics)}
-        
-        # Fill similarity matrix using correlation values
-        for i, metric_pair in enumerate(metrics):
-            m1, m2 = metric_pair.split('_')
-            idx1, idx2 = metric_to_idx[m1], metric_to_idx[m2]
-            similarity_matrix[idx1, idx2] = correlation_matrix[i, i]
-            similarity_matrix[idx2, idx1] = correlation_matrix[i, i]  # Symmetric
-        
-        # Set diagonal to 1
-        np.fill_diagonal(similarity_matrix, 1.0)
-        
-        # Apply t-SNE
-        n_samples = len(individual_metrics)
-        perplexity = min(30, n_samples - 1)  # Ensure perplexity < n_samples
-        tsne = TSNE(
-            n_components=2,
-            metric='precomputed',
-            random_state=42,
-            perplexity=perplexity,  # Adjust perplexity based on sample size
-            n_iter=1000,  # Increase iterations for better convergence
-            learning_rate='auto'  # Let TSNE choose the best learning rate
-        )
-        
-        # Convert similarity to distance: distance = 1 - similarity
-        distances = 1 - np.abs(similarity_matrix)
-        embedding = tsne.fit_transform(distances)
-        
-        # Create plot
-        plt.figure(figsize=(10, 10))
-        
-        # Plot points
-        plt.scatter(embedding[:, 0], embedding[:, 1], alpha=0.8)
-        
-        # Add labels
-        for i, metric in enumerate(individual_metrics):
-            plt.annotate(
-                metric,
-                (embedding[i, 0], embedding[i, 1]),
-                xytext=(5, 5),
-                textcoords='offset points',
-                bbox=dict(facecolor='white', edgecolor='none', alpha=0.7)
-            )
-        
-        # Customize plot
-        plt.title('Metric Relationship Visualization (t-SNE)')
-        plt.xlabel('t-SNE Position X')
-        plt.ylabel('t-SNE Position Y')
-        plt.grid(True, linestyle='--', alpha=0.7)
-        
-        # Save plot
-        models_str = "-".join(self.models)
-        plot_name = f'{models_str}-{self.res}-{self.metric}-tsne.png'
-        plt.savefig(save_dir / plot_name, dpi=300, bbox_inches='tight')
-        
-        return plt.gcf()
-
-    def calculate_tradeoff(self, scores1, scores2):
-        """Calculate trade-off relationship based on correlation value."""
-        try:
-            # Calculate correlation using the configured method
-            correlation_method = self.get_correlation_method()
-            correlation = correlation_method(scores1, scores2)
-            
-            # Use correlation value to determine relationship type
-            if correlation > 0:  # Positive correlation indicates dominating relationship
-                return {
-                    "relationship_type": "dominating",
-                    "strength": abs(correlation),
-                    "direction": 1
-                }
-            else:  # Negative correlation indicates contradicting relationship
-                return {
-                    "relationship_type": "contradicting",
-                    "strength": abs(correlation),
-                    "direction": -1
-                }
-            
-        except Exception as e:
-            print(f"Error calculating trade-off: {e}")
-            return {
-                "relationship_type": "error",
-                "strength": 0,
-                "direction": 0
-            }
-
-    def detect_dominance_cycles(self, G):
-        """Detect cycles in dominance relationships."""
-        cycles = []
-        for node in G.nodes():
-            try:
-                # Get all cycles containing this node
-                cycle = nx.find_cycle(G, node, orientation="original")
-                
-                # Check if this is a new cycle and all edges are dominating
-                if cycle not in cycles:
-                    # Get edge data for each edge in the cycle
-                    is_dominating_cycle = True
-                    for u, v, _ in cycle:
-                        edge_data = G.get_edge_data(u, v)
-                        if edge_data["relationship_type"] != "dominating":
-                            is_dominating_cycle = False
-                            break
-                    
-                    if is_dominating_cycle:
-                        cycles.append(cycle)
-                    
-            except nx.NetworkXNoCycle:
-                continue
-        return cycles
-
-    def calculate_effective_dominance(self, G, cycles):
-        """Calculate effective dominance considering cycles."""
-        effective_dominance = {}
-        for node in G.nodes():
-            # Count direct dominance
-            dominating = sum(1 for _, _, d in G.edges(node, data=True) 
-                            if d["relationship_type"] == "dominating")
-            dominated = sum(1 for _, _, d in G.edges(node, data=True) 
-                           if d["relationship_type"] == "dominating" and 
-                           node == list(d.keys())[1])
-            
-            # Reduce dominance score for nodes in cycles
-            cycle_penalty = 0
-            for cycle in cycles:
-                if any(node in edge for edge in cycle):
-                    cycle_penalty += 0.5  # Reduce dominance effect for cyclic relationships
-            
-            effective_dominance[node] = dominating - dominated - cycle_penalty
-        return effective_dominance
-
-    def plot_tradeoff(self, data: Dict, save_dir: Path) -> Figure:
-        """Generate trade-off visualization between metrics."""
-        # Load the pre-calculated correlation values from CSV
-        models_str = "-".join(self.models)
-        csv_filename = f"{models_str}-{self.res}-{self.metric}.csv"
-        csv_path = Path("data/relation/csv") / csv_filename
-        
-        # Read correlation matrix from CSV
-        with open(csv_path, 'r') as f:
-            lines = f.readlines()
-            metrics = lines[0].strip().split(',')[1:]  # Get metric names
-            matrix = {}
-            
-            # Only read upper triangular part of the matrix
-            for i, line in enumerate(lines[1:], 1):
-                values = line.strip().split(',')
-                metric1 = values[0]
-                for j, val in enumerate(values[1:], 1):
-                    if val.strip() and j >= i:  # Only read upper triangular part
-                        metric2 = metrics[j-1]
-                        matrix[f"{metric1}_{metric2}"] = float(val)
-
-        # Create network graph
-        G = nx.DiGraph()  # Use directed graph for arrows
-        
-        # Set fixed node size for all nodes
-        node_sizes = {metric: 1000 for metric in metrics}
-        
-        # Add nodes
-        for metric in metrics:
-            G.add_node(metric)
-        
-        # Add edges based on correlations
-        for pair, correlation in matrix.items():
-            if correlation != 1.0:  # Skip diagonal values
-                m1, m2 = pair.split('_')
-                if correlation > 0:
-                    G.add_edge(m1, m2, relationship_type="dominating")
-                else:  # correlation < 0
-                    G.add_edge(m1, m2, relationship_type="contradicting")
-
-        # Create weighted graph for layout
-        G_layout = nx.Graph()
-        for metric in metrics:
-            G_layout.add_node(metric)
-        
-        # Add edges with higher weights for positive correlations
-        for pair, correlation in matrix.items():
-            if correlation != 1.0:  # Skip diagonal values
-                m1, m2 = pair.split('_')
-                if correlation > 0:
-                    # Higher weight means stronger attraction
-                    G_layout.add_edge(m1, m2, weight=2.0)
-                else:
-                    # Lower weight means weaker attraction
-                    G_layout.add_edge(m1, m2, weight=0.5)
-
-        # Calculate layout with weighted edges
-        pos = nx.spring_layout(G_layout, k=0.5, weight='weight', iterations=50)
-        
-        # Create visualization
-        plt.figure(figsize=(12, 8))
-        
-        # Generate colors for nodes
-        node_colors = {}
-        for metric in metrics:
-            if metric in self.node_colors:
-                node_colors[metric] = self.node_colors[metric]
-            else:
-                hue = random.random()
-                node_colors[metric] = plt.cm.hsv(hue)
-        
-        # Create legend elements
-        legend_elements = [
-            Line2D([0], [0], color='green', 
-                   label='Dominating', linestyle='-',
-                   linewidth=2),  # Simple green line for dominating
-            Line2D([0], [0], color='orange',
-                   label='Contradicting', linestyle='-',
-                   linewidth=2)   # Simple orange line for contradicting
-        ]
-
-        # Define arrow properties
-        ARROW_WIDTH = 0.02
-        ARROW_HEAD_WIDTH = 0.05
-        ARROW_HEAD_LENGTH = 0.1
-        ARROW_ALPHA = 0.8
-        ARROW_LINE_WIDTH = 120
-
-        # Draw edges
-        for (m1, m2, data) in G.edges(data=True):
-            # Calculate positions
-            dx = pos[m2][0] - pos[m1][0]
-            dy = pos[m2][1] - pos[m1][1]
-            angle = np.arctan2(dy, dx)
-            
-            # Calculate exact circle radii
-            source_radius = np.sqrt(node_sizes[m1] / np.pi) / 30
-            target_radius = np.sqrt(node_sizes[m2] / np.pi) / 30
-            
-            # Calculate exact points on circle edges
-            start_x = pos[m1][0] + source_radius * np.cos(angle)
-            start_y = pos[m1][1] + source_radius * np.sin(angle)
-            end_x = pos[m2][0] - target_radius * np.cos(angle)
-            end_y = pos[m2][1] - target_radius * np.sin(angle)
-            
-            if data["relationship_type"] == "dominating":
-                # Use annotation for dominating relationship with inward arrows
-                plt.annotate("",
-                            xy=(end_x, end_y), xycoords='data',
-                            xytext=(start_x, start_y), textcoords='data',
-                            arrowprops=dict(arrowstyle='-',
-                                          color='green',
-                                          lw=ARROW_WIDTH*ARROW_LINE_WIDTH,
-                                          alpha=ARROW_ALPHA,
-                                          shrinkA=0, shrinkB=0),
-                            zorder=1)
-            else:  # contradicting relationship
-                plt.annotate("",
-                            xy=(end_x, end_y), xycoords='data',
-                            xytext=(start_x, start_y), textcoords='data',
-                            arrowprops=dict(arrowstyle="<->",
-                                          color="orange",
-                                          lw=ARROW_WIDTH*ARROW_LINE_WIDTH,
-                                          alpha=ARROW_ALPHA,
-                                          shrinkA=0, shrinkB=0),
-                            zorder=1)
-
-        # Draw nodes
-        for metric in G.nodes():
-            plt.scatter(pos[metric][0], pos[metric][1],
-                       s=node_sizes[metric],
-                       c=[node_colors[metric]],
-                       alpha=0.8,
-                       zorder=2)
-        
-        # Draw labels
-        for metric in G.nodes():
-            plt.annotate(metric,
-                        (pos[metric][0], pos[metric][1]),
-                        xytext=(0, 0),
-                        textcoords='offset points',
-                        ha='center',
-                        va='center',
-                        zorder=3)
-        
-        # Add legend
-        plt.legend(handles=legend_elements, loc='upper right')
-        
-        # Customize plot
-        plt.title("Metric Trade-off Relationships")
-        plt.axis('equal')
-        
-        # Save plot
-        plot_name = f'{models_str}-{self.res}-{self.metric}-tradeoff.png'
-        plt.savefig(save_dir / plot_name, dpi=300, bbox_inches='tight')
+        # 保存图形
+        if save_dir:
+            models_str = "-".join(self.models)
+            plot_name = f'{models_str}-{self.res}-{self.metric}-heatmap.png'
+            plt.savefig(save_dir / plot_name, dpi=300, bbox_inches='tight')
         
         return plt.gcf()
 
     def build_relation(self):
-        """Build relation between different metrics"""
-        # 1. Load result data
+        """Main analysis pipeline."""
+        # Load data
         result_path = Path(f"data/result/{self.res}.json")
-        if not result_path.exists():
-            raise FileNotFoundError(f"Result file not found: {result_path}")
-            
         with open(result_path, 'r') as f:
-            data = json.load(f)
-            
-        # 2. Extract metrics and calculate correlation
-        metrics = list(data.keys())  # Get all metric names like "IQ-O_TA-R", "IQ-O_TA-S"
+            self.data = json.load(f)
+        
+        metrics = list(self.data.keys())
         n_metrics = len(metrics)
         
-        # Create correlation matrix
+        # Calculate correlations
         correlation_matrix = np.zeros((n_metrics, n_metrics))
+        method = self.get_correlation_method()
         
-        # Get correlation calculation method
-        correlation_method = self.get_correlation_method()
+        for i, dim_pair in enumerate(metrics):
+            scores1 = np.array([v[0] for v in self.data[dim_pair].values()])
+            scores2 = np.array([v[1] for v in self.data[dim_pair].values()])
+            correlation_matrix[i][i] = method(scores1, scores2)
         
-        # Calculate correlation for each metric pair
-        for i in range(n_metrics):
-            metric_pair = metrics[i]
-            dim1, dim2 = metric_pair.split('_')  # Split into two dimensions
-            
-            # Extract scores for both dimensions
-            scores1 = []  # First dimension scores
-            scores2 = []  # Second dimension scores
-            
-            # Get all samples for this metric pair
-            for key in data[metric_pair].keys():
-                score_pair = data[metric_pair][key]
-                scores1.append(score_pair[0])  # First score for dim1
-                scores2.append(score_pair[1])  # Second score for dim2
-            
-            # Calculate correlation if we have valid data
-            if len(scores1) > 0 and len(scores2) > 0:
-                scores1_arr = np.array(scores1, dtype=float)
-                scores2_arr = np.array(scores2, dtype=float)
-                
-                if np.all(np.isfinite(scores1_arr)) and np.all(np.isfinite(scores2_arr)):
-                    correlation = correlation_method(scores1_arr, scores2_arr)
-                    correlation_matrix[i][i] = correlation
-                else:
-                    print(f"Warning: Invalid values found for {metric_pair}")
-        
-        # Generate scatter plots only if plot is True
+        # Generate plots
         if self.plot:
-            scatter_save_dir = Path("data/relation/plots")
-            self.plot_scatter(data, metrics=metrics, save_dir=scatter_save_dir)
+            self.plot_scatter(self.data, save_dir=self.base_dir)
         
-        # 3. Save results
+        # Save results
         output = {
             "metrics": metrics,
-            "correlation_matrix": correlation_matrix.tolist()
+            "correlation_matrix": correlation_matrix.tolist(),
+            "quadrant_analysis": {},
+            "relationship_codes": {}
         }
         
-        # Create subdirectories for different file types
-        json_dir = Path("data/relation/json")
-        csv_dir = Path("data/relation/csv")
-        json_dir.mkdir(parents=True, exist_ok=True)
-        csv_dir.mkdir(parents=True, exist_ok=True)
+        # Relationship coding
+        individual_metrics = sorted(set(m for pair in metrics for m in pair.split('_')))
+        n = len(individual_metrics)
+        code_matrix = np.zeros((n, n), dtype=int)
+        relationship_codes = {}  # 存储所有关系代码
         
-        # Save the JSON output
-        models_str = "-".join(self.models)
-        json_filename = f"{models_str}-{self.res}-{self.metric}.json"
-        json_path = json_dir / json_filename
+        # 构建关系代码矩阵 - 只处理上三角矩阵
+        for i in range(n):
+            for j in range(i + 1, n):  # 只处理上三角部分
+                metric1 = individual_metrics[i]
+                metric2 = individual_metrics[j]
+                pair = f"{metric1}_{metric2}"
+                reverse_pair = f"{metric2}_{metric1}"
+                
+                # 确定关系代码
+                code = -1  # 默认为未定义关系
+                if pair in metrics:
+                    code = self.determine_relationship_code(pair)
+                elif reverse_pair in metrics:
+                    code = self.determine_relationship_code(reverse_pair)
+                    # 如果是从reverse_pair得到的code，需要调整主导关系的方向
+                    if code == 2:
+                        code = -2
+                    elif code == -2:
+                        code = 2
+                
+                # 设置上三角位置
+                code_matrix[i][j] = code
+                relationship_codes[pair] = code
+                
+                # 设置下三角位置（对称）
+                if code == 2:
+                    code_matrix[j][i] = -2
+                    relationship_codes[reverse_pair] = -2
+                elif code == -2:
+                    code_matrix[j][i] = 2
+                    relationship_codes[reverse_pair] = 2
+                else:  # 对于非主导关系，直接复制相同的值
+                    code_matrix[j][i] = code
+                    relationship_codes[reverse_pair] = code
         
+        # 保存关系代码到输出
+        output["relationship_codes"] = relationship_codes
+        
+        # 计算每个维度对在特定配对中的平均分
+        pair_means = {}  # 存储每个维度对的平均分
+        for dim_pair in metrics:
+            dim1, dim2 = dim_pair.split('_')
+            scores1 = np.array([v[0] for v in self.data[dim_pair].values()])
+            scores2 = np.array([v[1] for v in self.data[dim_pair].values()])
+            
+            # 计算这个配对中两个维度的平均分
+            pair_means[dim_pair] = {
+                dim1: np.mean(scores1),
+                dim2: np.mean(scores2)
+            }
+        
+        # 计算每个维度在所有配对中的所有数据点的总平均分
+        dimension_all_scores = {}  # 存储每个维度的所有得分
+        for dim_pair in metrics:
+            dim1, dim2 = dim_pair.split('_')
+            scores1 = [v[0] for v in self.data[dim_pair].values()]
+            scores2 = [v[1] for v in self.data[dim_pair].values()]
+            
+            if dim1 not in dimension_all_scores:
+                dimension_all_scores[dim1] = []
+            if dim2 not in dimension_all_scores:
+                dimension_all_scores[dim2] = []
+            
+            dimension_all_scores[dim1].extend(scores1)
+            dimension_all_scores[dim2].extend(scores2)
+        
+        # 计算总平均分
+        dimension_means = {
+            dim: np.mean(scores) 
+            for dim, scores in dimension_all_scores.items()
+        }
+        
+        # Save relationship codes to CSV with means in lower triangle
+        code_csv_path = self.base_dir / "relationship_codes.csv"
+        with open(code_csv_path, 'w') as f:
+            f.write("," + ",".join(individual_metrics) + "\n")
+            for i, metric1 in enumerate(individual_metrics):
+                f.write(f"{metric1},")
+                for j, metric2 in enumerate(individual_metrics):
+                    if i == j:  # 对角线：该维度的总平均分
+                        value = f"{dimension_means[metric1]:.3f}"
+                    elif j > i:  # 右上角：关系代码
+                        value = str(code_matrix[i][j])
+                    else:  # 左下角：该配对中的平均分
+                        pair = f"{metric2}_{metric1}"  # 注意顺序
+                        reverse_pair = f"{metric1}_{metric2}"
+                        
+                        # 检查是否存在这个维度对
+                        if pair in pair_means:
+                            value = f"[{pair_means[pair][metric1]:.3f}-{pair_means[pair][metric2]:.3f}]"
+                        elif reverse_pair in pair_means:
+                            value = f"[{pair_means[reverse_pair][metric1]:.3f}-{pair_means[reverse_pair][metric2]:.3f}]"
+                        else:
+                            value = "NULL"  # 如果找不到维度对，显示NULL
+                    
+                    f.write(value + ("," if j < len(individual_metrics)-1 else "\n"))
+        
+        # 在保存CSV之后添加热力图绘制
+        if self.heatmap:
+            self.plot_heatmap(code_matrix, individual_metrics, save_dir=self.base_dir)
+        
+        # Generate insights using individual_metrics
+        insights = self.generate_insights(individual_metrics, correlation_matrix, 
+                                        output["quadrant_analysis"],
+                                        relationship_codes)
+        output["insights"] = insights
+        
+        # Save results
+        json_path = self.base_dir / "result.json"
         with open(json_path, 'w') as f:
             json.dump(output, f, indent=4)
         
-        # Extract unique individual metrics from dimension pairs
-        individual_metrics = set()
-        for dim_pair in metrics:
-            metric1, metric2 = dim_pair.split('_')
-            individual_metrics.add(metric1)
-            individual_metrics.add(metric2)
-        individual_metrics = sorted(list(individual_metrics))
-
-        # Generate CSV filename and save
-        csv_filename = f"{models_str}-{self.res}-{self.metric}.csv"
-        csv_path = csv_dir / csv_filename
-
-        # Create CSV content with upper triangular matrix
-        with open(csv_path, 'w') as f:
-            # Write header row
-            f.write("," + ",".join(individual_metrics) + "\n")
-            
-            # Write each row
-            for i, metric1 in enumerate(individual_metrics):
-                row = [metric1]
-                for j, metric2 in enumerate(individual_metrics):
-                    if j < i:  # Lower triangle
-                        pair = f"{metric2}_{metric1}"
-                        if pair in metrics:
-                            idx = metrics.index(pair)
-                            correlation = correlation_matrix[idx][idx]
-                            
-                            # Handle correlation based on metric type
-                            if self.metric in ['pearson_corr', 'spearman_corr']:
-                                # For Pearson and Spearman correlations, negate the value
-                                correlation = -correlation
-                            elif self.metric == 'paretoF':
-                                # For Pareto frontier score, use 1 - correlation
-                                # This maintains the [0,1] range while showing opposite relationship
-                                correlation = 1 - correlation
-                            
-                            row.append(f"{correlation:.3f}")
-                        else:
-                            row.append("")
-                    elif metric1 == metric2:  # Diagonal
-                        row.append("1.000")
-                    else:  # Upper triangle
-                        pair = f"{metric1}_{metric2}"
-                        if pair in metrics:
-                            idx = metrics.index(pair)
-                            correlation = correlation_matrix[idx][idx]
-                            row.append(f"{correlation:.3f}")
-                        else:
-                            row.append("")
-                
-                f.write(",".join(row) + "\n")
-
-        # Generate heatmap if enabled
-        if self.heatmap:
-            heatmap_save_dir = Path("data/relation/heatmap")
-            heatmap_save_dir.mkdir(parents=True, exist_ok=True)
-            self.plot_heatmap(csv_path, heatmap_save_dir)
-
-        # Generate t-SNE visualization if enabled
-        if self.tsne:
-            tsne_save_dir = Path("data/relation/tsne")
-            tsne_save_dir.mkdir(parents=True, exist_ok=True)
-            self.plot_tsne(correlation_matrix, metrics, tsne_save_dir)
-
-        # Generate trade-off analysis if enabled
-        if self.tradeoff:
-            tradeoff_save_dir = Path("data/relation/tradeoff")
-            tradeoff_save_dir.mkdir(parents=True, exist_ok=True)
-            self.plot_tradeoff(data, tradeoff_save_dir)
-
         return output
 
     def __call__(self):
         return self.build_relation()
+
+if __name__ == "__main__":
+    # Example usage
+    analyzer = Relationator(config_path="config.yaml")
+    result = analyzer()
