@@ -1,5 +1,5 @@
 # TRIG
-Trade-offs and Relationships in IMage Generation
+Trade-offs and Relationships in Image Generation: How Do Different Evaluation Dimensions Interact?
 
 ## About
 Here is a fast and easy-to-use library for image generation model inference and evaluation.
@@ -58,7 +58,9 @@ All the available models & metrics & relation functions could be found [there]()
 
 2. Run the eval.py
 ```
-pythoneval.py --config/your_config.yaml
+python eval.py --config your_config.yaml
+
+python eval.py --config config/relation.yaml   
 ```
 3. 
    - Generated images will be saved to data/output/your_task/your_model
