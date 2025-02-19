@@ -10,10 +10,16 @@ def get_image_resolution(image_path):
         width, height = img.size
     return width, height
 
+
 def get_image_type(image_path):
     image_type = image_path.split('.')[-1]
     assert image_type in ['png', 'jpeg', 'jpg', 'gif', 'bmp', 'webp']
     return image_type
+
+
+def load_config( config_path):
+    with open(config_path, "r") as f:
+        return yaml.safe_load(f)
 
 
 def encode_image(image_path):
@@ -23,9 +29,6 @@ def encode_image(image_path):
     image['type'] = get_image_type(image_path)
     return image
 
-def load_config( config_path):
-    with open(config_path, "r") as f:
-        return yaml.safe_load(f)
 
 def base64_to_image(base64_string):
     try:
@@ -37,5 +40,3 @@ def base64_to_image(base64_string):
         print(f"An error occurred: {e}")
         return None
 
-if __name__ == "__main__":
-    print(get_image_resolution('/home/zsc/TRIG/data/output/t2i/sana/IQ-R_IQ-A_87.png'))
