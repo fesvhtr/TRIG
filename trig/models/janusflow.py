@@ -19,21 +19,17 @@
 
 # copied from JanusFlow-1.3B by DeepSeek https://github.com/deepseek-ai/Janus
 
-import os
 import torch
 import torchvision.transforms.functional as TF
 
 from transformers import AutoModelForCausalLM
 from diffusers.models import AutoencoderKL
 
-# from trig.models.base import BaseModel
-# from trig.models.janus.janusflow.models import MultiModalityCausalLM, VLChatProcessor
-
-from base import BaseModel
-from janus.janusflow.models import MultiModalityCausalLM, VLChatProcessor
+from trig.models.base import BaseModel
+from trig.models.janus.janusflow.models import MultiModalityCausalLM, VLChatProcessor
 
 
-class JanusModel(BaseModel):
+class JanusFlowModel(BaseModel):
     def __init__(self):
         self.model_name = "janus"
         self.model_id = "deepseek-ai/JanusFlow-1.3B"
