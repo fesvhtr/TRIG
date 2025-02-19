@@ -31,7 +31,7 @@ from trig.models.janus.janusflow.models import MultiModalityCausalLM, VLChatProc
 
 class JanusFlowModel(BaseModel):
     def __init__(self):
-        self.model_name = "janus"
+        self.model_name = "janus-flow"
         self.model_id = "deepseek-ai/JanusFlow-1.3B"
         self.vae_id = "stabilityai/sdxl-vae"
         self.vl_chat_processor = VLChatProcessor.from_pretrained(self.model_id)
