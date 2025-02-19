@@ -2,600 +2,480 @@
     "IQ-O_TA-R_1": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.999
             }
         ],
         "TA-R": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.922
             }
         ]
     },
     "IQ-O_TA-R_2": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.999
             }
         ],
         "TA-R": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.987
             }
         ]
     },
     "IQ-O_TA-R_3": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.998
             }
         ],
         "TA-R": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.99
             }
         ]
     },
     "IQ-O_TA-R_4": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.999
             }
         ],
         "TA-R": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.905
             }
         ]
     },
     "IQ-O_TA-R_5": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.997
             }
         ],
         "TA-R": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.955
             }
         ]
     },
     "IQ-O_TA-R_6": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.998
             }
         ],
         "TA-R": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.995
             }
         ]
     },
     "IQ-O_TA-R_7": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.823
             }
         ],
         "TA-R": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.688
             }
         ]
     },
     "IQ-O_TA-R_8": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.967
             }
         ],
         "TA-R": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.856
             }
         ]
     },
     "IQ-O_TA-R_9": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.987
             }
         ],
         "TA-R": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.833
             }
         ]
     },
     "IQ-O_TA-R_10": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.998
             }
         ],
         "TA-R": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.979
             }
         ]
     },
     "IQ-O_TA-R_11": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.959
             }
         ],
         "TA-R": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.944
             }
         ]
     },
     "IQ-O_TA-R_12": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.964
             }
         ],
         "TA-R": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.616
             }
         ]
     },
     "IQ-O_TA-R_13": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.882
             }
         ],
         "TA-R": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.485
             }
         ]
     },
     "IQ-O_TA-R_14": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.876
             }
         ],
         "TA-R": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.994
             }
         ]
     },
     "IQ-O_TA-R_15": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.547
             }
         ],
         "TA-R": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.476
             }
         ]
     },
     "IQ-O_TA-R_16": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.734
             }
         ],
         "TA-R": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.426
             }
         ]
     },
     "IQ-O_TA-R_17": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.708
             }
         ],
         "TA-R": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.902
             }
         ]
     },
     "IQ-O_TA-R_18": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.743
             }
         ],
         "TA-R": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.688
             }
         ]
     },
     "IQ-O_TA-R_19": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.657
             }
         ],
         "TA-R": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.541
             }
         ]
     },
     "IQ-O_TA-R_20": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.8
             }
         ],
         "TA-R": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.997
             }
         ]
     },
     "IQ-O_TA-S_1": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.906
             }
         ],
         "TA-S": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.384
             }
         ]
     },
     "IQ-O_TA-S_2": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.973
             }
         ],
         "TA-S": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.518
             }
         ]
     },
     "IQ-O_TA-S_3": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.761
             }
         ],
         "TA-S": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.337
             }
         ]
     },
     "IQ-O_TA-S_4": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.984
             }
         ],
         "TA-S": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.396
             }
         ]
     },
     "IQ-O_TA-S_5": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.997
             }
         ],
         "TA-S": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.989
             }
         ]
     },
     "IQ-O_TA-S_6": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.483
             }
         ],
         "TA-S": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.282
             }
         ]
     },
     "IQ-O_TA-S_7": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.761
             }
         ],
         "TA-S": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.56
             }
         ]
     },
     "IQ-O_TA-S_8": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.886
             }
         ],
         "TA-S": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.405
             }
         ]
     },
     "IQ-O_TA-S_9": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.507
             }
         ],
         "TA-S": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.298
             }
         ]
     },
     "IQ-O_TA-S_10": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.595
             }
         ],
         "TA-S": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.309
             }
         ]
     },
     "IQ-O_TA-S_11": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.828
             }
         ],
         "TA-S": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.379
             }
         ]
     },
     "IQ-O_TA-S_12": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.458
             }
         ],
         "TA-S": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.281
             }
         ]
     },
     "IQ-O_TA-S_13": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.371
             }
         ],
         "TA-S": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.262
             }
         ]
     },
     "IQ-O_TA-S_14": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.738
             }
         ],
         "TA-S": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.481
             }
         ]
     },
     "IQ-O_TA-S_15": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.593
             }
         ],
         "TA-S": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.484
             }
         ]
     },
     "IQ-O_TA-S_16": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.763
             }
         ],
         "TA-S": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.493
             }
         ]
     },
     "IQ-O_TA-S_17": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.749
             }
         ],
         "TA-S": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.586
             }
         ]
     },
     "IQ-O_TA-S_18": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.493
             }
         ],
         "TA-S": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.327
             }
         ]
     },
     "IQ-O_TA-S_19": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.643
             }
         ],
         "TA-S": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.406
             }
         ]
     },
     "IQ-O_TA-S_20": {
         "IQ-O": [
             {
-                "trig_api": 0.0
-            },
-            {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.556
             }
         ],
         "TA-S": [
             {
-                "trig_api": 0.0
+                "TRIGAPIMetric_Benasd/Qwen2.5-VL-72B-Instruct-AWQ": 0.365
             }
         ]
     }

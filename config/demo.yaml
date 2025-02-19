@@ -1,22 +1,25 @@
-name: "demo"
+name: "demo_eval"
 task: "t2i"
 prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-text-to-image/text-to-imgae-without-m-e-v8.json"
 
 evaluation:
-    image_dir: "/home/muzammal/Projects/TRIG/data/output/t2i/demo"
+    image_dirs: ["/home/muzammal/Projects/TRIG/data/output/t2i/demo"]
     result_dir: "data/result"
+    result_files: ["data/result/demo2.json"]
+
+TRIG_metric_72B: &TRIG_metric_72B
+  name: trig_api
+  endpoint: "http://localhost:10021/v1/"
+  model_name: Benasd/Qwen2.5-VL-72B-Instruct-AWQ
+  top_logprobs: 5
 
 dimensions:
-  IQ-O:
-    metrics:
-      - name: trig_api
-        top_logprobs: 7
-        dimension: IQ-A
-      - name: trig_api
-        dimension: IQ-O
   TA-R:
     metrics:
-      - trig_api
+      - <<: *TRIG_metric_72B
+  IQ-O:
+    metrics:
+      - <<: *TRIG_metric_72B
   TA-S:
     metrics:
-      - trig_api
+      - <<: *TRIG_metric_72B

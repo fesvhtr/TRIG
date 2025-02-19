@@ -5,8 +5,10 @@ from typing import List, Dict, Any, Tuple
 
 class BaseMetric(ABC):
 
-    def __init__(self, **kwargs):
-        pass
+    # FIXME add dimension
+    def __init__(self, dimension=None, **kwargs):
+        self.dimension = dimension
+        super().__init__(**kwargs)
 
     @abstractmethod
     def compute(self, image_path, prompt):
