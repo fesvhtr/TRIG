@@ -6,7 +6,7 @@ from pathlib import Path
 import json
 from natsort import natsorted
 from trig.metrics import import_metric
-
+from tqdm import tqdm
 project_root = Path(__file__).resolve().parents[2]
 
 
@@ -34,7 +34,7 @@ class Evaluator:
             }
         return prompt_dic
 
-    def instantiate_metric(self, metric):
+    def instantiate_metric(self, metric, dim):
         """
         Dynamically instantiate multiple metrics for each dimension.
         """
@@ -42,11 +42,13 @@ class Evaluator:
             metric_name = metric.get("name")
             params = {k: v for k, v in metric.items() if k != "name"}
             metric_class = import_metric(metric_name)
-            metric_instance = metric_class(**params)
+            metric_instance = metric_class(dimension=dim, **params)
+            # get new metric name from the class
+            metric_name = metric_instance.metric_name
             metric_name = metric_name
         else:
             metric_class = import_metric(metric)
-            metric_instance = metric_class()
+            metric_instance = metric_class(dimension=dim)
             metric_name = metric
         return metric_instance, metric_name
 
@@ -56,8 +58,25 @@ class Evaluator:
         dimensions = base_name.split("_")[:-1]
         return dimensions
 
-    def save_results(self, results):
-        output_path = os.path.join(project_root, self.config['evaluation']['result_dir'], f"{self.config['name']}.json")
+    def read_results(self, image_dir=None, save_file=None):
+        if save_file is not None:
+            output_path = os.path.join(project_root, save_file)
+        else:
+            save_name = image_dir.split("/")[-1]
+            output_path = os.path.join(project_root, self.config['evaluation']['result_dir'], f"{save_name}.json")
+        if not os.path.exists(output_path):
+            return {}
+        else:
+            with open(output_path, "r") as f:
+                return json.load(f)
+        
+
+    def save_results(self, results, image_dir=None, save_file=None):
+        if save_file is not None:
+            output_path = os.path.join(project_root, save_file)
+        else:
+            save_name = image_dir.split("/")[-1]
+            output_path = os.path.join(project_root, self.config['evaluation']['result_dir'], f"{save_name}.json")
         with open(output_path, "w") as f:
             json.dump(results, f, indent=4)
         print(f"Results Saved:'{output_path}'")
@@ -86,7 +105,7 @@ class Evaluator:
             else:
                 metrics_config = self.config["dimensions"][dim].get("metrics", [])
                 for metric in metrics_config:
-                    metric_instance, metric_name = self.instantiate_metric(metric)
+                    metric_instance, metric_name = self.instantiate_metric(metric, dim)
                     scores = metric_instance.compute_batch(data["data_ids"], data["image_paths"], data["prompts"])
                     for key, value in scores.items():
                         if key not in combined_scores:
@@ -97,23 +116,37 @@ class Evaluator:
         return combined_scores
 
 
-    def evaluate_all(self):
-        image_dir = self.config["evaluation"]["image_dir"]
-        image_dir = os.path.join(project_root, image_dir)
-        grouped = self.group_images_by_combination(image_dir)
-        # print(grouped)
+    def evaluate_all(self, image_dirs=None, result_files=None):
+        if image_dirs is None:
+            image_dirs = self.config["evaluation"]["image_dirs"]
 
-        final_results = {}
-        for combination, prompts in grouped.items():
-            print(f"Evaluating combination {combination} with {len(prompts['image_paths'])} images...")
-            combined_scores = self.evaluate_dim_pair(combination, prompts)
-            # print(combined_scores)
-            final_results = {**final_results, **combined_scores}
-        self.save_results(final_results)
-        print("Evaluation complete!")
+        
+        if isinstance(image_dirs, list):
+            result_files = self.config["evaluation"]["result_files"]
+            assert len(result_files) == len(image_dirs), "Number of result_files should be equal to number of image_dirs"
+            for dir, result_file in zip(image_dirs, result_files):
+                print(f"dir is a list, Evaluating images in '{dir}'...")
+                self.evaluate_all(dir, result_file)
+        elif isinstance(image_dirs, str):
+            image_dir = os.path.join(project_root, image_dirs)
+            grouped = self.group_images_by_combination(image_dir)
+
+            final_results = self.read_results(image_dir=image_dir, save_file=result_files)
+            exist_combination = {"_".join(key.split("_")[:-1]) for key in final_results}
+            for combination, prompts in tqdm(grouped.items()):
+                print(f"Combination: {combination}")
+                if combination in exist_combination:
+                    continue
+                print(f"Evaluating combination {combination} with {len(prompts['image_paths'])} images...")
+                combined_scores = self.evaluate_dim_pair(combination, prompts)
+                final_results.update(combined_scores)
+                self.save_results(final_results,image_dir=image_dir, save_file=result_files)
+            print("Evaluation complete!")
+        else:
+            raise ValueError("image_dir must be a list or a string.")
+
 
 
 if __name__ == "__main__":
     evaluator = Evaluator(config_path=r"/home/muzammal/Projects/TRIG/config/demo.yaml")
-
     evaluator.evaluate_all()

@@ -22,8 +22,11 @@ pip install 'vllm>=0.7.2'
 ```
 Then deploy the selected VLM models, currently the TRIG score support GPT series, Qwen2.5-VL series, and LLaVA-NeXT Series. For more information, please visit vllm document.
 ```
-# use Qwen2.5-VL-72B to reproduce the result in our paper
-vllm serve Qwen/Qwen2.5-VL-72B-Instruct --port 8000 --device cuda --host 0.0.0.0 --dtype bfloat16 --limit-mm-per-prompt image=5,video=5
+# use Qwen2.5-VL-7B
+vllm serve Qwen/Qwen2.5-VL-7B-Instruct --port 8000 --device cuda --host 0.0.0.0 --dtype bfloat16 --limit-mm-per-prompt image=5,video=5
+
+# or use Qwen2.5-VL-72B quantize version to reduce memory usage
+vllm serve Benasd/Qwen2.5-VL-72B-Instruct-AWQ --dtype float16 --port 8000 --gpu-memory-utilization 0.85 --tensor-parallel-size 2 --quantization awq --limit_mm_per_prompt image=4
 ```
 
 ## Getting Started
@@ -147,7 +150,8 @@ datasets
 
 ### Citation
 
-
-
-
-
+CUDA_VISIBLE_DEVICES=2,3 vllm serve Benasd/Qwen2.5-VL-72B-Instruct-AWQ --dtype float16 --port 4701 --gpu-memory-utilization 0.85 --quantization awq --limit_mm_per_prompt image=4
+nohup bash -c "CUDA_VISIBLE_DEVICES=2,3 vllm serve Benasd/Qwen2.5-VL-72B-Instruct-AWQ --dtype float16 --port 8000 --gpu-memory-utilization 0.85 --tensor-parallel-size 2 --quantization awq --limit_mm_per_prompt image=4 " > server2.log 2>&1 &
+curl http://localhost:10021/v1/models
+curl http://localhost:8000/v1/models
+nohup python eval.py > eval2.log 2>&1 &

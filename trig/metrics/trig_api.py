@@ -12,12 +12,14 @@ import math
 
 
 class TRIGAPIMetric(BaseMetric):
-    def __init__(self, API_KEY="EMPTY", endpoint="http://localhost:8000/v1/", model_name="None", dimension="None", top_logprobs=5, **kwargs):
-        print("Initializing TRIGGPTMetric, params: API_KEY: {}, endpoint: {}, model_name:{}, dimension: {}, top_logprobs: {}".format(API_KEY, endpoint, model_name, dimension, top_logprobs))
-        self.dimension = dimension
+    def __init__(self, API_KEY="EMPTY", endpoint="http://localhost:8000/v1/", model_name="None", top_logprobs=5, temperature=1.0, **kwargs):
+        super().__init__(**kwargs)
+        print("Initializing TRIGGPTMetric, params: API_KEY: {}, endpoint: {}, model_name:{}, dimension: {}, top_logprobs: {}".format(API_KEY, endpoint, model_name, self.dimension, top_logprobs))
         self.top_logprobs = top_logprobs
         self.client = openai.Client(api_key=API_KEY, base_url=endpoint)
         self.model_name = model_name
+        self.temperature = temperature
+        self.metric_name = "TRIGAPIMetric_" + model_name
 
 
     def get_conv_template(self):
@@ -42,7 +44,7 @@ class TRIGAPIMetric(BaseMetric):
             user_msg = [{
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": prompt},
+                    {"type": "text", "text": 'Prompt for generating this image: ' + prompt},
                     {"type": "image_url",
                     "image_url": {"url": f"data:image/{image['type']};base64,{image['base64']}"}}]
             }]
@@ -70,6 +72,7 @@ class TRIGAPIMetric(BaseMetric):
                 model=self.model_name,
                 messages=msg,
                 logprobs=True,
+                temperature=self.temperature,
                 top_logprobs=self.top_logprobs,
             )
         except Exception as e:
@@ -77,18 +80,19 @@ class TRIGAPIMetric(BaseMetric):
             return 0.0
         print(completion.choices[0].message.content)
         top_logprobs = completion.choices[0].logprobs.content[0].top_logprobs
-        print('top_logprobs:', top_logprobs)
+        # print('top_logprobs:', top_logprobs)
         usage_tokens = [completion.usage.prompt_tokens, completion.usage.completion_tokens,
                         completion.usage.prompt_tokens + completion.usage.completion_tokens]
-        # print('usage_tokens:', usage_tokens)
+        print('usage_tokens:', usage_tokens)
         score = self.logprobs_score(top_logprobs)
-        return score
+        return round(score, 3)
+
 
 
     def logprobs_score(self, top_logprobs):
         score = 0.0
 
-        valid_tokens = ["excellent", "Excellent", "good", "Good", "medium", "Medium", "bad", "Bad", "terr", "Terr"]
+        valid_tokens = ["ex", "excellent", "Excellent", "good", "Good", "medium", "Medium", "bad", "Bad", "terr", "Terr"]
 
         filtered_tokens = []
         filtered_logprobs = []
@@ -130,13 +134,13 @@ class TRIGAPIMetric(BaseMetric):
     def compute_batch(self, data_ids, images, prompts):
         if data_ids is None:
             results = []
-            for idx, (image_path, prompt) in tqdm(enumerate(zip(images, prompts))):
+            for image_path, prompt in tqdm(zip(images, prompts)):
                 results.append(self.compute(image_path, prompt['prompt'])) 
             return results
         
         else:
             results = {}
-            for idx, (data_id, image_path, prompt) in tqdm(enumerate(zip(data_ids, images, prompts))):
+            for data_id, image_path, prompt in tqdm(zip(data_ids, images, prompts)):
                 results[data_id] = self.compute(image_path, prompt['prompt'])
             return results
 
