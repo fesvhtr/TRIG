@@ -2,13 +2,45 @@ import torch
 from PIL import Image
 
 from diffusers import (
+    EulerAncestralDiscreteScheduler,
     DDIMScheduler,
+    StableDiffusionInstructPix2PixPipeline,
     StableDiffusionPipeline, 
 )
+from diffusers.utils import load_image
+
 from trig.models.base import BaseModel
 from trig.models.FreeDiff import invutils, frq_ptputils
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+class InstructPix2PixModel(BaseModel):
+    """
+    CVPR 2023
+    InstructPix2Pix: Learning to Follow Image Editing Instructions
+    https://github.com/timothybrooks/instruct-pix2pix
+    """
+    def __init__(self):
+        self.model_name = "SDXL"
+        self.model_id = "timbrooks/instruct-pix2pix"
+        
+        self.pipe = StableDiffusionInstructPix2PixPipeline.from_pretrained(
+            self.model_id, 
+            torch_dtype=torch.float16, 
+            safety_checker=None
+        )
+        self.pipe.to("cuda")
+        self.pipe.scheduler = EulerAncestralDiscreteScheduler.from_config(self.pipe.scheduler.config)
+
+    def generate(self, prompt, input_image):
+        input_image = load_image(input_image)
+        image = self.pipe(
+            prompt, 
+            image=input_image, 
+            num_inference_steps=100
+        ).images[0]
+        return image
+
 
 class FreeDiff(BaseModel):
     """
@@ -55,3 +87,6 @@ if __name__ == "__main__":
     image = model.generate(prompt, input_image)
     image.save("output.png")
     
+    model = InstructPix2PixModel()
+    image = model.generate(prompt, input_image)
+    image.save("output.png")
