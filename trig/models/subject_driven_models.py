@@ -4,7 +4,10 @@ from PIL import Image
 from diffusers import (
     UniPCMultistepScheduler
 )
-from diffusers.pipelines import FluxPipeline
+from diffusers.pipelines import(
+    BlipDiffusionPipeline,
+    FluxPipeline
+)
 from diffusers.utils import load_image
 
 from trig.models.base import BaseModel
@@ -14,6 +17,37 @@ from trig.models.OminiControl.flux.condition import Condition
 from trig.models.OminiControl.flux.generate import generate, seed_everything
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+class BlipDiffusionModel(BaseModel):
+    """
+    NIPS 2023
+    Blip-diffusion: Pretrained subject representation for controllable text-to-image generation and editing    
+    https://github.com/salesforce/LAVIS/tree/main/projects/blip-diffusion
+    """
+    def __init__(self):
+        self.model_name = "Blip-diffusion"
+        self.pipe = BlipDiffusionPipeline.from_pretrained(
+            "Salesforce/blipdiffusion", 
+            torch_dtype=torch.float16
+        )
+        self.pipe.to(device)
+        self.negative_prompt = "over-exposure, under-exposure, saturated, duplicate, out of frame, lowres, cropped, worst quality, low quality, jpeg artifacts, morbid, mutilated, out of frame, ugly, bad anatomy, bad proportions, deformed, blurry, duplicate"
+
+    def generate(self, prompt, item, input_image):
+        cond_image = load_image(input_image)
+        image = self.pipe(
+            prompt,
+            cond_image,
+            item,
+            item,
+            guidance_scale=7.5,
+            num_inference_steps=25,
+            neg_prompt=self.negative_prompt,
+            height=512,
+            width=512,
+        ).images[0]
+
+        return image
 
 
 class SSREncoder(BaseModel):
@@ -67,7 +101,8 @@ class OminiControlModel(BaseModel):
     def __init__(self):
         self.model_name = "OminiControl"
         self.pipe = FluxPipeline.from_pretrained(
-            "black-forest-labs/FLUX.1-schnell", torch_dtype=torch.bfloat16
+            "black-forest-labs/FLUX.1-schnell", 
+            torch_dtype=torch.bfloat16
         )
         self.pipe.to(device)
         self.pipe.load_lora_weights(
