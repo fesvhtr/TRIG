@@ -11,10 +11,13 @@ AVAILABLE_Metric = {
     'vqascore_llava': 'vqascore_llava.VQAScoreLLaVAMetric',
     'vqascore_gpt': 'vqascore_gpt.VQAScoreGPTMetric',
     # classic Metrics
-    'niqe': 'niqe.NIQEMetric',
-    'aes_predictor': 'aes_predictor.AESPredictorMetric',
-    
-
+    'niqe': 'classic.NIQEMetric',
+    'aes_predictor': 'aesthetic_predictor.AESPredictorMetric',
+    'knn_rarity': 'classic.KNN_rarityscore',
+    'cmmd': 'classic.CMMD',
+    'rt_semsr': 'classic.RT_SemSR',
+    'mid': 'classic.MIDMetric',
+    'tas_artscore': 'classic.TASArtScoreMetric',
 }
 
 
