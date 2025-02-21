@@ -78,12 +78,12 @@ class TRIGAPIMetric(BaseMetric):
         except Exception as e:
             print(f"Error: {e}")
             return 0.0
-        print(completion.choices[0].message.content)
+        # print(completion.choices[0].message.content)
         top_logprobs = completion.choices[0].logprobs.content[0].top_logprobs
         # print('top_logprobs:', top_logprobs)
         usage_tokens = [completion.usage.prompt_tokens, completion.usage.completion_tokens,
                         completion.usage.prompt_tokens + completion.usage.completion_tokens]
-        print('usage_tokens:', usage_tokens)
+        # print('usage_tokens:', usage_tokens)
         score = self.logprobs_score(top_logprobs)
         return round(score, 3)
 

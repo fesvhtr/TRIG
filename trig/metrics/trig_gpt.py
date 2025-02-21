@@ -14,8 +14,9 @@ import math
 
 
 class TRIGGPTMetric(BaseMetric):
-    def __init__(self, API_KEY, dimension, top_logprobs=5, **kwargs):
-        print("Initializing TRIGGPTMetric, params: API_KEY: {}, dimension: {}, top_logprobs: {}".format(API_KEY, dimension, top_logprobs))
+    def __init__(self, API_KEY, top_logprobs=5, **kwargs):
+        super().__init__(**kwargs)
+        print("Initializing TRIGGPTMetric, params: API_KEY: {}, dimension: {}, top_logprobs: {}".format(API_KEY, self.dimension, top_logprobs))
         self.dimension = dimension
         self.top_logprobs = top_logprobs
         self.client = openai.Client(api_key=API_KEY)

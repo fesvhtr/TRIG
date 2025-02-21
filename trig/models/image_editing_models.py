@@ -1,16 +1,8 @@
 import torch
 from PIL import Image
-
-from diffusers import (
-    EulerAncestralDiscreteScheduler,
-    DDIMScheduler,
-    StableDiffusionInstructPix2PixPipeline,
-    StableDiffusionPipeline, 
-)
 from diffusers.utils import load_image
-
 from trig.models.base import BaseModel
-from trig.models.FreeDiff import invutils, frq_ptputils
+
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -23,7 +15,7 @@ class InstructPix2PixModel(BaseModel):
     def __init__(self):
         self.model_name = "SDXL"
         self.model_id = "timbrooks/instruct-pix2pix"
-        
+        from diffusers import StableDiffusionInstructPix2PixPipeline, EulerAncestralDiscreteScheduler
         self.pipe = StableDiffusionInstructPix2PixPipeline.from_pretrained(
             self.model_id, 
             torch_dtype=torch.float16, 
@@ -51,6 +43,8 @@ class FreeDiff(BaseModel):
     def __init__(self):
         self.model_name = "FreeDiff"
         self.num_infer_steps = 50
+        from diffusers import DDIMScheduler, StableDiffusionPipeline
+        from trig.models.FreeDiff import invutils, frq_ptputils
         self.scheduler = DDIMScheduler(beta_start=0.00085, beta_end=0.012,
                            beta_schedule="scaled_linear", clip_sample=False, 
                            set_alpha_to_one=False, steps_offset=1)
