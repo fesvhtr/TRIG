@@ -11,8 +11,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"  # 如果是多 GPU 服务器，这里�
 
 
 class AestheticPredictor:
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self):
         self.model = MLP(768)  # CLIP embedding dim is 768 for CLIP ViT L 14
         model_weights = torch.load(r"../utils/sac+logos+ava1-l14-linearMSE.pth")
         self.model.load_state_dict(model_weights)

@@ -264,18 +264,21 @@ def save_results(dim, dataset, image_path, response_content):
         data_id = 1
     
     for response in response_content:
-        id = data_id + int(response['id'])
-        meta_data = {
-            'data_id': f'{dim}_{id}',
-            'prompt': response['prompt'],
-            'dimension_prompt': response['dimension_prompt'],
-            'image_path': image_path,
-            "parent_dataset": [
-                dataset,
-                "Origin"
-            ]
-        }  
-        dim_file.append(meta_data)
+        try:
+            id = data_id + int(response['id'])
+            meta_data = {
+                'data_id': f'{dim}_{id}',
+                'prompt': response['prompt'],
+                'dimension_prompt': response['dimension_prompt'],
+                'image_path': image_path,
+                "parent_dataset": [
+                    dataset,
+                    "Origin"
+                ]
+            }
+            dim_file.append(meta_data)
+        except Exception as e:
+            print(f"Error: {e}")
         
     with open(json_file, 'w', encoding='utf-8') as file:
         json.dump(dim_file, file, ensure_ascii=False, indent=4)

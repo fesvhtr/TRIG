@@ -49,3 +49,4 @@ dataset/raw_dataset/image-editing/OmniEdit-Filtered/prompt_dev.jsonl
 dataset/raw_dataset/subject-driven/Subjects200K-Total/
 dataset/raw_dataset/subject-driven/Subjects200K/data/
 dataset/raw_dataset/image-editing/dev-00000-of-00001.parquet
+dataset/Trig/Trig-image-editing/OmniEdit-Filtered/
