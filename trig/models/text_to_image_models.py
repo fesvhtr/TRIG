@@ -1,25 +1,14 @@
 import base64
 from io import BytesIO
-from openai import OpenAI
-
 import torch
 import torchvision.transforms.functional as TF
 import numpy as np
 from PIL import Image
 
 from transformers import AutoModelForCausalLM
-from diffusers import (
-    AutoencoderKL,
-    DiffusionPipeline,
-    StableDiffusion3Pipeline,
-    Transformer2DModel,
-    PixArtSigmaPipeline,
-    SanaPipeline,
-    FluxPipeline
-)
 from trig.models.base import BaseModel
-from trig.models.janus.janusflow.models import MultiModalityCausalLM, VLChatProcessor
-from trig.models.janus.models import MultiModalityCausalLM, VLChatProcessor
+
+
 from trig.config import API_KEY
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -30,6 +19,7 @@ class DALLE3Model(BaseModel):
     """
     def __init__(self):
         self.model_name = "dalle3"
+        from openai import OpenAI
         self.pipe = OpenAI(api_key=API_KEY)
 
     def generate(self, prompt, **kwargs):
@@ -66,6 +56,7 @@ class SDXLModel(BaseModel):
     """
     def __init__(self):
         self.model_name = "SDXL"
+        from diffusers import DiffusionPipeline
         self.pipe = DiffusionPipeline.from_pretrained(
             "stabilityai/stable-diffusion-xl-base-1.0", 
             torch_dtype=torch.float16, 
@@ -92,6 +83,7 @@ class PixartSigmaModel(BaseModel):
     def __init__(self):
         self.model_name = "PixArt_Sigma"
         weight_dtype = torch.float16
+        from diffusers import Transformer2DModel, PixArtSigmaPipeline
         transformer = Transformer2DModel.from_pretrained(
             "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS",
             subfolder='transformer',
@@ -119,6 +111,7 @@ class SD35Model(BaseModel):
     def __init__(self):
         self.model_name = "SD3.5"
         self.model_id = "stabilityai/stable-diffusion-3.5-large"
+        from diffusers import StableDiffusion3Pipeline
         self.pipe = StableDiffusion3Pipeline.from_pretrained("stabilityai/stable-diffusion-3.5-large", torch_dtype=torch.bfloat16)
         self.pipe = self.pipe.to(device)
 
@@ -138,6 +131,7 @@ class FLUXModel(BaseModel):
     def __init__(self):
         self.model_name = "FLUX"
         self.model_id = "black-forest-labs/FLUX.1-dev"
+        from diffusers import FluxPipeline
         self.pipe = FluxPipeline.from_pretrained("black-forest-labs/FLUX.1-dev", torch_dtype=torch.bfloat16).to(device)
 
         # uncomment if you want to use less GPU memory
@@ -164,6 +158,7 @@ class SanaModel(BaseModel):
     """
     def __init__(self):
         self.model_name = "Sana"
+        from diffusers import SanaPipeline
         self.pipe = SanaPipeline.from_pretrained("Efficient-Large-Model/Sana_1600M_1024px_MultiLing_diffusers", variant="fp16", torch_dtype=torch.float16,)
         self.pipe.to(device)
 
@@ -182,10 +177,11 @@ class JanusFlowModel(BaseModel):
         self.model_name = "janus-flow"
         self.model_id = "deepseek-ai/JanusFlow-1.3B"
         self.vae_id = "stabilityai/sdxl-vae"
+        from trig.models.janusflow.models import VLChatProcessor
         self.vl_chat_processor = VLChatProcessor.from_pretrained(self.model_id)
         self.tokenizer = self.vl_chat_processor.tokenizer
 
-        self.vl_gpt: MultiModalityCausalLM = AutoModelForCausalLM.from_pretrained(
+        self.vl_gpt = AutoModelForCausalLM.from_pretrained(
             self.model_id, trust_remote_code=True
         )
 
@@ -294,6 +290,7 @@ class JanusProModel(BaseModel):
     def __init__(self):
         self.model_name = "janus-pro"
         self.model_id = "deepseek-ai/Janus-Pro-7B"
+        from trig.models.janus.models import MultiModalityCausalLM, VLChatProcessor
         self.vl_chat_processor = VLChatProcessor.from_pretrained(self.model_id)
         self.tokenizer = self.vl_chat_processor.tokenizer
 

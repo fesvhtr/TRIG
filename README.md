@@ -155,3 +155,7 @@ nohup bash -c "CUDA_VISIBLE_DEVICES=2,3 vllm serve Benasd/Qwen2.5-VL-72B-Instruc
 curl http://localhost:10021/v1/models
 curl http://localhost:8000/v1/models
 nohup python eval.py > eval2.log 2>&1 &
+
+nohup bash -c "CUDA_VISIBLE_DEVICES=3 vllm serve Qwen/Qwen2.5-VL-7B-Instruct --dtype float16 --port 8001 --gpu-memory-utilization 0.9 --limit_mm_per_prompt image=4 " > server.log 2>&1 &
+
+huggingface-cli download TRIG-bench/TRIG output/t2i/pixart_sigma.zip --local-dir /home/muzammal/Projects/TRIG/data/output/t2i --repo-type dataset

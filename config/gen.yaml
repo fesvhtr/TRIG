@@ -4,4 +4,4 @@ prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-text-to-image/text-
 
 generation:
     # all models: ["base", "dalle3", "sdxl", "omnigen", "pixart_sigma", "onediffusion", "sana", "sd35", 'flux']
-    models: ["omnigen",]
+    models: ["janus_flow",]

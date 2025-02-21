@@ -3,17 +3,20 @@ import importlib
 
 AVAILABLE_Model = {
     'base': 'base.BaseModel', 
-    # t2i models 12000 pics
-    'dalle3': 'dalle.DALLE3Model',
-    'sdxl': 'diffuser_models.SDXLModel', # 30h - 1024px, A6000, 50step
-    'omnigen': 'diffuser_models.OmniGenModel', # 200h - 1024px, A6000, 50step ???
-    'pixart_sigma': 'diffuser_models.PixartSigmaModel', # 20h - 1024px, A6000, 20step
-    'onediffusion': 'diffuser_models.OneDiffusionModel', # 150h - 1024px, A6000, 50step
-    'sana': 'diffuser_models.SanaModel', # 20h - 1024px, A6000, 20step
-    'sd35': 'diffuser_models.SD35Model', # 140h - 1024px, A6000, 28step
-    'flux': 'diffuser_models.FLUXModel', # 300h - 1024px, A6000, 50step
-    'janus': 'januspro.JanusModel', # 
+    # general models
+    'onediffusion': 'general_models.OneDiffusionModel', 
+    'omnigen': 'general_models.OmniGenModel', 
+    # t2i models 12300 pics
+    'dalle3': 'text_to_image_models.DALLE3Model',
+    'sdxl': 'text_to_image_models.SDXLModel',
+    'pixart_sigma': 'text_to_image_models.PixartSigmaModel', 
+    'sana': 'text_to_image_models.SanaModel', 
+    'sd35': 'text_to_image_models.SD35Model', 
+    'flux': 'text_to_image_models.FLUXModel', 
+    'janus': 'text_to_image_modelso.JanusModel',
+    'janus_flow': 'text_to_image_models.JanusFlowModel' 
     # p2p models
+
     # subjects models
 }
 

@@ -1,20 +1,7 @@
 import torch
 from PIL import Image
-
-from diffusers import (
-    UniPCMultistepScheduler
-)
-from diffusers.pipelines import(
-    BlipDiffusionPipeline,
-    FluxPipeline
-)
 from diffusers.utils import load_image
-
 from trig.models.base import BaseModel
-from trig.models.SSREncoder.utils.pipeline_t2i import StableDiffusionPipeline
-from trig.models.SSREncoder.ssr_encoder import SSR_encoder
-from trig.models.OminiControl.flux.condition import Condition
-from trig.models.OminiControl.flux.generate import generate, seed_everything
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -26,6 +13,7 @@ class BlipDiffusionModel(BaseModel):
     """
     def __init__(self):
         self.model_name = "Blip-diffusion"
+        from diffusers import BlipDiffusionPipeline
         self.pipe = BlipDiffusionPipeline.from_pretrained(
             "Salesforce/blipdiffusion", 
             torch_dtype=torch.float16
@@ -58,6 +46,11 @@ class SSREncoder(BaseModel):
     """
     def __init__(self):
         self.model_name = "SSREncoder"
+        from trig.models.SSREncoder.utils.pipeline_t2i import StableDiffusionPipeline
+        from trig.models.SSREncoder.ssr_encoder import SSR_encoder
+        from diffusers import StableDiffusionPipeline
+        from diffusers import UniPCMultistepScheduler
+
         self.pipe = StableDiffusionPipeline.from_pretrained(
             "stable-diffusion-v1-5/stable-diffusion-v1-5",
             safety_checker=None,
@@ -100,6 +93,9 @@ class OminiControlModel(BaseModel):
     """
     def __init__(self):
         self.model_name = "OminiControl"
+        from trig.models.OminiControl.flux.condition import Condition
+        from trig.models.OminiControl.flux.generate import generate, seed_everything
+        from diffusers import FluxPipeline
         self.pipe = FluxPipeline.from_pretrained(
             "black-forest-labs/FLUX.1-schnell", 
             torch_dtype=torch.bfloat16

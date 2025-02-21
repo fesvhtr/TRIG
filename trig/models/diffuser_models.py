@@ -70,7 +70,8 @@ class OneDiffusionModel(BaseModel):
         image = self.pipe(prompt=f"[[text2image]] {prompt}", negative_prompt=OD_NEGATIVE_PROMPT, num_inference_steps=50,
                      guidance_scale=4, height=1024, width=1024, ).images[0]
         return image
-    
+   
+
     def generate_p2p(self, prompt, input_image):
         input_image = Image.open(input_image)
         image = self.pipe.img2img(image=input_image, prompt=f"[[image_editing]] {prompt}", negative_prompt=OD_NEGATIVE_PROMPT, 
