@@ -56,38 +56,38 @@ def encode_image(image_path):
 def create_image_message(base64_image, image_type):
     image_message = [
         {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": (
-                            "You are an AI Vision Evaluation Expert, skilled at analyzing image content and generating "
-                            "high-quality Text-Guided Image Editing prompts to evaluate model trade-offs in various image "
-                            "editing dimensions. Your primary task is to accurately analyze the visual content of the input image "
-                            "and extract key details that will support subsequent image editing prompt generation.\n\n"
-                            "1. Task Objective:\n"
-                            "- Provide a **detailed image description**, capturing the image's key elements, style, lighting, color balance, and object relationships.\n"
-                            "- Extract **structured details** that will help in designing visually logical editing prompts.\n"
-                            "- **This step does not involve modification**; it is purely for analysis.\n\n"
-                            "2. Output Format:\n"
-                            "Your response must be a valid JSON object containing a `responses`.\n"
-                            "`responses` should follow this format:\n"
-                            "- `description`: A detailed textual description of the entire image, avoiding vague, subjective, or incomplete expressions, ensuring it is **editable**, containing at least 50 words.\n"
-                            "- `details`: Key visual information to support the editing task, following this structured format:\n"
-                            "  - `style`: 1-2 words summarizing the image's overall style (e.g., 'realistic', 'cyberpunk').\n"
-                            "  - `lighting`: A short phrase summarizing lighting conditions (e.g., 'soft indoor lighting', 'harsh sunlight from the left').\n"
-                            "  - `color_palette`: No more than 5 words summarizing the image’s dominant color scheme (e.g., 'warm tones with reds and oranges').\n"
-                            "  - `object_relationships`: A concise sentence describing key object interactions in the scene (e.g., 'a man sitting at a wooden table, reading a book').\n"
-                            "  - `depth_and_perspective`: A short description summarizing the spatial depth and camera perspective (e.g., 'low-angle close-up', 'wide shot with deep depth of field')."
-                        )
-                    },
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": f"data:image/{image_type};base64,{base64_image}"}
-                    }
-                ]
-            }
-        ]
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": (
+                        "You are an AI Vision Evaluation Expert, skilled at analyzing image content and generating "
+                        "high-quality Text-Guided Image Editing prompts to evaluate model trade-offs in various image "
+                        "editing dimensions. Your primary task is to accurately analyze the visual content of the input image "
+                        "and extract key details that will support subsequent image editing prompt generation.\n\n"
+                        "1. Task Objective:\n"
+                        "- Provide a **detailed image description**, capturing the image's key elements, style, lighting, color balance, and object relationships.\n"
+                        "- Extract **structured details** that will help in designing visually logical editing prompts.\n"
+                        "- **This step does not involve modification**; it is purely for analysis.\n\n"
+                        "2. Output Format:\n"
+                        "Your response must be a valid JSON object containing a `responses`.\n"
+                        "`responses` should follow this format:\n"
+                        "- `description`: A detailed textual description of the entire image, avoiding vague, subjective, or incomplete expressions, ensuring it is **editable**, containing at least 50 words.\n"
+                        "- `details`: Key visual information to support the editing task, following this structured format:\n"
+                        "  - `style`: 1-2 words summarizing the image's overall style (e.g., 'realistic', 'cyberpunk').\n"
+                        "  - `lighting`: A short phrase summarizing lighting conditions (e.g., 'soft indoor lighting', 'harsh sunlight from the left').\n"
+                        "  - `color_palette`: No more than 5 words summarizing the image’s dominant color scheme (e.g., 'warm tones with reds and oranges').\n"
+                        "  - `object_relationships`: A concise sentence describing key object interactions in the scene (e.g., 'a man sitting at a wooden table, reading a book').\n"
+                        "  - `depth_and_perspective`: A short description summarizing the spatial depth and camera perspective (e.g., 'low-angle close-up', 'wide shot with deep depth of field')."
+                    )
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/{image_type};base64,{base64_image}"}
+                }
+            ]
+        }
+    ]
     
     return image_message
 
