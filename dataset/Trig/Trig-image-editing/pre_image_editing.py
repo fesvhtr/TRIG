@@ -12,9 +12,9 @@ from openai import OpenAI
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--raw_path", type=str)
-    parser.add_argument("--dataset", type=str)
-    parser.add_argument("--config", type=str)
+    parser.add_argument("--raw_path",default=r'H:\ProjectsPro\TRIG\dataset\raw_dataset\image-editing', type=str)
+    parser.add_argument("--dataset", default="OmniEdit-Filtered", type=str)
+    parser.add_argument("--config", default='prompt_dev.jsonl',type=str)
 
     return parser.parse_args()
 
@@ -167,21 +167,22 @@ def create_prompt_message(image_content, dim1, dim2, dim1_desc, dim2_desc, dim1_
                 "the model’s ability to balance the trade-off between the following two dimensions:\n\n"
 
                 f"3.1. Dimension 1 ({dim1})\n"
-                f"   - Definition: {dim1_desc}\n"
+                f"   - Requirements: {dim1_desc}\n"
                 f"   - Core Concepts: {dim1_core}\n\n"
 
                 f"3.2. Dimension 2 ({dim2})\n"
-                f"   - Definition: {dim2_desc}\n"
+                f"   - Requirements: {dim2_desc}\n"
                 f"   - Core Concepts: {dim2_core}\n\n"
 
                 "4. Reference Principles\n"
                 "- Prompts must not reference specific evaluation dimensions or testing-related concepts.\n"
+                "- Core Concepts are only reference and examples, you should have originality and variety.\n"
                 "- You must generate creative editing instructions based only on the image content while ensuring that both dimensions are equally represented.\n\n"
 
                 "5. Prompt Requirements\n"
                 "- Each prompt must precisely describe the image modification requirements, avoiding vague expressions.\n"
                 "- The prompt must equally incorporate `dim1` and `dim2`, ensuring no bias toward either dimension.\n"
-                "- Each prompt must contain between 30 and 50 words to ensure sufficient detail for a complex editing process.\n\n"
+                "- Each prompt must contain around 30 words to ensure sufficient detail for a complex editing process, but should be in 2-3 short sentence, not too long\n\n"
 
                 "6. Strict Prompt Restrictions\n"
                 "You must generate a fully-formed description of an image editing task, focusing only on the modification itself. "
@@ -218,8 +219,9 @@ def create_prompt_message(image_content, dim1, dim2, dim1_desc, dim2_desc, dim1_
 def send_request(messages, max_retries=5, delay=2):
     for attempt in range(max_retries):
         try:
-            api_key = "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"
-            client = OpenAI(api_key=api_key)    
+            print("Sending request...")
+            api_key = 'sk-mqUwZI8bhIv746rG6f3fE830D8B146E789Fd11717aD8C4B1'
+            client = OpenAI(api_key=api_key, base_url="https://api.bltcy.ai/v1")
             
             response = client.chat.completions.create(
                 model="gpt-4o",
@@ -228,7 +230,9 @@ def send_request(messages, max_retries=5, delay=2):
             response_content = response.choices[0].message.content
             response_match = re.search(r"\{.*\}", response_content, re.DOTALL)
             response_content = json.loads(response_match.group(0))
-            response_content = response_content['responses']       
+            response_content = response_content['responses']
+
+            print(response_content)
             return response_content
         
         except Exception as e:
@@ -285,12 +289,13 @@ def process_data(args, data_list):
     
     dataset = args.dataset
     image_name = 'src_img_filename' if dataset == 'OmniEdit-Filtered' else 'input_images'
-    
-    for object in tqdm(data_list, desc="Processing object", unit="image"):
+    # print(len(data_list))
+    # sampled_data = random.sample(data_list, 1)
+    for object in tqdm(data_list[:1], desc="Processing object", unit="image"):
         src_img_filename = object[image_name] if dataset == 'OmniEdit-Filtered' else object[image_name][0]
         image_path = os.path.join(args.raw_path, dataset, src_img_filename)
         base64_image, image_type = encode_image(image_path)
-        
+
         image_message = create_image_message(base64_image, image_type)
         image_content = send_request(image_message)
 
@@ -301,16 +306,16 @@ def process_data(args, data_list):
                 dim2_desc = DIM_DESC[dim2]
                 dim1_core = CORE_CONCEPTS[dim1]
                 dim2_core = CORE_CONCEPTS[dim2]
-                
+
                 if dim1 =='R-T' or dim2 == 'R-T':
                     continue
                 else:
                     main_message = create_prompt_message(image_content, dim1, dim2, dim1_desc, dim2_desc, dim1_core, dim2_core)
-                
+
                 response_content = send_request(main_message)
                 save_results(dim, dataset, image_path, response_content)
             
-
+import random
 if __name__ == "__main__":
     args = get_args()
     

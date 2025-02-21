@@ -90,7 +90,7 @@ def process_parquet_file(parquet_file, src_path, edited_path, json_output_file):
 
 if __name__ == "__main__":
     # Define paths and file names
-    parquet_file = './data/dev-00000-of-00001.parquet'
+    parquet_file = r'H:\ProjectsPro\TRIG\dataset\raw_dataset\image-editing\dev-00000-of-00001.parquet'
     src_path = 'dev/src'
     edited_path = 'dev/edited'
     json_output_file = 'prompt_dev.jsonl'

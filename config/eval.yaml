@@ -1,11 +1,11 @@
 name: "flux"
 task: "t2i"
-prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-text-to-image/text-to-imgae-without-m-e-v8.json"
+prompt_path: "H://ProjectsPro//TRIG//dataset//Trig//Trig-text-to-image//text-to-imgae-without-m-e-v8.json"
 
 evaluation:
-    image_dirs: ["/home/muzammal/Projects/TRIG/data/output/t2i/flux", "/home/muzammal/Projects/TRIG/data/output/t2i/janus"]
+    image_dirs: ["H://ProjectsPro//TRIG//data//output//t2i//sana"]
     result_dir: "data/result"
-    result_files: ["data/result/flux_72B_t1.json", "data/result/janus_72B_t1.json"]
+    result_files: ["data/result/sana_72B_t1.json"]
 
 TRIG_metric: &TRIG_metric
   name: trig_api

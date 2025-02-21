@@ -14,9 +14,9 @@ from openai import OpenAI
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--raw_path", type=str)
-    parser.add_argument("--dataset", type=str)
-    parser.add_argument("--config", type=str)
+    parser.add_argument("--raw_path",default=r'H:\ProjectsPro\TRIG\dataset\raw_dataset\subject-driven', type=str)
+    parser.add_argument("--dataset",default='Subjects200K', type=str)
+    parser.add_argument("--config",default='collection1.json', type=str)
 
     return parser.parse_args()
 
