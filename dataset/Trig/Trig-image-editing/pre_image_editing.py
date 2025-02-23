@@ -294,7 +294,7 @@ def process_data(args, data_list):
     image_name = 'src_img_filename' if dataset == 'OmniEdit-Filtered' else 'input_images'
     # print(len(data_list))
     # sampled_data = random.sample(data_list, 1)
-    for object in tqdm(data_list[:1], desc="Processing object", unit="image"):
+    for object in tqdm(data_list[50:100], desc="Processing object", unit="image"):
         src_img_filename = object[image_name] if dataset == 'OmniEdit-Filtered' else object[image_name][0]
         image_path = os.path.join(args.raw_path, dataset, src_img_filename)
         base64_image, image_type = encode_image(image_path)
