@@ -50,7 +50,7 @@ class TRIGGPTMetric(BaseMetric):
         # print('top_logprobs:', top_logprobs)
         usage_tokens = [completion.usage.prompt_tokens, completion.usage.completion_tokens,
                         completion.usage.prompt_tokens + completion.usage.completion_tokens]
-        print('usage_tokens:', usage_tokens)
+        # print('usage_tokens:', usage_tokens)
         score = self.logprobs_score(top_logprobs)
         return score
 

@@ -1,11 +1,11 @@
 name: "flux"
 task: "t2i"
-prompt_path: "H://ProjectsPro//TRIG//dataset//Trig//Trig-text-to-image//text-to-imgae-without-m-e-v8.json"
+prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-text-to-image/text-to-imgae-without-m-e-v8.json"
 
 evaluation:
-    image_dirs: ["H://ProjectsPro//TRIG//data//output//t2i//sana"]
+    image_dirs: ["/home/muzammal/Projects/TRIG/data/output/t2i/flux"]
     result_dir: "data/result"
-    result_files: ["data/result/sana_72B_t1.json"]
+    result_files: ["data/result/flux_GPT_t1.json"]
 
 TRIG_metric: &TRIG_metric
   name: trig_api
@@ -16,8 +16,15 @@ TRIG_metric: &TRIG_metric
 TRIG_metric_72B: &TRIG_metric_72B
   name: trig_api
   API_KEY: "sk-3816bf9e709540598d239fc684fe0423"
-  endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+  endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1/"
   model_name: qwen2.5-vl-72b-instruct
+  top_logprobs: 5
+
+TRIG_metric_GPT: &TRIG_metric_GPT
+  name: trig_api
+  API_KEY: "sk-mqUwZI8bhIv746rG6f3fE830D8B146E789Fd11717aD8C4B1"
+  endpoint: "https://api.bltcy.ai/v1"
+  model_name: gpt-4o
   top_logprobs: 5
 
 dimensions:

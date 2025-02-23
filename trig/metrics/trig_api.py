@@ -67,7 +67,9 @@ class TRIGAPIMetric(BaseMetric):
     def compute(self, image_path, prompt):
         image = encode_image(image_path)
         msg = self.format_msg(self.get_conv_template(), prompt, image)
+        # print(msg)
         try:
+            print("Sending request to OpenAI API...")
             completion = self.client.chat.completions.create(
                 model=self.model_name,
                 messages=msg,
@@ -75,17 +77,19 @@ class TRIGAPIMetric(BaseMetric):
                 temperature=self.temperature,
                 top_logprobs=self.top_logprobs,
             )
+
+            # print(completion.choices[0].message.content)
+            top_logprobs = completion.choices[0].logprobs.content[0].top_logprobs
+            # print('top_logprobs:', top_logprobs)
+            usage_tokens = [completion.usage.prompt_tokens, completion.usage.completion_tokens,
+                            completion.usage.prompt_tokens + completion.usage.completion_tokens]
+            # print('usage_tokens:', usage_tokens)
+            score = self.logprobs_score(top_logprobs)
+            return round(score, 3)
         except Exception as e:
             print(f"Error: {e}")
             return 0.0
-        # print(completion.choices[0].message.content)
-        top_logprobs = completion.choices[0].logprobs.content[0].top_logprobs
-        # print('top_logprobs:', top_logprobs)
-        usage_tokens = [completion.usage.prompt_tokens, completion.usage.completion_tokens,
-                        completion.usage.prompt_tokens + completion.usage.completion_tokens]
-        # print('usage_tokens:', usage_tokens)
-        score = self.logprobs_score(top_logprobs)
-        return round(score, 3)
+
 
 
 
@@ -145,9 +149,9 @@ class TRIGAPIMetric(BaseMetric):
             return results
 
 if __name__ == "__main__":
-    API_KEY = "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"
+    API_KEY = "sk-3816bf9e709540598d239fc684fe0423"
     # Example usage
-    metric = TRIGAPIMetric(model_name="Qwen/Qwen2.5-VL-7B-Instruct", dimension='TA-C', top_logprobs=5,)
+    metric = TRIGAPIMetric(API_KEY=API_KEY, model_name="qwen2.5-vl-72b-instruct",endpoint="https://dashscope.aliyuncs.com/compatible-mode/v1", dimension='TA-C', top_logprobs=5,)
     image_path = r"/home/muzammal/Projects/TRIG/demo.jpg"
     prompt = ["A old building like a main building of a university",
               "A old building like a main building of a university with green grass and blue sky",
