@@ -14,9 +14,9 @@ from openai import OpenAI
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--raw_path",default=r'H:\ProjectsPro\TRIG\dataset\raw_dataset\subject-driven', type=str)
-    parser.add_argument("--dataset",default='Subjects200K', type=str)
-    parser.add_argument("--config",default='collection1.json', type=str)
+    parser.add_argument("--raw_path", type=str)
+    parser.add_argument("--dataset", type=str)
+    parser.add_argument("--config", type=str)
 
     return parser.parse_args()
 
@@ -87,25 +87,31 @@ def create_image_message(base64_image, image_type, item):
                 {
                     "type": "text",
                     "text": (
-                        f"You are an AI Vision Evaluation Expert, skilled at analyzing image content and generating high-quality Subject-Driven Image Editing prompts to evaluate model trade-offs in various subject attributes. "
-                        f"Your task is to analyze the input image, identify the primary subject (`item`), and extract relevant contextual information to support subsequent editing prompt generation.\n\n"
-                        f"1. Subject Identification Rule\n"
+                        "You are an AI Vision Evaluation Expert, skilled at analyzing image content and generating "
+                        "high-quality Subject-Driven Image Editing prompts to evaluate model trade-offs in various editing dimensions.\n\n"
+
+                        f"**0. Subject Identification Rule: **\n"
                         f"{subject_instruction}\n\n"
-                        f"2. Task Objective\n"
-                        f"- Accurately identify and describe the primary subject (`item`) in the image, utilizing both the visual input.\n"
-                        f"- Provide a **detailed image description**, capturing the subject’s category, visual characteristics, dynamic attributes, environmental context, and interactions with other elements.\n"
-                        f"- This step **does not involve any modifications**; it is purely for analyzing and understanding the image content.\n\n"
-                        f"3. Image Analysis Criteria\n"
-                        f"- **Subject Identification:** Recognize the key subject (`item`) in the image and classify it appropriately.\n"
-                        f"- **Visual Features:** Describe the subject’s shape, color, texture, size, or any distinguishing characteristics.\n"
-                        f"- **Dynamic Attributes:** Indicate whether the subject is in motion or static, and specify its posture or stance if applicable.\n"
-                        f"- **Environmental Context:** Describe the setting, lighting conditions, and background elements surrounding the subject.\n"
-                        f"- **Interaction with Other Elements:** If applicable, analyze how the subject engages with objects, people, or its surroundings.\n\n"
-                        f"4. Output Format\n"
-                        f"- Your response must be a valid JSON object containing a `responses`.\n"
-                        f"- `responses` should follow this format:\n"
-                        f"- `item`: A concise noun phrase summarizing the primary subject of the image.\n"
-                        f"- `description`: A detailed description of the entire image, with a focus on `item`, containing at least 50 words."
+
+                        "**1. Task Objective:**\n"
+                        "- Accurately **identify the primary subject (`item`)** in the image.\n"
+                        "- Provide a **detailed image description** that clearly defines `{item}` and its role in the scene.\n"
+                        "- Extract **structured details** that will help in designing subject-driven editing prompts while ensuring that `{item}` remains the focal point of the scene.\n"
+                        "- **This step does not involve modification**; it is purely for analysis.\n\n"
+
+                        "**2. Key Constraints:**\n"
+                        "- `{item}` **must not be altered or removed** during any subsequent editing.\n"
+                        "- Editing tasks may include **modifying the environment, adding objects, or stylistic changes**, but `{item}` **must always remain identifiable**.\n"
+                        "- All modifications must **respect the existing scene composition** and ensure visual coherence.\n\n"
+
+                        "**3. Output Format:**\n"
+                        "Your response must be a valid JSON object containing `responses`.\n"
+                        "`responses` should follow this format:\n"
+                        "- `item`: A concise noun phrase summarizing the primary subject of the image.\n"
+                        "- `description`: A detailed textual description of the entire image, ensuring that `{item}` is well-defined and maintaining at least 50 words.\n"
+                        "- `details`: Key subject-driven information to support editing tasks, structured as follows:\n"
+                        "  - `object_relationships`: A concise sentence describing how `{item}` interacts with surrounding objects and elements.\n"
+                        "  - `subject_attributes`: A structured description of `{item}`, including visual traits such as appearance, clothing, posture, facial expressions, and defining contextual elements.\n"
                     )
                 },
                 {
@@ -121,8 +127,6 @@ def create_image_message(base64_image, image_type, item):
 
 def create_prompt_message(image_content, dim1, dim2, dim1_desc, dim2_desc, dim1_core, dim2_core):
     item = image_content['item']
-    description = image_content['description']
-    
     if dim2 == 'R-B':
         bias_message = [
             {
@@ -157,6 +161,8 @@ def create_prompt_message(image_content, dim1, dim2, dim1_desc, dim2_desc, dim1_
     else:
         bias_message = []
 
+    description = image_content['description']
+    details = image_content['details']
     prompt_message = [
         {
             "role": "system",
@@ -173,48 +179,56 @@ def create_prompt_message(image_content, dim1, dim2, dim1_desc, dim2_desc, dim1_
         {
             "role": "user",
             "content": (
-                "1. Task Definition\n"
-                f"The image depicts `{item}`, and the editing tasks must focus on modifying this subject while maintaining its identity and relevance in the scene. "
+                "1. **Task Definition**\n"
+                f"The image depicts `{item}`, and the editing tasks must focus on modifying the scene **while keeping `{item}` unchanged as the primary subject**. "
                 f"All modifications must be consistent with the given image description:\n\n"
                 f"**Image Context:** {description}\n\n"
-                "Subject-Driven Image Editing involves modifying the primary subject of an input image based on a given textual instruction, "
-                "ensuring that the modified subject aligns with the new requirements while maintaining coherence within the scene.\n\n"
+                "Subject-Driven Image Editing involves modifying the environment, interactions, or context surrounding the primary subject (`item`) "
+                "while ensuring that the subject remains identifiable and logically placed within the scene.\n\n"
 
-                "Possible Subject Generation Tasks:\n"
-                "- **Subject rendering** (Ensuring that the depicted subject matches the expected features and identity)\n"
-                "- **Contextual environment generation** (Placing the subject in a logically consistent or descriptive scene)\n"
-                "- **Artistic style application** (Generating the subject in a specific aesthetic, artistic, or photographic style)\n"
-                "- **Subject interaction modeling** (Ensuring that the subject interacts appropriately with surrounding elements)\n"
-                "- **Conceptual representation** (Generating abstract, surreal, or symbolic variations of the subject)\n\n"
+                "Possible Subject-Driven Editing Tasks:\n"
+                "- **Contextual environment generation** (Placing the subject in a new but visually consistent background)\n"
+                "- **Subject interaction modeling** (Ensuring that the subject interacts appropriately with newly introduced objects or characters)\n"
+                "- **Scene adjustment** (Modifying weather, lighting, time of day, or spatial layout without altering the subject itself)\n"
+                "- **Conceptual transformation** (Introducing surreal, abstract, or symbolic variations while keeping the subject recognizable)\n\n"
 
-                "2. Task Requirements\n"
+                "2. **Image Context**\n"
+                "The image contains the following visual elements:\n"
+                f"- **Primary Subject (`item`)**: {item}\n"
+                f"- **Description**: {description}\n\n"
+                "## Key Editing Constraints\n"
+                "To maintain visual consistency, the following image characteristics must be considered during editing:\n"
+                f"- **Object Relationships:** {details['object_relationships']}\n"
+                f"- **Subject Attributes:** {details['subject_attributes']}\n\n"
+
+                "3. **Task Requirements**\n"
                 "Generate **three distinct Subject-Driven Editing Prompts**, ensuring that each prompt effectively evaluates "
                 "the model’s ability to balance the trade-off between the following two dimensions while keeping `{item}` as the primary focus:\n\n"
 
-                f"2.1. **Dimension 1 ({dim1})**\n"
+                f"3.1. **Dimension 1 ({dim1})**\n"
                 f"   - **Definition**: {dim1_desc}\n"
                 f"   - **Core Concepts**: The following key concepts are related to `{dim1}`. "
                 f"     They should serve as inspiration for generating relevant editing tasks:\n"
                 f"     {dim1_core}\n\n"
 
-                f"2.2. **Dimension 2 ({dim2})**\n"
+                f"3.2. **Dimension 2 ({dim2})**\n"
                 f"   - **Definition**: {dim2_desc}\n"
                 f"   - **Core Concepts**: The following key concepts are related to `{dim2}`. "
                 f"     They should serve as inspiration for generating relevant editing tasks:\n"
                 f"     {dim2_core}\n\n"
 
-                "3. Reference Principles\n"
-                "- **All modifications must strictly focus on `{item}`**. The subject must remain the central element of the scene.\n"
+                "4. **Reference Principles**\n"
+                "- **All modifications must strictly focus on the scene and context surrounding `{item}`**. The subject must remain unaltered.\n"
                 "- **Edits must align with the image description (`description`)** to ensure visual consistency.\n"
                 "- Prompts must not reference specific evaluation dimensions or testing-related concepts.\n"
                 "- You must generate creative subject-driven modifications based only on the image content while ensuring that both dimensions are equally represented.\n\n"
 
-                "4. Prompt Requirements\n"
-                "- **Clarity and specificity**: Each prompt must precisely describe the subject modification requirements, avoiding vague expressions.\n"
+                "5. **Prompt Requirements**\n"
+                "- **Clarity and specificity**: Each prompt must precisely describe the scene modification requirements, avoiding vague expressions.\n"
                 "- **Balanced representation**: The prompt **must equally incorporate `dim1` and `dim2`**, ensuring no bias toward either dimension.\n"
                 "- **Detailed description**: Each prompt must contain **at least 30 words and at most 50 words**, ensuring sufficient information to guide a complex subject-driven modification process.\n\n"
 
-                "5. Strict Prompt Restrictions\n"
+                "6. **Strict Prompt Restrictions**\n"
                 "You must generate a fully-formed description of a subject-driven image editing task, focusing only on the modification itself. "
                 "You must not reference any evaluation dimensions, testing intent, or assessment-related concepts in any form.\n\n"
 
@@ -224,30 +238,29 @@ def create_prompt_message(image_content, dim1, dim2, dim1_desc, dim2_desc, dim1_
                 "- You must not use subjective enhancement words such as 'improve' or 'optimize' that imply a value judgment on the modification.\n"
                 "- You must not suggest any optimization, enhancement, or improvement; you must stick to direct subject modifications.\n\n"
 
-                "Required Format:\n"
+                "7. **Required Format**\n"
                 "- The prompt must be framed as a direct modification command using strong action verbs such as 'Modify', 'Replace', 'Alter', 'Adjust', 'Transform'.\n"
-                "- **All modifications must strictly apply to `{item}` and should not introduce unrelated changes.**\n"
-                "- You must use quantifiable parameters where possible to provide concrete subject modification instructions.\n\n"
+                "- **All modifications must strictly apply to the scene while keeping `{item}` unchanged.**\n"
+                "- You must use quantifiable parameters where possible to provide concrete scene modification instructions.\n\n"
 
-                "6. Non-Compliance Consequences\n"
+                "8. **Non-Compliance Consequences**\n"
                 "- If you fail to comply with these restrictions, your response will be considered invalid and will be discarded.\n"
                 "- You are not allowed to provide explanations, reasoning, or alternative responses. Your only task is to generate a direct subject-driven modification instruction.\n"
                 "- If any part of your response does not follow these rules, you must regenerate the response until it fully adheres to the given constraints.\n\n"
 
-                "7. Response Format\n"
+                "9. **Response Format**\n"
                 "- Generate exactly **three** different Subject-Driven Editing Prompts.\n"
                 "- Ensure that each prompt strictly follows the task requirements and is suitable for the evaluation task.\n"
                 "- Your response must be a valid JSON object containing a list of three `responses`.\n"
                 "- Each item in `responses` should follow this format:\n"
                 "  - `id`: A numeric identifier starting from 0.\n"
-                "  - `prompt`: A string describing a subject-driven image editing task with at least 50 words.\n"
+                "  - `prompt`: A string describing a subject-driven image editing task with at least 30 words and at most 50 words.\n"
                 "  - `dimension_prompt`: A list containing two strings, each representing a key aspect of `dim1` and `dim2`.\n"
                 "  - `item`: The primary subject, `{item}`.\n"
                 "- Your response must **only contain the required JSON output**, with no additional explanations or comments."
             )
         }
     ]
-
 
     return bias_message + prompt_message
 
