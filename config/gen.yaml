@@ -1,6 +1,7 @@
 name: "test"
 task: "t2i"
-prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-text-to-image/text-to-imgae-without-m-e-v8.json"
+# prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-text-to-image/text-to-imgae-without-m-e-v8.json"
+prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-image-editing/p2p_without_t.json"
 
 generation:
     # all models: ["base", "dalle3", "sdxl", "omnigen", "pixart_sigma", "onediffusion", "sana", "sd35", 'flux']

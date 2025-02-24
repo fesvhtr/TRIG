@@ -14,10 +14,14 @@ AVAILABLE_Model = {
     'sd35': 'text_to_image_models.SD35Model', 
     'flux': 'text_to_image_models.FLUXModel', 
     'janus': 'text_to_image_modelso.JanusModel',
-    'janus_flow': 'text_to_image_models.JanusFlowModel' 
+    'janus_flow': 'text_to_image_models.JanusFlowModel',
     # p2p models
-
+    'instructp2p': 'image_editing_models.InstructPix2PixModel',
+    'freediff': 'image_editing_models.FreeDiff',
     # subjects models
+    'blipdiffusion': 'subject_driven_models.BlipDiffusionModel',
+    'ssrencoder': 'subject_driven_models.SSREncoder',
+    'omnicontrol': 'subject_driven_models.OmniControlModel'
 }
 
 def import_model(model_name):

@@ -3,9 +3,9 @@ task: "t2i"
 prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-text-to-image/text-to-imgae-without-m-e-v8.json"
 
 evaluation:
-    image_dirs: ["/home/muzammal/Projects/TRIG/data/output/t2i/flux"]
+    image_dirs: ["/home/muzammal/Projects/TRIG/data/output/t2i/flux", "/home/muzammal/Projects/TRIG/data/output/t2i/janus"]
     result_dir: "data/result"
-    result_files: ["data/result/flux_GPT_t1.json"]
+    result_files: ["data/result/flux_llava_7B_t1.json", "data/result/janus_llava_7B_t1.json"]
 
 TRIG_metric: &TRIG_metric
   name: trig_api
@@ -15,9 +15,8 @@ TRIG_metric: &TRIG_metric
 
 TRIG_metric_72B: &TRIG_metric_72B
   name: trig_api
-  API_KEY: "sk-3816bf9e709540598d239fc684fe0423"
-  endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1/"
-  model_name: qwen2.5-vl-72b-instruct
+  endpoint: "http://localhost:8000/v1/"
+  model_name: PointerHQ/Qwen2.5-VL-72B-Instruct-Pointer-AWQ
   top_logprobs: 5
 
 TRIG_metric_GPT: &TRIG_metric_GPT
@@ -27,34 +26,40 @@ TRIG_metric_GPT: &TRIG_metric_GPT
   model_name: gpt-4o
   top_logprobs: 5
 
+TRIG_metric_llava: &TRIG_metric_llava
+  name: trig_api
+  endpoint: "http://localhost:10022/v1/"
+  model_name: llava-hf/llava-onevision-qwen2-7b-ov-hf
+  top_logprobs: 5
+
 dimensions:
   IQ-R:
     metrics:
-      - <<: *TRIG_metric_72B
+      - <<: *TRIG_metric_llava
   IQ-O:
     metrics:
-      - <<: *TRIG_metric_72B
+      - <<: *TRIG_metric_llava
   IQ-A:
     metrics:
-      - <<: *TRIG_metric_72B
+      - <<: *TRIG_metric_llava
   TA-R:
     metrics:
-      - <<: *TRIG_metric_72B
+      - <<: *TRIG_metric_llava
   TA-C:
     metrics:
-      - <<: *TRIG_metric_72B
+      - <<: *TRIG_metric_llava
   TA-S:
     metrics:
-      - <<: *TRIG_metric_72B
+      - <<: *TRIG_metric_llava
   D-K:
     metrics:
-      - <<: *TRIG_metric_72B
+      - <<: *TRIG_metric_llava
   D-A:
     metrics:
-      - <<: *TRIG_metric_72B
+      - <<: *TRIG_metric_llava
   R-T:
     metrics:
-      - <<: *TRIG_metric_72B
+      - <<: *TRIG_metric_llava
   R-B:  
     metrics:
-      - <<: *TRIG_metric_72B
+      - <<: *TRIG_metric_llava

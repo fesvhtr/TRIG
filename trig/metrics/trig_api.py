@@ -69,7 +69,7 @@ class TRIGAPIMetric(BaseMetric):
         msg = self.format_msg(self.get_conv_template(), prompt, image)
         # print(msg)
         try:
-            print("Sending request to OpenAI API...")
+            # print("Sending request to OpenAI API...")
             completion = self.client.chat.completions.create(
                 model=self.model_name,
                 messages=msg,
