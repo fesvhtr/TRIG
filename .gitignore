@@ -3,6 +3,8 @@
 
 # compilation and distribution
 __pycache__/
+images/
+.cache/
 _ext
 *.pyc
 *.pyd
@@ -33,6 +35,7 @@ model_ts*.txt
 *.log
 *.parquet
 *.tar.gz
+*.zip
 *~
 
 

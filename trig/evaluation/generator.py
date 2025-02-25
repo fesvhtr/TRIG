@@ -51,14 +51,17 @@ class Generator:
         return prompts_data
 
     def generate_batch_models(self):
-        with multiprocessing.Pool() as pool:
-            pool.map(self.generate_single_model, self.config["generation"]["models"])
+        # FIXME: multiprocessing not working
+        # with multiprocessing.Pool() as pool:
+        #     pool.map(self.generate_single_model, self.config["generation"]["models"])
+        for model_name in self.config["generation"]["models"]:
+            self.generate_single_model(model_name)
 
     def generate_single_model(self, model_name):
         model_class = import_model(model_name)
         model = model_class()
-
-        output_path = os.path.join(project_root, 'data/output', self.config["task"], model_name)
+        task  = self.config["task"]
+        output_path = os.path.join(project_root, 'data/output', task, model_name)
         print(f"Output path: {output_path}")
 
         if not os.path.exists(output_path):
@@ -66,7 +69,7 @@ class Generator:
         file_list = os.listdir(output_path)
         file_list = [os.path.splitext(f)[0] for f in file_list]
 
-        for prompt_data in tqdm(self.prompts_data):
+        for prompt_data in tqdm(self.prompts_data[6000:8000]):
             if prompt_data["data_id"] in file_list:
                 continue
 
@@ -87,7 +90,15 @@ class Generator:
 
             else:
                 prompt = prompt_data["prompt"]
-                image = model.generate(prompt)
+                if task == "t2i":
+                    image = model.generate(prompt)
+                elif task == "p2p":
+                    image_path = os.path.join(self.config["image_path"], prompt_data["img_id"])
+                    image = model.generate_p2p(prompt, image_path)
+                elif task == "s2p":
+                    image = model.generate_s2p()
+                else:
+                    raise ValueError(f"Task {task} not supported")
 
                 image.save(os.path.join(output_path, f"{prompt_data['data_id']}.png"))
 

@@ -121,6 +121,3 @@ class OminiControlModel(BaseModel):
         ).images[0]
 
         return image
-
-
-

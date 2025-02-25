@@ -11,7 +11,7 @@ class BaseModel(ABC):
     def generate(self, prompt):
         pass
 
-    def generate_p2p(self, image_path, prompt):
+    def generate_p2p(self, prompt, image_path):
         pass
 
     def generate_s2p(self, prompt, item, input_image):
