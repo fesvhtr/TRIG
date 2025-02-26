@@ -69,7 +69,7 @@ class Generator:
         file_list = os.listdir(output_path)
         file_list = [os.path.splitext(f)[0] for f in file_list]
 
-        for prompt_data in tqdm(self.prompts_data[6000:8000]):
+        for prompt_data in tqdm(self.prompts_data[4000:6000]):
             if prompt_data["data_id"] in file_list:
                 continue
 

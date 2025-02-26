@@ -35,8 +35,8 @@ class OmniGenModel(BaseModel):
     
     def generate_p2p(self, prompt, input_image):
         width, height = Image.open(input_image).size
-        width = int((width // 16) * 16 / 2)
-        height = int((height // 16) * 16 / 2)
+        width = int((width/2) // 16) * 16
+        height = int((height/2) // 16) * 16
         prompt=f"Generate a new photo using the following picture and text as conditions: <img><|image_1|><img>\n {prompt}"
         images = self.pipe(prompt=prompt, input_images=[input_image], height=height, width=width, guidance_scale=2.5, 
                            img_guidance_scale=1.6, seed=0)[0]
@@ -44,7 +44,10 @@ class OmniGenModel(BaseModel):
     
     def generate_s2p(self, prompt, item, input_image):
         prompt = f"The {item} is in <img><|image_1|></img>. {prompt}"
-        images = self.pipe(prompt=prompt, input_images=[input_image], height=1024, width=1024, guidance_scale=2.5, 
+        width, height = Image.open(input_image).size
+        width = int((width/2) // 16) * 16
+        height = int((height/2) // 16) * 16
+        images = self.pipe(prompt=prompt, input_images=[input_image], height=height, width=width, guidance_scale=2.5, 
                            img_guidance_scale=1.6, seed=0)[0]
         return images
 
@@ -73,24 +76,27 @@ class OneDiffusionModel(BaseModel):
         return image
     
     def generate_t2i(self, prompt):
-        width, height = Image.open(input_image).size
-        width = int((width // 16) * 16 / 2)
-        height = int((height // 16) * 16 / 2)
+        
         image = self.pipe(prompt=f"[[text2image]] {prompt}", negative_prompt=self.OD_NEGATIVE_PROMPT, num_inference_steps=50,
                      guidance_scale=4, height=1024, width=1024, ).images[0]
         return image
     
     def generate_p2p(self, prompt, input_image):
         input_image = Image.open(input_image)
-        width, height = input_image.size
+        width, height = Image.open(input_image).size
+        width = int((width/2) // 16) * 16
+        height = int((height/2) // 16) * 16
         image = self.pipe.img2img(image=input_image, prompt=f"[[image_editing]] {prompt}", negative_prompt=self.OD_NEGATIVE_PROMPT, 
                                   num_inference_steps=60, denoise_mask=[1, 0], guidance_scale=4, height=height, width=width).images[0]
         return image
     
     def generate_s2p(self, prompt, item, input_image):
         input_image = Image.open(input_image)
+        width, height = Image.open(input_image).size
+        width = int((width/2) // 16) * 16
+        height = int((height/2) // 16) * 16
         image = self.pipe.img2img(image=input_image, prompt=f"[[subject_driven]] <item: {item}> [[img0]] {prompt}", negative_prompt=self.OD_NEGATIVE_PROMPT, 
-                                  num_inference_steps=60, denoise_mask=[1, 0], guidance_scale=4, height=1024, width=1024).images[0]
+                                  num_inference_steps=60, denoise_mask=[1, 0], guidance_scale=4, height=height, width=width).images[0]
         return image
  
  

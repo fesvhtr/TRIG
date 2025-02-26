@@ -5,4 +5,4 @@ prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-image-editing/p2p_w
 image_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-image-editing/images"
 
 generation:
-  models: ["instructp2p"]
+  models: ["omnigen"]

@@ -133,8 +133,37 @@ class FlowEdit(BaseModel):
         image_tar = self.pipe.image_processor.postprocess(image_tar)
 
         return image_tar[0]
-    
 
+class HQEdit(BaseModel):
+    def __init__(self):
+        self.model_name = "HQEdit"
+        self.model_id = "MudeHui/HQ-Edit"
+        from diffusers import StableDiffusionInstructPix2PixPipeline, EulerAncestralDiscreteScheduler
+        self.pipe = StableDiffusionInstructPix2PixPipeline.from_pretrained(
+            "MudeHui/HQ-Edit", 
+            torch_dtype=torch.float16, 
+            safety_checker=None
+        )
+        self.pipe.to("cuda")
+        self.pipe.scheduler = EulerAncestralDiscreteScheduler.from_config(self.pipe.scheduler.config)
+    
+    def generate_p2p(self, prompt, input_image):
+        image_guidance_scale = 1.5
+        guidance_scale = 7.0
+        height, width = Image.open(input_image).size
+        image = load_image(input_image).resize((height, width))
+
+        edit_instruction = "Turn sky into a cloudy one"
+        edited_image = pipe(
+            prompt=edit_instruction,
+            image=image,
+            height=height,
+            width=width,
+            guidance_scale=image_guidance_scale,
+            image_guidance_scale=image_guidance_scale,
+            num_inference_steps=30,
+        ).images[0]
+        return edited_image
 
 if __name__ == "__main__":
     prompt = "Transform the woman's earrings into small, glowing orbs that illuminate her face subtly, casting gentle reflections on her skin. Retain the realistic lighting while introducing an ethereal glow that suggests a unique, otherworldly origin."
