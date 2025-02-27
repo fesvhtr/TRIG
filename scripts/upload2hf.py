@@ -14,7 +14,7 @@ from huggingface_hub import hf_hub_download
 repo_id = "TRIG-bench/TRIG"
 
 # 远程仓库中的文件路径
-path_in_repo = "dataset/Trig-image-editing/images.zip"
+path_in_repo = "dataset/Trig-subject-driven/images.zip"
 
 # 指定本地存储路径（可选）
 local_file = hf_hub_download(

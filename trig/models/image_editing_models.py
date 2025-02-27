@@ -35,7 +35,7 @@ class InstructPix2PixModel(BaseModel):
         return image
 
 
-class FreeDiff(BaseModel):
+class FreeDiffModel(BaseModel):
     """
     ECCV 2024
     FreeDiff: Progressive Frequency Truncation for Image Editing with Diffusion Models
@@ -80,7 +80,7 @@ class FreeDiff(BaseModel):
 
 
 
-class FlowEdit(BaseModel):
+class FlowEditModel(BaseModel):
     def __init__(self, model_type='FLUX',):
         self.model_name = "FlowEdit"
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -100,8 +100,8 @@ class FlowEdit(BaseModel):
         self.scheduler = pipe.scheduler
         self.pipe = self.pipe.to(self.device)
 
-    def generate_p2p(self, prompt, input_image):
-        src_prompt = prompt
+    def generate_p2p(self, prompt, input_image, src_prompt):
+        src_prompt = src_prompt
         tar_prompts = prompt
         negative_prompt =  "" # optionally add support for negative prompts (SD3)
    
@@ -134,7 +134,7 @@ class FlowEdit(BaseModel):
 
         return image_tar[0]
 
-class HQEdit(BaseModel):
+class HQEditModel(BaseModel):
     def __init__(self):
         self.model_name = "HQEdit"
         self.model_id = "MudeHui/HQ-Edit"
@@ -150,15 +150,14 @@ class HQEdit(BaseModel):
     def generate_p2p(self, prompt, input_image):
         image_guidance_scale = 1.5
         guidance_scale = 7.0
-        height, width = Image.open(input_image).size
-        image = load_image(input_image).resize((height, width))
+        res = 512
+        image = load_image(input_image).resize((res, res))
 
-        edit_instruction = "Turn sky into a cloudy one"
-        edited_image = pipe(
-            prompt=edit_instruction,
+        edited_image = self.pipe(
+            prompt=prompt,
             image=image,
-            height=height,
-            width=width,
+            height=res,
+            width=res,
             guidance_scale=image_guidance_scale,
             image_guidance_scale=image_guidance_scale,
             num_inference_steps=30,

@@ -9,6 +9,6 @@ def count_files_in_directory(directory_path):
 
     return len([f for f in os.listdir(directory_path) if os.path.isfile(os.path.join(directory_path, f))])
 
-folder_path = "/home/muzammal/Projects/TRIG/data/output/t2i/omnigen"
+folder_path = "/home/muzammal/Projects/TRIG/data/output/p2p/freediff"
 file_count = count_files_in_directory(folder_path)
 print(f"'{folder_path}' : {file_count}")

@@ -5,6 +5,7 @@ from trig.config import DIM_DICT_WITHOUT_M_E
 from trig.models import import_model
 from pathlib import Path
 import shutil
+import requests
 import multiprocessing
 from tqdm import tqdm
 
@@ -20,6 +21,7 @@ class Generator:
         print("Task:", self.config["task"])
         print("Models:", self.config["generation"]["models"])
         self.prompts_data = self.load_prompts(self.config["prompt_path"])
+        self.descriptions_data = self.load_descriptions(self.config["description_path"])
         print("-" * 50)
 
     def instantiate_models(self):
@@ -50,6 +52,11 @@ class Generator:
 
         return prompts_data
 
+    def load_descriptions(self, description_file):
+        with open(description_file, 'r') as file:
+            description_data = json.load(file)
+        return description_data
+
     def generate_batch_models(self):
         # FIXME: multiprocessing not working
         # with multiprocessing.Pool() as pool:
@@ -57,10 +64,26 @@ class Generator:
         for model_name in self.config["generation"]["models"]:
             self.generate_single_model(model_name)
 
+    def save_image(image, output_path, filename):
+
+        file_path = os.path.join(output_path, f"{filename}.png")
+
+        try:
+            if isinstance(image, str):
+                response = requests.get(image)
+                response.raise_for_status()
+                with open(file_path, "wb") as file:
+                    file.write(response.content)
+            else: 
+                image.save(file_path)
+        except Exception as e:
+            print(f"Failed to save image: {filename}, Error: {e}")
+
     def generate_single_model(self, model_name):
         model_class = import_model(model_name)
         model = model_class()
         task  = self.config["task"]
+        image_path = os.path.join(self.config["image_path"], prompt_data["img_id"])
         output_path = os.path.join(project_root, 'data/output', task, model_name)
         print(f"Output path: {output_path}")
 
@@ -69,7 +92,7 @@ class Generator:
         file_list = os.listdir(output_path)
         file_list = [os.path.splitext(f)[0] for f in file_list]
 
-        for prompt_data in tqdm(self.prompts_data[4000:6000]):
+        for prompt_data in tqdm(self.prompts_data[9000:]):
             if prompt_data["data_id"] in file_list:
                 continue
 
@@ -90,17 +113,17 @@ class Generator:
 
             else:
                 prompt = prompt_data["prompt"]
-                if task == "t2i":
-                    image = model.generate(prompt)
-                elif task == "p2p":
-                    image_path = os.path.join(self.config["image_path"], prompt_data["img_id"])
-                    image = model.generate_p2p(prompt, image_path)
-                elif task == "s2p":
-                    image = model.generate_s2p()
-                else:
-                    raise ValueError(f"Task {task} not supported")
+                if model_name == "flowedit":
+                    src_prompt = description_data[prompt_data["img_id"]]
+                task_mapping = {
+                    "t2i": lambda: model.generate(prompt),
+                    "p2p": lambda: model.generate_p2p(prompt, image_path, src_prompt) 
+                    if model_name == "flowedit" else model.generate_p2p(prompt, image_path),
+                    "s2p": lambda: model.generate_s2p(),
+                }
+                image = task_mapping[task]()
 
-                image.save(os.path.join(output_path, f"{prompt_data['data_id']}.png"))
+                save_image(image, output_path, prompt_data["data_id"])
 
 
 if __name__ == "__main__":

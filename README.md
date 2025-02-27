@@ -156,6 +156,6 @@ curl http://localhost:10021/v1/models
 curl http://localhost:8000/v1/models
 nohup python eval.py > eval2.log 2>&1 &
 
-nohup bash -c "CUDA_VISIBLE_DEVICES=3 vllm serve llava-hf/llava-onevision-qwen2-7b-ov-hf --dtype float16 --port 10022 --gpu-memory-utilization 0.9 --limit_mm_per_prompt image=4 " > server.log 2>&1 &
+nohup bash -c "CUDA_VISIBLE_DEVICES=3 vllm serve Qwen/Qwen2.5-VL-7B-Instruct --dtype float16 --port 8000 --gpu-memory-utilization 0.8 --limit_mm_per_prompt image=2 " > server.log 2>&1 &
 
 huggingface-cli download TRIG-bench/TRIG output/t2i/pixart_sigma.zip --local-dir /home/muzammal/Projects/TRIG/data/output/t2i --repo-type dataset

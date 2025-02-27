@@ -38,7 +38,7 @@ class BlipDiffusionModel(BaseModel):
         return image
 
 
-class SSREncoder(BaseModel):
+class SSREncoderModel(BaseModel):
     """
     CVPR 2024
     SSR-Encoder: Encoding Selective Subject Representation for Subject-Driven Generation

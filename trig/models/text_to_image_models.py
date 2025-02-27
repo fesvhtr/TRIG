@@ -4,7 +4,7 @@ import torch
 import torchvision.transforms.functional as TF
 import numpy as np
 from PIL import Image
-
+import requests
 from transformers import AutoModelForCausalLM
 from trig.models.base import BaseModel
 
@@ -19,24 +19,31 @@ class DALLE3Model(BaseModel):
     """
     def __init__(self):
         self.model_name = "dalle3"
+        api_key = 'sk-mqUwZI8bhIv746rG6f3fE830D8B146E789Fd11717aD8C4B1'
         from openai import OpenAI
-        self.pipe = OpenAI(api_key=API_KEY)
+        # self.pipe = OpenAI(api_key=API_KEY)
+        self.pipe = OpenAI(api_key=api_key, base_url="https://api.bltcy.ai/v1")
 
     def generate(self, prompt, **kwargs):
         cnt = 0
         while cnt < 3:
             try:
-                response = self.pipe.images.generate(model="dall-e-3", prompt=prompt, size="1024x1024", quality="standard", n=1,
-                                                response_format='b64_json')
-                image_b64 = response.data[0].b64_json
-                image = self.base64_to_image(image_b64)
-                return image
+                response = self.pipe.images.generate(
+                model="dall-e-3",
+                prompt=prompt,
+                size="1024x1024",
+                quality="standard",
+                n=1,
+            )
+
+                url = response.data[0].url
+                print(url)
+                return url
             except Exception:
                 cnt += 1
                 continue
         return None
     
-    @staticmethod
     def base64_to_image(base64_string):
         try:
             image_data = base64.b64decode(base64_string)
@@ -193,8 +200,8 @@ class JanusFlowModel(BaseModel):
     @torch.inference_mode()
     def janus_generate(
         self,
-        vl_gpt: MultiModalityCausalLM,
-        vl_chat_processor: VLChatProcessor,
+        vl_gpt,
+        vl_chat_processor,
         prompt: str,
         cfg_weight: float = 5.0,
         num_inference_steps: int = 30,
@@ -303,8 +310,8 @@ class JanusProModel(BaseModel):
     @torch.inference_mode()
     def janus_generate(
         self,
-        mmgpt: MultiModalityCausalLM,
-        vl_chat_processor: VLChatProcessor,
+        mmgpt,
+        vl_chat_processor,
         prompt: str,
         temperature: float = 1,
         parallel_size: int = 1,

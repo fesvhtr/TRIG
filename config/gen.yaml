@@ -1,8 +1,8 @@
 name: "test"
-task: "p2p"
-# prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-text-to-image/text-to-imgae-without-m-e-v8.json"
-prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-image-editing/p2p_without_t.json"
+task: "t2i"
+prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-text-to-image/text-to-imgae-without-m-e-v8.json"
+# prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-image-editing/p2p_without_t.json"
 image_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-image-editing/images"
 
 generation:
-  models: ["omnigen"]
+  models: ["dalle3"]

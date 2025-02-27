@@ -14,7 +14,6 @@ AVAILABLE_Metric = {
     'niqe': 'classic.NIQEMetric',
     'aes_predictor': 'aesthetic_predictor.AESPredictorMetric',
     'knn_rarity': 'classic.KNN_rarityscore',
-    'cmmd': 'classic.CMMD',
     'rt_semsr': 'classic.RT_SemSR',
     'mid': 'classic.MIDMetric',
     'tas_artscore': 'classic.TASArtScoreMetric',

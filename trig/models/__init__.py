@@ -17,11 +17,12 @@ AVAILABLE_Model = {
     'janus_flow': 'text_to_image_models.JanusFlowModel',
     # p2p models
     'instructp2p': 'image_editing_models.InstructPix2PixModel',
-    'freediff': 'image_editing_models.FreeDiff',
+    'freediff': 'image_editing_models.FreeDiffModel',
     'flowedit': 'image_editing_models.FlowEditModel',
+    'hqedit': 'image_editing_models.HQEditModel',
     # subjects models
     'blipdiffusion': 'subject_driven_models.BlipDiffusionModel',
-    'ssrencoder': 'subject_driven_models.SSREncoder',
+    'ssrencoder': 'subject_driven_models.SSREncoderModel',
     'omnicontrol': 'subject_driven_models.OmniControlModel'
 }
 
@@ -37,6 +38,7 @@ def import_model(model_name):
 
     try:
         full_path = f"trig.models.{AVAILABLE_Model[model_name]}"
+        print(full_path)
         module_path, class_name = full_path.rsplit('.', 1)
 
         module = importlib.import_module(module_path)

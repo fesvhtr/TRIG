@@ -101,7 +101,8 @@ class Evaluator:
         combined_scores = defaultdict(lambda: defaultdict(list))
         for dim in combination.split("_"):
             if dim not in self.config["dimensions"]:
-                raise ValueError(f"Dimension '{dim}' not found in metrics!")
+                print(f"Dimension '{dim}' not found in config file.")
+                continue
             else:
                 metrics_config = self.config["dimensions"][dim].get("metrics", [])
                 for metric in metrics_config:
