@@ -156,6 +156,19 @@ curl http://localhost:10021/v1/models
 curl http://localhost:8000/v1/models
 nohup python eval.py > eval2.log 2>&1 &
 
-nohup bash -c "CUDA_VISIBLE_DEVICES=3 vllm serve Qwen/Qwen2.5-VL-7B-Instruct --dtype float16 --port 8000 --gpu-memory-utilization 0.8 --limit_mm_per_prompt image=2 " > server.log 2>&1 &
+nohup bash -c "CUDA_VISIBLE_DEVICES=2 vllm serve Qwen/Qwen2.5-VL-7B-Instruct --dtype float16 --port 10021 --gpu-memory-utilization 0.5 --limit_mm_per_prompt image=4 --disable-frontend-multiprocessing" > server.log 2>&1 &
 
 huggingface-cli download TRIG-bench/TRIG output/t2i/pixart_sigma.zip --local-dir /home/muzammal/Projects/TRIG/data/output/t2i --repo-type dataset
+
+curl http://localhost:10021/v1/chat/completions \
+    -H "Content-Type: application/json" \
+    -d '{
+    "model": "Qwen/Qwen2.5-VL-7B-Instruct",
+    "messages": [
+    {"role": "system", "content": "You are a helpful assistant."},
+    {"role": "user", "content": [
+        {"type": "image_url", "image_url": {"url": "https://modelscope.oss-cn-beijing.aliyuncs.com/resource/qwen.png"}},
+        {"type": "text", "text": "What is the text in the illustrate?"}
+    ]}
+    ]
+    }'

@@ -21,7 +21,8 @@ class Generator:
         print("Task:", self.config["task"])
         print("Models:", self.config["generation"]["models"])
         self.prompts_data = self.load_prompts(self.config["prompt_path"])
-        self.descriptions_data = self.load_descriptions(self.config["description_path"])
+        if "description_path" in self.config:
+            self.description_data = self.load_descriptions(self.config["description_path"])
         print("-" * 50)
 
     def instantiate_models(self):
@@ -64,7 +65,7 @@ class Generator:
         for model_name in self.config["generation"]["models"]:
             self.generate_single_model(model_name)
 
-    def save_image(image, output_path, filename):
+    def save_image(self, image, output_path, filename):
 
         file_path = os.path.join(output_path, f"{filename}.png")
 
@@ -83,7 +84,7 @@ class Generator:
         model_class = import_model(model_name)
         model = model_class()
         task  = self.config["task"]
-        image_path = os.path.join(self.config["image_path"], prompt_data["img_id"])
+        
         output_path = os.path.join(project_root, 'data/output', task, model_name)
         print(f"Output path: {output_path}")
 
@@ -92,7 +93,7 @@ class Generator:
         file_list = os.listdir(output_path)
         file_list = [os.path.splitext(f)[0] for f in file_list]
 
-        for prompt_data in tqdm(self.prompts_data[9000:]):
+        for prompt_data in tqdm(self.prompts_data[5000:]):
             if prompt_data["data_id"] in file_list:
                 continue
 
@@ -112,18 +113,20 @@ class Generator:
                     continue
 
             else:
+                image_path = os.path.join(self.config["image_path"], prompt_data["img_id"])
                 prompt = prompt_data["prompt"]
+                item = prompt_data["item"] if "item" in prompt_data else None
                 if model_name == "flowedit":
                     src_prompt = description_data[prompt_data["img_id"]]
                 task_mapping = {
                     "t2i": lambda: model.generate(prompt),
                     "p2p": lambda: model.generate_p2p(prompt, image_path, src_prompt) 
                     if model_name == "flowedit" else model.generate_p2p(prompt, image_path),
-                    "s2p": lambda: model.generate_s2p(),
+                    "s2p": lambda: model.generate_s2p(prompt, item, image_path),
                 }
                 image = task_mapping[task]()
 
-                save_image(image, output_path, prompt_data["data_id"])
+                self.save_image(image, output_path, prompt_data["data_id"])
 
 
 if __name__ == "__main__":

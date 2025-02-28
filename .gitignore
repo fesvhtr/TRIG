@@ -61,6 +61,7 @@ dataset/raw_dataset/subject-driven/Subjects200K/collection2.json
 dataset/raw_dataset/image-editing/dev-00000-of-00001.parquet
 dataset/Trig/Trig-image-editing/OmniEdit-Filtered/
 dataset/Trig/Trig-subject-driven/Subjects200K/
+dataset/Trig/Trig-subject-driven/images_right_half/
 data/result
 
 config/eval.yaml

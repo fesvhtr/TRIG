@@ -81,6 +81,11 @@ class FreeDiffModel(BaseModel):
 
 
 class FlowEditModel(BaseModel):
+    """
+    Arxiv 2024
+    FlowEdit: Inversion-Free Text-Based Editing Using Pre-Trained Flow Models
+    https://github.com/fallenshock/FlowEdit
+    """
     def __init__(self, model_type='FLUX',):
         self.model_name = "FlowEdit"
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -119,10 +124,10 @@ class FlowEditModel(BaseModel):
         x0_src = x0_src.to(device)
         
         if self.model_type == 'SD3':
-            x0_tar = FlowEditSD3(pipe,scheduler,x0_src,src_prompt,tar_prompt,negative_prompt,T_steps,n_avg,src_guidance_scale,tar_guidance_scale,n_min,n_max,)
+            x0_tar = FlowEditSD3(self.pipe,self.scheduler,x0_src,src_prompt,tar_prompt,negative_prompt,T_steps=28,n_avg=1,src_guidance_scale=1.5,tar_guidance_scale=5.5,n_min=0,n_max=24,)
             
         elif self.model_type == 'FLUX':
-            x0_tar = FlowEditFLUX(pipe,scheduler,x0_src,src_prompt,tar_prompt,negative_prompt, T_steps,n_avg, src_guidance_scale,tar_guidance_scale,n_min,n_max,)
+            x0_tar = FlowEditFLUX(self.pipe,self.scheduler,x0_src,src_prompt,tar_prompt,negative_prompt, T_steps=28,n_avg=1,src_guidance_scale=1.5,tar_guidance_scale=5.5,n_min=0,n_max=24,)
         else:
             raise NotImplementedError(f"Sampler type {model_type} not implemented")
 
@@ -135,6 +140,11 @@ class FlowEditModel(BaseModel):
         return image_tar[0]
 
 class HQEditModel(BaseModel):
+    """
+    Arxiv 2024
+    HQ-Edit: A High-Quality Dataset for Instruction-based Image Editing
+    https://github.com/UCSC-VLAA/HQ-Edit
+    """
     def __init__(self):
         self.model_name = "HQEdit"
         self.model_id = "MudeHui/HQ-Edit"

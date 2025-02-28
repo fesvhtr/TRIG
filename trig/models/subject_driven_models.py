@@ -21,7 +21,7 @@ class BlipDiffusionModel(BaseModel):
         self.pipe.to(device)
         self.negative_prompt = "over-exposure, under-exposure, saturated, duplicate, out of frame, lowres, cropped, worst quality, low quality, jpeg artifacts, morbid, mutilated, out of frame, ugly, bad anatomy, bad proportions, deformed, blurry, duplicate"
 
-    def generate(self, prompt, item, input_image):
+    def generate_s2p(self, prompt, item, input_image):
         cond_image = load_image(input_image)
         image = self.pipe(
             prompt,
@@ -65,7 +65,7 @@ class SSREncoderModel(BaseModel):
                     base_ssr+"/pytorch_model_1.bin"]
         self.ssr_model.load_SSR(ssr_ckpt[0], ssr_ckpt[1])
 
-    def generate(self, prompt, item, input_image):
+    def generate_s2p(self, prompt, item, input_image):
         pil_img = load_image(input_image)
         image = self.ssr_model.generate(
             pil_image=pil_img,
@@ -84,7 +84,6 @@ class SSREncoderModel(BaseModel):
 
         return image
 
-
 class OminiControlModel(BaseModel):
     """
     Arxiv 2024
@@ -94,8 +93,11 @@ class OminiControlModel(BaseModel):
     def __init__(self):
         self.model_name = "OminiControl"
         from trig.models.OminiControl.flux.condition import Condition
-        from trig.models.OminiControl.flux.generate import generate, seed_everything
+        from trig.models.OminiControl.flux.generate import generate as omini_generate
+        from trig.models.OminiControl.flux.generate import seed_everything
         from diffusers import FluxPipeline
+        self.Condition = Condition
+        self.omini_generate = omini_generate
         self.pipe = FluxPipeline.from_pretrained(
             "black-forest-labs/FLUX.1-schnell", 
             torch_dtype=torch.bfloat16
@@ -108,10 +110,10 @@ class OminiControlModel(BaseModel):
         )
         seed_everything(0)
 
-    def generate(self, prompt, item, input_image):
+    def generate_s2p(self, prompt, item, input_image):
         input_image = Image.open(input_image).convert("RGB")
-        condition = Condition("subject", input_image, position_delta=(0, 32))
-        image = generate(
+        condition = self.Condition("subject", input_image, position_delta=(0, 32))
+        image = self.omini_generate(
             self.pipe,
             prompt=prompt,
             conditions=[condition],

@@ -1,11 +1,12 @@
-name: "flux"
-task: "t2i"
-prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-text-to-image/text-to-imgae-without-m-e-v8.json"
+name: "p2p"
+task: "p2p"
+prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-image-editing/p2p_without_t.json"
+image_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-image-editing/images"
 
 evaluation:
-    image_dirs: ["/home/muzammal/Projects/TRIG/data/output/t2i/flux",]
+    image_dirs: ["/home/muzammal/Projects/TRIG/data/output/p2p/hqedit",]
     result_dir: "data/result"
-    result_files: ["data/result/t2i/test.json", ]
+    result_files: ["data/result/p2p/hqedit_qwen_7B_t1.json", ]
 
 TRIG_metric: &TRIG_metric
   name: trig_api

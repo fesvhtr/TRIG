@@ -25,13 +25,7 @@ class Evaluator:
         prompt_path = self.config["prompt_path"]
         with open(prompt_path, "r") as f:
             data = json.load(f)
-        prompt_dic = {}
-        for i in data:
-            prompt_dic[i['data_id']] = {
-                'prompt': i['prompt'],
-                'sub_prompt': i['dimension_prompt'],
-                'img_id': i['img_id']  # ground truth image
-            }
+        prompt_dic = {i['data_id']: {k: v for k, v in i.items()} for i in data}
         return prompt_dic
 
     def instantiate_metric(self, metric, dim):
@@ -76,13 +70,13 @@ class Evaluator:
             output_path = os.path.join(project_root, save_file)
         else:
             save_name = image_dir.split("/")[-1]
-            output_path = os.path.join(project_root, self.config['evaluation']['result_dir'], f"{save_name}.json")
+            output_path = os.path.join(project_root, self.config['evaluation']['result_dir'], self.config["task"], f"{save_name}.json")
         with open(output_path, "w") as f:
             json.dump(results, f, indent=4)
         print(f"Results Saved:'{output_path}'")
 
     def group_images_by_combination(self, image_dir):
-        grouped = defaultdict(lambda: {"data_ids": [], "image_paths": [], "prompts": []})
+        grouped = defaultdict(list)
         images = natsorted([f for f in os.listdir(os.path.join(project_root, image_dir))])
         print(f"Found {len(images)} images in '{image_dir}'")
 
@@ -90,14 +84,17 @@ class Evaluator:
             combination = "_".join(self.parse_dimensions(filename))
             image_path = os.path.join(image_dir, filename)
             data_id = os.path.splitext(filename)[0]
-            prompt = self.prompt_dic[data_id]
-            grouped[combination]["data_ids"].append(data_id)
-            grouped[combination]["image_paths"].append(image_path)
-            grouped[combination]["prompts"].append(prompt)
+
+            promp_data = self.prompt_dic[data_id]
+            promp_data["gen_image_path"] = image_path
+            
+            if "image_path" in self.config:
+                promp_data["img_id"] = os.path.join(self.config["image_path"], promp_data["img_id"])
+            grouped[combination].append(promp_data)
 
         return grouped
 
-    def evaluate_dim_pair(self, combination, data):
+    def evaluate_dim_pair(self, combination, prompt_data):
         combined_scores = defaultdict(lambda: defaultdict(list))
         for dim in combination.split("_"):
             if dim not in self.config["dimensions"]:
@@ -107,7 +104,12 @@ class Evaluator:
                 metrics_config = self.config["dimensions"][dim].get("metrics", [])
                 for metric in metrics_config:
                     metric_instance, metric_name = self.instantiate_metric(metric, dim)
-                    scores = metric_instance.compute_batch(data["data_ids"], data["image_paths"], data["prompts"])
+                    task = self.config["task"]
+
+                    # FIXME: improve general metric interface
+                    # scores = metric_instance.compute_batch(data["data_ids"], data["image_paths"], data["prompts"])
+                    scores = metric_instance.compute_batch(task, prompt_data)
+
                     for key, value in scores.items():
                         if key not in combined_scores:
                             combined_scores[key][dim] = [{metric_name: value}]
@@ -134,12 +136,13 @@ class Evaluator:
 
             final_results = self.read_results(image_dir=image_dir, save_file=result_files)
             exist_combination = {"_".join(key.split("_")[:-1]) for key in final_results}
-            for combination, prompts in tqdm(grouped.items()):
+            for combination, prompt_data in tqdm(grouped.items()):
                 print(f"Combination: {combination}")
                 if combination in exist_combination:
                     continue
-                print(f"Evaluating combination {combination} with {len(prompts['image_paths'])} images...")
-                combined_scores = self.evaluate_dim_pair(combination, prompts)
+                print(f"Evaluating combination {combination} with {len(prompt_data)} images...")
+                # print(f"Prompt data: {prompt_data[0]}")
+                combined_scores = self.evaluate_dim_pair(combination, prompt_data)
                 final_results.update(combined_scores)
                 self.save_results(final_results,image_dir=image_dir, save_file=result_files)
             print("Evaluation complete!")
