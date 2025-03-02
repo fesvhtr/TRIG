@@ -60,7 +60,8 @@ class SSREncoderModel(BaseModel):
                                      "cuda", dtype=torch.float32)
         self.ssr_model.get_pipe(self.pipe)
         
-        base_ssr = "/path/to/ssr_model"
+        # FIXME: give a script to download the model
+        base_ssr = "/home/muzammal/Projects/TRIG/data/ssrencoder"
         ssr_ckpt = [base_ssr+"/pytorch_model.bin",
                     base_ssr+"/pytorch_model_1.bin"]
         self.ssr_model.load_SSR(ssr_ckpt[0], ssr_ckpt[1])

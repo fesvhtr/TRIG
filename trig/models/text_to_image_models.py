@@ -26,7 +26,7 @@ class DALLE3Model(BaseModel):
 
     def generate(self, prompt, **kwargs):
         cnt = 0
-        while cnt < 3:
+        while cnt < 1:
             try:
                 response = self.pipe.images.generate(
                 model="dall-e-3",
@@ -39,8 +39,9 @@ class DALLE3Model(BaseModel):
                 url = response.data[0].url
                 print(url)
                 return url
-            except Exception:
+            except Exception as e:
                 cnt += 1
+                print(f"Error generating image with: {e}")
                 continue
         return None
     

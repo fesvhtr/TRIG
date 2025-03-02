@@ -63,6 +63,7 @@ dataset/Trig/Trig-image-editing/OmniEdit-Filtered/
 dataset/Trig/Trig-subject-driven/Subjects200K/
 dataset/Trig/Trig-subject-driven/images_right_half/
 data/result
+data/ssrencoder
 
 config/eval.yaml
 config/gen.yaml

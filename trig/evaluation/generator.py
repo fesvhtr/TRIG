@@ -58,12 +58,12 @@ class Generator:
             description_data = json.load(file)
         return description_data
 
-    def generate_batch_models(self):
+    def generate_batch_models(self, start_idx=None, end_idx=None):
         # FIXME: multiprocessing not working
         # with multiprocessing.Pool() as pool:
         #     pool.map(self.generate_single_model, self.config["generation"]["models"])
         for model_name in self.config["generation"]["models"]:
-            self.generate_single_model(model_name)
+            self.generate_single_model(model_name, start_idx, end_idx)
 
     def save_image(self, image, output_path, filename):
 
@@ -80,7 +80,7 @@ class Generator:
         except Exception as e:
             print(f"Failed to save image: {filename}, Error: {e}")
 
-    def generate_single_model(self, model_name):
+    def generate_single_model(self, model_name, start_idx=None, end_idx=None):
         model_class = import_model(model_name)
         model = model_class()
         task  = self.config["task"]
@@ -93,8 +93,16 @@ class Generator:
         file_list = os.listdir(output_path)
         file_list = [os.path.splitext(f)[0] for f in file_list]
 
-        for prompt_data in tqdm(self.prompts_data[5000:]):
+        if start_idx is not None and end_idx is not None:
+            if end_idx > len(self.prompts_data):
+                end_idx = len(self.prompts_data)
+            self.prompts_data = self.prompts_data[start_idx:end_idx]
+
+        for prompt_data in tqdm(self.prompts_data):
             if prompt_data["data_id"] in file_list:
+                continue
+
+            if  "IQ-R_R-T" in prompt_data["data_id"] and model_name=='dalle3':
                 continue
 
             if prompt_data["parent_dataset"][0].startswith("<") and prompt_data["parent_dataset"][0].endswith(

@@ -4,5 +4,6 @@ task: "s2p"
 prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-subject-driven/s2p_without_t.json"
 image_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-subject-driven/images_right_half"
 
+
 generation:
-  models: ["ominicontrol"]
+  models: ["ssrencoder"]

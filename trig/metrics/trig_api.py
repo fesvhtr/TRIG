@@ -38,7 +38,7 @@ class TRIGAPIMetric(BaseMetric):
         if len(args) == 0:  # t2i
             sys_msg = [{
                 "role": "system",
-                "content": gpt_logit_system_msg[self.task].format(gpt_logit_dimension_msg[self.dimension])
+                "content": gpt_logit_system_msg[self.task].format(gpt_logit_dimension_msg[self.task][self.dimension])
             }]
             user_msg = [{
                 "role": "user",
@@ -53,13 +53,14 @@ class TRIGAPIMetric(BaseMetric):
             src_image = args[0]
             sys_msg = [{
                 "role": "system",
-                "content": gpt_logit_system_msg[self.task].format(gpt_logit_dimension_msg[self.dimension])
+                "content": gpt_logit_system_msg[self.task].format(gpt_logit_dimension_msg[self.task][self.dimension])
             }]
 
             user_msg = [{
                 "role": "user",
                 "content": [
                     {"type": "text", "text": 'Prompt for editing the source image: ' + prompt},
+                    {"type": "text", "text": 'Here is the source image and the AI generated image:'},
                     {"type": "image_url",
                     "image_url": {"url": f"data:image/{src_image['type']};base64,{src_image['base64']}"}},
                     {"type": "image_url",
@@ -71,7 +72,7 @@ class TRIGAPIMetric(BaseMetric):
             item = args[1]
             sys_msg = [{
                 "role": "system",
-                "content": gpt_logit_system_msg[self.task].format(gpt_logit_dimension_msg[self.dimension])
+                "content": gpt_logit_system_msg[self.task].format(gpt_logit_dimension_msg[self.task][self.dimension])
             }]
             user_msg = [{
                 "role": "user",

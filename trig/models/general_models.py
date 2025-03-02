@@ -44,10 +44,7 @@ class OmniGenModel(BaseModel):
     
     def generate_s2p(self, prompt, item, input_image):
         prompt = f"The {item} is in <img><|image_1|></img>. {prompt}"
-        width, height = Image.open(input_image).size
-        width = int((width/2) // 16) * 16
-        height = int((height/2) // 16) * 16
-        images = self.pipe(prompt=prompt, input_images=[input_image], height=height, width=width, guidance_scale=2.5, 
+        images = self.pipe(prompt=prompt, input_images=[input_image], height=512, width=512, guidance_scale=2.5, 
                            img_guidance_scale=1.6, seed=0)[0]
         return images
 
