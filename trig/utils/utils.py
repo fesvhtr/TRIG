@@ -3,7 +3,6 @@ import yaml
 from PIL import Image
 from io import BytesIO
 
-from PIL import Image
 
 def get_image_resolution(image_path):
     with Image.open(image_path) as img:
@@ -17,7 +16,7 @@ def get_image_type(image_path):
     return image_type
 
 
-def load_config( config_path):
+def load_config(config_path):
     with open(config_path, "r") as f:
         return yaml.safe_load(f)
 

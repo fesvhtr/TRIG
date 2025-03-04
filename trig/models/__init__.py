@@ -23,7 +23,8 @@ AVAILABLE_Model = {
     # subjects models
     'blipdiffusion': 'subject_driven_models.BlipDiffusionModel',
     'ssrencoder': 'subject_driven_models.SSREncoderModel',
-    'ominicontrol': 'subject_driven_models.OminiControlModel'
+    'ominicontrol': 'subject_driven_models.OminiControlModel',
+    'xflux': 'subject_driven_models.XFluxModel',
 }
 
 def import_model(model_name):

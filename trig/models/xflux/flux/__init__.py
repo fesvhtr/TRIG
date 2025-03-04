@@ -6,6 +6,9 @@ except ImportError:
     version_tuple = (0, 0, "unknown", "noinfo")
 
 from pathlib import Path
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 PACKAGE = __package__.replace("_", "-")
 PACKAGE_ROOT = Path(__file__).parent

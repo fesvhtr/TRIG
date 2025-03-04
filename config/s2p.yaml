@@ -1,9 +1,10 @@
 name: "test"
 task: "s2p"
 # prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-text-to-image/text-to-imgae-without-m-e-v8.json"
-prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-subject-driven/s2p_without_t.json"
-image_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-subject-driven/images_right_half"
+prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-subject-driven/s2p_t.json"
+image_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-subject-driven/toxicity_images"
 
 
 generation:
-  models: ["ssrencoder"]
+# "xflux", "blipdiffusion", "omnigen", "ssrencoder", "ominicontrol"
+  models: ["ominicontrol"]

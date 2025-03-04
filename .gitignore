@@ -32,6 +32,8 @@ model_ts*.txt
 *.swn
 *.swo
 *.swp
+*.npz
+*.pth
 *.log
 *.parquet
 *.tar.gz
@@ -64,6 +66,9 @@ dataset/Trig/Trig-subject-driven/Subjects200K/
 dataset/Trig/Trig-subject-driven/images_right_half/
 data/result
 data/ssrencoder
-
+hf_cache
+dataset/Trig/Trig-image-editing/toxicity_images
+dataset/Trig/Trig-subject-driven/toxicity_images
 config/eval.yaml
 config/gen.yaml
+metrics

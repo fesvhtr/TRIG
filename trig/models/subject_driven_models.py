@@ -124,3 +124,37 @@ class OminiControlModel(BaseModel):
         ).images[0]
 
         return image
+
+class XFluxModel(BaseModel):
+    """
+    Huggingface: https://huggingface.co/XLabs-AI/flux-ip-adapter-v2
+    A IP-Adapter checkpoint for FLUX.1-dev model by Black Forest Labs
+    https://github.com/XLabs-AI/x-flux
+    """
+    def __init__(self):
+        self.model_name = "xflux"
+        from trig.models.xflux.flux.xflux_pipeline import XFluxPipeline
+        self.pipe = XFluxPipeline("flux-dev", "cuda", False)
+        self.pipe.set_ip(None, "XLabs-AI/flux-ip-adapter", "ip_adapter.safetensors")
+
+    def generate_s2p(self, prompt, item, input_image):
+        input_image = Image.open(input_image)
+        image = self.pipe(
+            prompt=prompt,
+            controlnet_image=None,
+            width=512,
+            height=512  ,
+            guidance=4,
+            num_steps=25,
+            seed=42,
+            true_gs=3.5,
+            control_weight=0.0,
+            neg_prompt="",
+            timestep_to_start_cfg=1,
+            image_prompt=input_image,
+            neg_image_prompt=None,
+            ip_scale=1.0,
+            neg_ip_scale=1.0,
+        )
+
+        return image

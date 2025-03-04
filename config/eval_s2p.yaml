@@ -1,11 +1,12 @@
-name: "flux"
-task: "t2i"
-prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-text-to-image/text-to-imgae-without-m-e-v8.json"
+name: "s2p"
+task: "s2p"
+prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-subject-driven/s2p_without_t.json"
+image_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-subject-driven/images_right_half"
 
 evaluation:
-    image_dirs: ["/home/muzammal/Projects/TRIG/data/output/t2i/dalle3",]
+    image_dirs: ["/home/muzammal/Projects/TRIG/data/output/s2p/omnigen", "/home/muzammal/Projects/TRIG/data/output/s2p/ssrencoder", "/home/muzammal/Projects/TRIG/data/output/s2p/xflux"]
     result_dir: "data/result"
-    result_files: ["data/result/t2i/dalle3.json", ]
+    result_files: ["data/result/s2p/omnigen_qwen_7B_t1.json", "data/result/s2p/ssrencoder_qwen_7B_t1.json", "data/result/s2p/xflux_qwen_7B_t1.json"]
 
 TRIG_metric: &TRIG_metric
   name: trig_api

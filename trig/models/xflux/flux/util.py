@@ -278,6 +278,7 @@ def print_load_warning(missing: list[str], unexpected: list[str]) -> None:
 
 def load_from_repo_id(repo_id, checkpoint_name):
     ckpt_path = hf_hub_download(repo_id, checkpoint_name)
+    print("Loading checkpoint", ckpt_path)
     sd = load_sft(ckpt_path, device='cpu')
     return sd
 

@@ -14,6 +14,8 @@ import sys
 import os
 from pathlib import Path
 import torch.nn.functional as F
+from urllib.request import urlretrieve
+from os.path import expanduser
 
 class NIQEMetric(BaseMetric):
     # Natural Image Quality Evaluator
@@ -188,7 +190,9 @@ class KNN_rarityscore(BaseMetric):
             np.ndarray: 稀有度分数数组
         """
         if self.real_features is None:
-            raise ValueError("请先通过init_reference_database初始化参考数据库")
+            real_image_dir = os.path.dirname(images[0])
+            self.init_reference_database(real_image_dir)
+            #raise ValueError("请先通过init_reference_database初始化参考数据库")
             
         try:
             print(f"开始处理 {len(images)} 张测试图像...")
@@ -287,7 +291,7 @@ class CMMD(BaseMetric):
             raise ValueError("请先通过init_real_images初始化真实图像目录")
         
         # 创建临时目录存放单张图片
-        temp_dir = os.path.join(os.path.dirname(image_path), "temp_eval")
+        temp_dir = os.path.join(os.path.dirname(image_path), "..\\temp_eval")
         os.makedirs(temp_dir, exist_ok=True)
         try:
             # 复制图片到临时目录
@@ -323,10 +327,12 @@ class CMMD(BaseMetric):
             np.ndarray: CMMD分数数组
         """
         if self.real_image_dir is None:
-            raise ValueError("请先通过init_real_images初始化真实图像目录")
+            real_image_dir = os.path.dirname(images[0])
+            self.init_real_images(real_image_dir)
+            #raise ValueError("请先通过init_real_images初始化真实图像目录")
             
         # 创建临时目录存放评估图片
-        temp_dir = os.path.join(os.path.dirname(images[0]), "temp_eval_batch")
+        temp_dir = os.path.join(os.path.dirname(images[0]), "..\\temp_eval_batch")
         os.makedirs(temp_dir, exist_ok=True)
         try:
             # 复制所有图片到临时目录
@@ -439,6 +445,8 @@ class MIDMetric(BaseMetric):
             feature_dim: 特征维度，默认为512
             limit: 样本数量限制，默认为30000
         """
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
         super().__init__(**kwargs)
         self.device = device
         self.feature_dim = feature_dim
@@ -640,12 +648,12 @@ class MIDMetric(BaseMetric):
             # 计算 MID 分数
             score = self._compute_mid(real_features, text_features, fake_features)
             print(f"批量计算完成，MID分数: {float(score)}")
-            return np.array([float(score)])
+            return np.array([float(score)] * len(images))  
         except Exception as e:
             print(f"批量计算MID分数时出错: {str(e)}")
             if torch.cuda.is_available():
                 print(f"当前GPU内存使用情况: {torch.cuda.memory_allocated()/1024**2:.2f}MB")
-            return np.array([np.nan])
+            return np.array([np.nan]* len(images))
 
 class TASArtScoreMetric(BaseMetric):
     def __init__(self, model_path=None, device='cuda', **kwargs):
@@ -715,9 +723,535 @@ class TASArtScoreMetric(BaseMetric):
         """
         try:
             print(f"\n批量评估 {len(images)} 张图片")
-            scores = self.evaluate_batch(self.model, images, batch_size=32, device=self.device)
+            scores = self.evaluate_batch(self.model, images, batch_size=32, device=self.device) 
+            #scores from 2D to 1D modify by zhb
+            scores = np.array(scores).flatten()           
             print(f"评分范围: [{min(scores):.4f}, {max(scores):.4f}]")
             return np.array(scores)
         except Exception as e:
             print(f"批量计算艺术性评分时出错: {str(e)}")
             return np.array([float('nan')] * len(images))
+
+class CLIPScoreMetric(BaseMetric):
+    def __init__(self, model_path=None, device='cuda', **kwargs):
+        """
+        初始化 CLIPScore 评分计算器
+        Args:
+            model_path: 预训练模型路径（在这里不使用，因为使用CLIP默认权重）
+            device: 计算设备，默认为 'cuda'
+        """
+        super().__init__(**kwargs)
+        try:
+            from .clipscore_main.clipscore import get_clip_score, extract_all_images, extract_all_captions
+            self.get_clip_score = get_clip_score
+            self.extract_all_images = extract_all_images
+            self.extract_all_captions = extract_all_captions
+            
+            self.device = device if torch.cuda.is_available() else "cpu"
+            print(f"使用设备: {self.device}")
+            
+            # 初始化CLIP模型
+            print("初始化CLIP模型...")
+            #self.model, _ = clip.load("ViT-B/32", device=self.device, jit=False)
+            self.model, self.clip_preprocess = clip.load("ViT-B/32", device=self.device)
+            self.model.eval()
+            print("CLIP模型初始化完成！")
+            
+        except Exception as e:
+            print(f"初始化CLIPScore模型时出错: {str(e)}")
+            raise
+
+    def compute(self, image_path, prompt):
+        """
+        计算单张图片的CLIPScore
+        Args:
+            image_path: 图片路径
+            prompt: 提示文本
+        Returns:
+            float: CLIPScore分数
+        """
+        try:
+            print(f"\n评估图片: {image_path}")
+            print(f"提示文本: {prompt}")
+            
+            # 导入extract_all_images和extract_all_captions函数
+            from .clipscore_main.clipscore import extract_all_images, extract_all_captions
+            
+            # 直接提取特征
+            image_features = extract_all_images([image_path], self.model, self.device, num_workers=0)
+            text_features = extract_all_captions([prompt], self.model, self.device, num_workers=0)
+            
+            # 归一化
+            image_features = image_features / np.sqrt(np.sum(image_features**2, axis=1, keepdims=True))
+            text_features = text_features / np.sqrt(np.sum(text_features**2, axis=1, keepdims=True))
+            
+            # 计算相似度
+            similarity = np.sum(image_features * text_features, axis=1)
+            score = 2.5 * np.clip(similarity[0], 0, None)
+            
+            print(f"CLIPScore: {score:.4f}")
+            return float(score)
+            
+        except Exception as e:
+            print(f"计算CLIPScore时出错: {str(e)}")
+            return float('nan')
+
+    def compute_batch(self, images, prompts, dimension):
+        """
+        批量计算图片的CLIPScore
+        Args:
+            images: 图片路径列表
+            prompts: 提示文本列表
+            dimension: 维度信息（在CLIPScore中不使用）
+        Returns:
+            np.ndarray: CLIPScore分数数组
+        """
+        try:
+            print(f"\n批量评估 {len(images)} 张图片")
+            
+            # 导入extract_all_images和extract_all_captions函数
+            from .clipscore_main.clipscore import extract_all_images, extract_all_captions
+            
+            # 分批处理以避免内存问题
+            batch_size = 32
+            all_scores = []
+            
+            for i in range(0, len(images), batch_size):
+                batch_images = images[i:i+batch_size]
+                batch_prompts = prompts[i:i+batch_size]
+                
+                # 提取特征
+                image_features = extract_all_images(batch_images, self.model, self.device, num_workers=0)
+                text_features = extract_all_captions(batch_prompts, self.model, self.device, num_workers=0)
+                
+                # 归一化
+                image_features = image_features / np.sqrt(np.sum(image_features**2, axis=1, keepdims=True))
+                text_features = text_features / np.sqrt(np.sum(text_features**2, axis=1, keepdims=True))
+                
+                # 计算相似度
+                similarities = np.sum(image_features * text_features, axis=1)
+                batch_scores = 2.5 * np.clip(similarities, 0, None)
+                all_scores.extend(batch_scores)
+            
+            scores = np.array(all_scores)
+            mean_score = np.mean(scores)
+            
+            print(f"平均CLIPScore: {mean_score:.4f}")
+            print(f"分数范围: [{min(scores):.4f}, {max(scores):.4f}]")
+            
+            return scores
+            
+        except Exception as e:
+            print(f"批量计算CLIPScore时出错: {str(e)}")
+            return np.array([float('nan')] * len(images))  
+
+class InceptionScoreMetric(BaseMetric):
+    def __init__(self, **kwargs):
+        """
+        初始化 Inception Score 评分计算器
+        """
+        super().__init__(**kwargs)
+        try:
+            from .inception_score_pytorch_master.inception_score import inception_score
+            self.inception_score_fn = inception_score
+            self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+            print(f"使用设备: {self.device}")
+            print("Inception Score模型初始化完成！")
+        except Exception as e:
+            print(f"初始化Inception Score模型时出错: {str(e)}")
+            raise
+
+    def _prepare_dataset(self, image_paths):
+        """
+        将图片路径列表转换为符合inception_score函数要求的数据集
+        """
+        class ImageDataset(torch.utils.data.Dataset):
+            def __init__(self, image_paths):
+                self.image_paths = image_paths
+                self.transform = transforms.Compose([
+                    transforms.Resize((299, 299)),
+                    transforms.ToTensor(),
+                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+                ])
+
+            def __len__(self):
+                return len(self.image_paths)
+
+            def __getitem__(self, idx):
+                img_path = self.image_paths[idx]
+                try:
+                    img = Image.open(img_path).convert('RGB')
+                    img = self.transform(img)
+                    return img
+                except Exception as e:
+                    print(f"处理图片 {img_path} 时出错: {str(e)}")
+                    # 返回一个全零张量作为替代
+                    return torch.zeros(3, 299, 299)
+
+        return ImageDataset(image_paths)
+
+    def compute(self, image_path, prompt):
+        """
+        计算单张图片的Inception Score
+        Args:
+            image_path: 图片路径
+            prompt: 提示文本（在Inception Score中不使用）
+        Returns:
+            float: Inception Score分数
+        """
+        try:
+            print(f"\n评估图片: {image_path}")
+            
+            # 创建单图片数据集
+            dataset = self._prepare_dataset([image_path])
+            
+            # 计算Inception Score
+            # 注意：inception_score要求至少有2张图片，所以对单张图片的情况特殊处理
+            if len(dataset) < 2:
+                # 复制图片以满足最小要求
+                image_paths = [image_path] * 2
+                dataset = self._prepare_dataset(image_paths)
+            
+            mean, std = self.inception_score_fn(
+                dataset,
+                cuda=self.device=='cuda',
+                batch_size=1,
+                resize=True,
+                splits=1
+            )
+            
+            print(f"Inception Score: {mean:.4f} ± {std:.4f}")
+            return float(mean)
+            
+        except Exception as e:
+            print(f"计算Inception Score时出错: {str(e)}")
+            return float('nan')
+
+    def compute_batch(self, images, prompts, dimension):
+        """
+        批量计算图片的Inception Score
+        Args:
+            images: 图片路径列表
+            prompts: 提示文本列表（在Inception Score中不使用）
+            dimension: 维度信息（在Inception Score中不使用）
+        Returns:
+            np.ndarray: Inception Score分数数组
+        """
+        try:
+            print(f"\n批量评估 {len(images)} 张图片")
+            
+            # 创建数据集
+            dataset = self._prepare_dataset(images)
+            
+            # 如果图片数量不足2张，进行复制
+            if len(dataset) < 2:
+                print("警告：图片数量不足2张，将复制现有图片以满足最小要求")
+                images = images * 2
+                dataset = self._prepare_dataset(images)
+            
+            # 计算Inception Score
+            mean, std = self.inception_score_fn(
+                dataset,
+                cuda=self.device=='cuda',
+                batch_size=min(32, len(images)),
+                resize=True,
+                splits=1
+            )
+            
+            print(f"平均Inception Score: {mean:.4f} ± {std:.4f}")
+            
+            # 对于批量计算，我们返回一个所有图片共享相同分数的数组
+            # 因为Inception Score是对整个数据集的评估，而不是单张图片
+            return np.array([float(mean)] * len(images))
+            
+        except Exception as e:
+            print(f"批量计算Inception Score时出错: {str(e)}")
+            return np.array([float('nan')] * len(images))  
+
+class AestheticPredictorMetric(BaseMetric):
+    def __init__(self, clip_model="vit_l_14", device='cuda', **kwargs):
+        """
+        初始化美学评分预测器
+        Args:
+            clip_model: CLIP模型类型，可选 'vit_l_14' 或 'vit_b_32'
+            device: 计算设备，默认为 'cuda'
+        """
+        super().__init__(**kwargs)
+        try:
+            import open_clip
+            self.device = torch.device(device if torch.cuda.is_available() else 'cpu')
+            print(f"使用设备: {self.device}")
+            
+            # 初始化CLIP模型
+            print(f"初始化CLIP模型 {clip_model}...")
+            if clip_model == "vit_l_14":
+                self.model, _, self.preprocess = open_clip.create_model_and_transforms('ViT-L/14', pretrained='openai')
+            elif clip_model == "vit_b_32":
+                self.model, _, self.preprocess = open_clip.create_model_and_transforms('ViT-B-32', pretrained='openai')
+            else:
+                raise ValueError(f"不支持的CLIP模型类型: {clip_model}")
+                
+            self.model = self.model.to(self.device)
+            self.model.eval()
+            
+            # 初始化美学评分模型
+            print("初始化美学评分模型...")
+            self.aesthetic_model = self._get_aesthetic_model(clip_model)
+            self.aesthetic_model = self.aesthetic_model.to(self.device)
+            self.aesthetic_model.eval()
+            
+            print("模型初始化完成！")
+            
+        except Exception as e:
+            print(f"初始化美学评分预测器时出错: {str(e)}")
+            raise
+
+    def _get_aesthetic_model(self, clip_model):
+        """加载美学评分模型"""
+        home = expanduser("~")
+        cache_folder = home + "/.cache/emb_reader"
+        path_to_model = cache_folder + "/sa_0_4_"+clip_model+"_linear.pth"
+        
+        if not os.path.exists(path_to_model):
+            os.makedirs(cache_folder, exist_ok=True)
+            url_model = (
+                "https://github.com/LAION-AI/aesthetic-predictor/blob/main/sa_0_4_"+clip_model+"_linear.pth?raw=true"
+            )
+            urlretrieve(url_model, path_to_model)
+            
+        if clip_model == "vit_l_14":
+            m = nn.Linear(768, 1)
+        elif clip_model == "vit_b_32":
+            m = nn.Linear(512, 1)
+        else:
+            raise ValueError(f"不支持的CLIP模型类型: {clip_model}")
+            
+        s = torch.load(path_to_model)
+        m.load_state_dict(s)
+        m.eval()
+        return m
+
+    def compute(self, image_path, prompt):
+        """
+        计算单张图片的美学评分
+        Args:
+            image_path: 图片路径
+            prompt: 提示文本（在美学评分中不使用）
+        Returns:
+            float: 美学评分
+        """
+        try:
+            print(f"\n评估图片: {image_path}")
+            
+            # 加载和预处理图片
+            image = Image.open(image_path).convert('RGB')
+            image = self.preprocess(image).unsqueeze(0).to(self.device)
+            
+            # 计算美学评分
+            with torch.no_grad():
+                image_features = self.model.encode_image(image)
+                image_features /= image_features.norm(dim=-1, keepdim=True)
+                prediction = self.aesthetic_model(image_features)
+                
+            score = float(prediction[0][0])
+            print(f"美学评分: {score:.4f}")
+            return score
+            
+        except Exception as e:
+            print(f"计算美学评分时出错: {str(e)}")
+            return float('nan')
+
+    def compute_batch(self, images, prompts, dimension):
+        """
+        批量计算图片的美学评分
+        Args:
+            images: 图片路径列表
+            prompts: 提示文本列表（在美学评分中不使用）
+            dimension: 维度信息（在美学评分中不使用）
+        Returns:
+            np.ndarray: 美学评分数组
+        """
+        try:
+            print(f"\n批量评估 {len(images)} 张图片")
+            scores = []
+            
+            # 批量处理图片
+            batch_size = 32
+            for i in range(0, len(images), batch_size):
+                batch_paths = images[i:i+batch_size]
+                batch_images = []
+                
+                # 加载和预处理批次中的图片
+                for img_path in batch_paths:
+                    try:
+                        image = Image.open(img_path).convert('RGB')
+                        image = self.preprocess(image)
+                        batch_images.append(image)
+                    except Exception as e:
+                        print(f"处理图片 {img_path} 时出错: {str(e)}")
+                        batch_images.append(torch.zeros_like(batch_images[0] if batch_images else torch.zeros(3, 224, 224)))
+                
+                # 将批次转换为张量
+                batch_tensor = torch.stack(batch_images).to(self.device)
+                
+                # 计算批次的美学评分
+                with torch.no_grad():
+                    image_features = self.model.encode_image(batch_tensor)
+                    image_features /= image_features.norm(dim=-1, keepdim=True)
+                    predictions = self.aesthetic_model(image_features)
+                    batch_scores = [float(p[0]) for p in predictions]
+                    scores.extend(batch_scores)
+            
+            scores = np.array(scores)
+            print(f"评分范围: [{min(scores):.4f}, {max(scores):.4f}]")
+            return scores
+            
+        except Exception as e:
+            print(f"批量计算美学评分时出错: {str(e)}")
+            return np.array([float('nan')] * len(images))  
+
+class NSFWMetric(BaseMetric):
+    def __init__(self, model_type='h14', device='cuda', **kwargs):
+        """
+        初始化NSFW检测器
+        Args:
+            model_type: 模型类型，可选 'h14' 或 'clip'
+            device: 计算设备，默认为 'cuda'
+        """
+        super().__init__(**kwargs)
+    
+        try:
+            self.device = torch.device(device if torch.cuda.is_available() else 'cpu')
+            self.model_type = model_type
+            print(f"使用设备: {self.device}")
+            
+            if model_type == 'h14':
+                from .NSFW.h14_nsfw_model import H14_NSFW_Detector
+                self.model = H14_NSFW_Detector()
+                # 加载预训练权重
+                weights_path = os.path.join(os.path.dirname(__file__), 'NSFW/h14_nsfw.pth')
+                self.model.load_state_dict(torch.load(weights_path, map_location=self.device))
+                self.model = self.model.to(self.device)
+                self.model.eval()
+                
+                # 设置图像预处理
+                self.preprocess = transforms.Compose([
+                    transforms.Resize(1024),
+                    transforms.CenterCrop(1024),
+                    transforms.ToTensor(),
+                    transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                      std=[0.229, 0.224, 0.225])
+                ])
+                
+            elif model_type == 'clip':
+                import tensorflow as tf
+                model_path = os.path.join(os.path.dirname(__file__), 'NSFW/clip_autokeras_nsfw')
+                self.model = tf.keras.models.load_model(model_path)
+                
+                # 加载CLIP模型用于特征提取
+                self.clip_model, _ = clip.load("ViT-B/32", device=self.device)
+                self.clip_model.eval()
+                
+            else:
+                raise ValueError(f"不支持的模型类型: {model_type}")
+                
+            print("NSFW检测器初始化完成！")
+            
+        except Exception as e:
+            print(f"初始化NSFW检测器时出错: {str(e)}")
+            raise
+
+    def _extract_features(self, image_path):
+        """提取图像特征"""
+        try:
+            image = Image.open(image_path).convert('RGB')
+            if self.model_type == 'h14':
+                image = self.preprocess(image).unsqueeze(0).to(self.device)
+                return image
+            else:  # clip
+                image = self.clip_model.preprocess(image).unsqueeze(0).to(self.device)
+                with torch.no_grad():
+                    features = self.clip_model.encode_image(image)
+                return features.cpu().numpy()
+        except Exception as e:
+            print(f"提取图像特征时出错: {str(e)}")
+            raise
+
+    def compute(self, image_path, prompt):
+        """
+        计算单张图片的NSFW分数
+        Args:
+            image_path: 图片路径
+            prompt: 提示文本（在NSFW检测中不使用）
+        Returns:
+            float: NSFW分数（0-1之间，越大表示越可能是NSFW内容）
+        """
+        try:
+            print(f"\n评估图片: {image_path}")
+            
+            features = self._extract_features(image_path)
+            
+            if self.model_type == 'h14':
+                with torch.no_grad():
+                    score = torch.sigmoid(self.model(features)).item()
+            else:  # clip
+                score = float(self.model.predict(features)[0])
+                
+            print(f"NSFW分数: {score:.4f}")
+            return score
+            
+        except Exception as e:
+            print(f"计算NSFW分数时出错: {str(e)}")
+            return float('nan')
+
+    def compute_batch(self, images, prompts, dimension):
+        """
+        批量计算图片的NSFW分数
+        Args:
+            images: 图片路径列表
+            prompts: 提示文本列表（在NSFW检测中不使用）
+            dimension: 维度信息（在NSFW检测中不使用）
+        Returns:
+            np.ndarray: NSFW分数数组
+        """
+        try:
+            print(f"\n批量评估 {len(images)} 张图片")
+            scores = []
+            
+            # 批量处理图片
+            batch_size = 32
+            for i in range(0, len(images), batch_size):
+                batch_paths = images[i:i+batch_size]
+                batch_features = []
+                
+                # 提取特征
+                for img_path in batch_paths:
+                    try:
+                        features = self._extract_features(img_path)
+                        batch_features.append(features)
+                    except Exception as e:
+                        print(f"处理图片 {img_path} 时出错: {str(e)}")
+                        # 使用零特征作为替代
+                        if self.model_type == 'h14':
+                            batch_features.append(torch.zeros_like(batch_features[0] if batch_features else torch.zeros(1, 3, 224, 224)).to(self.device))
+                        else:  # clip
+                            batch_features.append(np.zeros_like(batch_features[0] if batch_features else np.zeros((1, 512))))
+                
+                # 计算分数
+                if self.model_type == 'h14':
+                    batch_tensor = torch.cat(batch_features, dim=0)
+                    with torch.no_grad():
+                        batch_scores = torch.sigmoid(self.model(batch_tensor)).cpu().numpy()
+                    scores.extend(batch_scores.flatten().tolist())
+                else:  # clip
+                    batch_array = np.concatenate(batch_features, axis=0)
+                    batch_scores = self.model.predict(batch_array)
+                    scores.extend(batch_scores.flatten().tolist())
+            
+            scores = np.array(scores)
+            print(f"评分范围: [{min(scores):.4f}, {max(scores):.4f}]")
+            return scores
+            
+        except Exception as e:
+            print(f"批量计算NSFW分数时出错: {str(e)}")
+            return np.array([float('nan')] * len(images))  

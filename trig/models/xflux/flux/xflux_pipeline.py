@@ -7,7 +7,7 @@ from einops import rearrange
 import uuid
 import os
 
-from src.flux.modules.layers import (
+from ..flux.modules.layers import (
     SingleStreamBlockProcessor,
     DoubleStreamBlockProcessor,
     SingleStreamBlockLoraProcessor,
@@ -15,8 +15,8 @@ from src.flux.modules.layers import (
     IPDoubleStreamBlockProcessor,
     ImageProjModel,
 )
-from src.flux.sampling import denoise, denoise_controlnet, get_noise, get_schedule, prepare, unpack
-from src.flux.util import (
+from ..flux.sampling import denoise, denoise_controlnet, get_noise, get_schedule, prepare, unpack
+from ..flux.util import (
     load_ae,
     load_clip,
     load_flow_model,
