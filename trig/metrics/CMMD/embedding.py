@@ -16,8 +16,9 @@
 """Embedding models used in the CMMD calculation."""
 
 import jax
-from scenic.projects.baselines.clip import model as clip
+from scenic.projects.baselines.clip import model as clipmodel
 import torch
+import clip
 from PIL import Image
 import torchvision.transforms as T
 
@@ -33,7 +34,7 @@ def _clip_preprocess(images, size):
 
   # Apply CLIP-specific shifting/scaling.  The input to `normalize_image` is
   # expected to be in [0, 1].
-  images = clip.normalize_image(images)
+  images = clipmodel.normalize_image(images)
 
   return images
 

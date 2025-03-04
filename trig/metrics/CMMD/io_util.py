@@ -16,12 +16,12 @@
 """IO utilities."""
 
 import os
-from cmmd import embedding
+#from cmmd import embedding
 import jax
 import numpy as np
 from PIL import Image
 import tensorflow as tf
-import tqdm
+from tqdm import tqdm
 
 
 def _get_image_list(path):

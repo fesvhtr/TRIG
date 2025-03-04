@@ -11,12 +11,19 @@ AVAILABLE_Metric = {
     'vqascore_llava': 'vqascore_llava.VQAScoreLLaVAMetric',
     'vqascore_gpt': 'vqascore_gpt.VQAScoreGPTMetric',
     # classic Metrics
+
     'niqe': 'classic.NIQEMetric',
-    'aes_predictor': 'aesthetic_predictor.AESPredictorMetric',
+    #'aes_predictor': 'aesthetic_predictor.AESPredictorMetric',#未实现
     'knn_rarity': 'classic.KNN_rarityscore',
-    'rt_semsr': 'classic.RT_SemSR',
-    'mid': 'classic.MIDMetric',
     'tas_artscore': 'classic.TASArtScoreMetric',
+    
+    'rt_semsr': 'classic.RT_SemSR',#需要预设值对比图像
+    'mid': 'classic.MIDMetric',
+    'cmmd': 'classic.CMMD',
+    'NSFW': 'classic.NSFWMetric',#算法返回格式有问题，和目前格式不匹配
+    'clipscore': 'classic.CLIPScoreMetric',
+    'inception_score': 'classic.InceptionScoreMetric',
+    'aesthetic_predictor': 'classic.AestheticPredictorMetric',
 }
 
 

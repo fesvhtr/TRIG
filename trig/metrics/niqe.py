@@ -313,7 +313,7 @@ def calculate_niqe(img, crop_border, input_order='HWC', convert_to='y'):
     """
 
     # we use the official params estimated from the pristine dataset.
-    niqe_pris_params = np.load('../trig/utils/niqe_pris_params.npz')
+    niqe_pris_params = np.load('TRIG/trig/utils/niqe_pris_params.npz')
     mu_pris_param = niqe_pris_params['mu_pris_param']
     cov_pris_param = niqe_pris_params['cov_pris_param']
     gaussian_window = niqe_pris_params['gaussian_window']

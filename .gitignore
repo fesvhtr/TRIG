@@ -71,4 +71,3 @@ dataset/Trig/Trig-image-editing/toxicity_images
 dataset/Trig/Trig-subject-driven/toxicity_images
 config/eval.yaml
 config/gen.yaml
-metrics
