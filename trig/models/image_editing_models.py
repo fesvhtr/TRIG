@@ -1,7 +1,7 @@
 import torch
 from PIL import Image
 from diffusers.utils import load_image
-from trig.models.base import BaseModel
+from base import BaseModel
 
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -79,66 +79,6 @@ class FreeDiffModel(BaseModel):
         return xT, xts
 
 
-
-class FlowEditModel(BaseModel):
-    """
-    Arxiv 2024
-    FlowEdit: Inversion-Free Text-Based Editing Using Pre-Trained Flow Models
-    https://github.com/fallenshock/FlowEdit
-    """
-    def __init__(self, model_type='FLUX',):
-        self.model_name = "FlowEdit"
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model_type = model_type
-        from trig.models.FlowEdit_utils import FlowEditSD3, FlowEditFLUX
-
-        if model_type == 'FLUX':
-            from diffusers import FluxPipeline
-            # pipe = FluxPipeline.from_pretrained("black-forest-labs/FLUX.1-schnell", torch_dtype=torch.float16) 
-            self.pipe = FluxPipeline.from_pretrained("black-forest-labs/FLUX.1-dev", torch_dtype=torch.float16)
-        elif model_type == 'SD3':
-            from diffusers import StableDiffusion3Pipeline
-            self.pipe = StableDiffusion3Pipeline.from_pretrained("stabilityai/stable-diffusion-3-medium-diffusers", torch_dtype=torch.float16)
-        else:
-            raise NotImplementedError(f"Model type {model_type} not implemented")
-    
-        self.scheduler = pipe.scheduler
-        self.pipe = self.pipe.to(self.device)
-
-    def generate_p2p(self, prompt, input_image, src_prompt):
-        src_prompt = src_prompt
-        tar_prompts = prompt
-        negative_prompt =  "" # optionally add support for negative prompts (SD3)
-   
-        # load image
-        image = Image.open(input_imageh)
-        # crop image to have both dimensions divisibe by 16 - avoids issues with resizing
-        image = image.crop((0, 0, image.width - image.width % 16, image.height - image.height % 16))
-        image_src = self.pipe.image_processor.preprocess(image)
-        # cast image to half precision
-        image_src = image_src.to(device).half()
-        with torch.autocast("cuda"), torch.inference_mode():
-            x0_src_denorm = self.pipe.vae.encode(image_src).latent_dist.mode()
-        x0_src = (x0_src_denorm - self.pipe.vae.config.shift_factor) * self.pipe.vae.config.scaling_factor
-        # send to cuda
-        x0_src = x0_src.to(device)
-        
-        if self.model_type == 'SD3':
-            x0_tar = FlowEditSD3(self.pipe,self.scheduler,x0_src,src_prompt,tar_prompt,negative_prompt,T_steps=28,n_avg=1,src_guidance_scale=1.5,tar_guidance_scale=5.5,n_min=0,n_max=24,)
-            
-        elif self.model_type == 'FLUX':
-            x0_tar = FlowEditFLUX(self.pipe,self.scheduler,x0_src,src_prompt,tar_prompt,negative_prompt, T_steps=28,n_avg=1,src_guidance_scale=1.5,tar_guidance_scale=5.5,n_min=0,n_max=24,)
-        else:
-            raise NotImplementedError(f"Sampler type {model_type} not implemented")
-
-
-        x0_tar_denorm = (x0_tar / self.pipe.vae.config.scaling_factor) + self.pipe.vae.config.shift_factor
-        with torch.autocast("cuda"), torch.inference_mode():
-            image_tar = self.pipe.vae.decode(x0_tar_denorm, return_dict=False)[0]
-        image_tar = self.pipe.image_processor.postprocess(image_tar)
-
-        return image_tar[0]
-
 class HQEditModel(BaseModel):
     """
     Arxiv 2024
@@ -174,14 +114,69 @@ class HQEditModel(BaseModel):
         ).images[0]
         return edited_image
 
+
+class RFInversionModel(BaseModel):
+    """
+    Arxiv 2024
+    Semantic Image Inversion and Editing using Rectified Stochastic Differential Equations
+    https://github.com/LituRout/RF-Inversion
+    """
+    def __init__(self):
+        self.model_name = "RFInversion"
+        self.model_id = "black-forest-labs/FLUX.1-dev"
+        from trig.models.RFInversion.pipeline_flux_rf_inversion import RFInversionFluxPipeline
+        self.pipe = RFInversionFluxPipeline.from_pretrained(
+            "/home/yanzhonghao/model_hub/FLUX.1-dev",
+            torch_dtype=torch.bfloat16)
+        self.pipe.to("cuda")
+
+    def generate_p2p(self, prompt, input_image):
+        image = load_image(input_image)
+        inverted_latents, image_latents, latent_image_ids = self.pipe.invert(
+            image=image, 
+            num_inversion_steps=28, 
+            gamma=0.5
+        )
+        image = self.pipe(
+            prompt=prompt,
+            inverted_latents=inverted_latents,
+            image_latents=image_latents,
+            latent_image_ids=latent_image_ids,
+            start_timestep=0,
+            stop_timestep=7/28,
+            num_inference_steps=28,
+            eta=0.9,    
+        ).images[0]
+        
+        return image
+
+
+class RFSolverEditModel(BaseModel):
+    """
+    Arxiv 2024
+    Taming Rectified Flow for Inversion and Editing
+    https://github.com/wangjiangshan0725/RF-Solver-Edit
+    """
+    def __init__(self):
+        self.model_name = "RFSolverEdit"
+        self.model_id = "black-forest-labs/FLUX.1-dev"
+        from RF_Solver_Edit.edit import main as RFEditPipeline
+        self.pipe = RFEditPipeline
+
+    def generate_p2p(self, prompt, input_image):
+        image = self.pipe(
+            source_img_dir=input_image,
+            source_prompt='',
+            target_prompt=prompt,   
+        )
+        
+        return image
+
+
 if __name__ == "__main__":
-    prompt = "Transform the woman's earrings into small, glowing orbs that illuminate her face subtly, casting gentle reflections on her skin. Retain the realistic lighting while introducing an ethereal glow that suggests a unique, otherworldly origin."
-    input_image = "./task_style_121254.png"
+    prompt =  "Add a subtle layer of transparent digital rain falling in the background, ensuring it accentuates the metallic shine and depth of the robotic skull's features without obscuring the headphones or altering the lighting."
+    input_image = "/home/yanzhonghao/datasets/MOGAI/dataset/Trig-image-editing/images/task_attr_mod_color_97708.png"
     
-    model = FreeDiff()
-    image = model.generate_p2p(prompt, input_image)
-    image.save("output.png")
-    
-    model = InstructPix2PixModel()
+    model = RFSolverEditModel()
     image = model.generate_p2p(prompt, input_image)
     image.save("output.png")

@@ -85,6 +85,7 @@ class SSREncoderModel(BaseModel):
 
         return image
 
+
 class OminiControlModel(BaseModel):
     """
     Arxiv 2024
@@ -125,6 +126,7 @@ class OminiControlModel(BaseModel):
 
         return image
 
+
 class XFluxModel(BaseModel):
     """
     Huggingface: https://huggingface.co/XLabs-AI/flux-ip-adapter-v2
@@ -158,3 +160,4 @@ class XFluxModel(BaseModel):
         )
 
         return image
+
