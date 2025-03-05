@@ -33,3 +33,4 @@ jaxtyping
 gradio
 xformers==0.0.27
 invisible-watermark
+fire

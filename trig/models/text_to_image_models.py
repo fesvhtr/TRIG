@@ -116,7 +116,11 @@ class SanaModel(BaseModel):
     def __init__(self):
         self.model_name = "Sana"
         from diffusers import SanaPipeline
-        self.pipe = SanaPipeline.from_pretrained("Efficient-Large-Model/Sana_1600M_1024px_MultiLing_diffusers", variant="fp16", torch_dtype=torch.float16,)
+        self.pipe = SanaPipeline.from_pretrained(
+            "Efficient-Large-Model/Sana_1600M_1024px_MultiLing_diffusers", 
+            variant="fp16", 
+            torch_dtype=torch.float16,
+        )
         self.pipe.to(device)
 
         self.pipe.vae.to(torch.bfloat16)
@@ -129,7 +133,6 @@ class SanaModel(BaseModel):
         return image
 
 
-
 class FLUXModel(BaseModel):
     """
     FLUX from Black Forest Labs
@@ -139,7 +142,10 @@ class FLUXModel(BaseModel):
         self.model_name = "FLUX"
         self.model_id = "black-forest-labs/FLUX.1-dev"
         from diffusers import FluxPipeline
-        self.pipe = FluxPipeline.from_pretrained("black-forest-labs/FLUX.1-dev", torch_dtype=torch.bfloat16).to(device)
+        self.pipe = FluxPipeline.from_pretrained(
+            "black-forest-labs/FLUX.1-dev", 
+            torch_dtype=torch.bfloat16
+        ).to(device)
 
         # uncomment if you want to use less GPU memory
         # self.pipe.enable_model_cpu_offload()
@@ -166,7 +172,10 @@ class SD35Model(BaseModel):
         self.model_name = "SD3.5"
         self.model_id = "stabilityai/stable-diffusion-3.5-large"
         from diffusers import StableDiffusion3Pipeline
-        self.pipe = StableDiffusion3Pipeline.from_pretrained("stabilityai/stable-diffusion-3.5-large", torch_dtype=torch.bfloat16)
+        self.pipe = StableDiffusion3Pipeline.from_pretrained(
+            "stabilityai/stable-diffusion-3.5-large", 
+            torch_dtype=torch.bfloat16
+        )
         self.pipe = self.pipe.to(device)
 
         # uncomment if you want to use less GPU memory

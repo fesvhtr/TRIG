@@ -126,7 +126,7 @@ class RFInversionModel(BaseModel):
         self.model_id = "black-forest-labs/FLUX.1-dev"
         from trig.models.RFInversion.pipeline_flux_rf_inversion import RFInversionFluxPipeline
         self.pipe = RFInversionFluxPipeline.from_pretrained(
-            "/home/yanzhonghao/model_hub/FLUX.1-dev",
+            "black-forest-labs/FLUX.1-dev",
             torch_dtype=torch.bfloat16)
         self.pipe.to("cuda")
 
