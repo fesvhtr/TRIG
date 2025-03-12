@@ -13,18 +13,29 @@ AVAILABLE_Model = {
     'sana': 'text_to_image_models.SanaModel', 
     'sd35': 'text_to_image_models.SD35Model', 
     'flux': 'text_to_image_models.FLUXModel', 
-    'janus': 'text_to_image_modelso.JanusModel',
+    'janus': 'text_to_image_models.JanusModel',
     'janus_flow': 'text_to_image_models.JanusFlowModel',
     # p2p models
     'instructp2p': 'image_editing_models.InstructPix2PixModel',
     'freediff': 'image_editing_models.FreeDiffModel',
     'flowedit': 'image_editing_models.FlowEditModel',
     'hqedit': 'image_editing_models.HQEditModel',
+    'rfinversion': 'image_editing_models.RFInversionModel',
+    'rfsolver': 'image_editing_models.RFSolverModel',
     # subjects models
     'blipdiffusion': 'subject_driven_models.BlipDiffusionModel',
     'ssrencoder': 'subject_driven_models.SSREncoderModel',
     'ominicontrol': 'subject_driven_models.OminiControlModel',
     'xflux': 'subject_driven_models.XFluxModel',
+    # DTM models
+    'sd35_dtm': 'text_to_image_models.SD35DTMModel',
+    'flux_dtm': 'text_to_image_models.FLUXDTMModel',
+    'sana_dtm': 'text_to_image_models.SanaDTMModel',
+    # DTM models with dimension
+    'sd35_dtm_dim': 'text_to_image_models.SD35DTMDimModel',
+    'sana_dtm_dim': 'text_to_image_models.SanaDTMDimModel',
+    'xflux_dtm_dim': 'subject_driven_models.XFluxDTMDimModel',
+    'hqedit_dtm_dim': 'image_editing_models.HQEditDTMDimModel',
 }
 
 def import_model(model_name):

@@ -1,9 +1,9 @@
 name: "test"
-task: "p2p"
+task: "p2p_dtm"
 # prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-text-to-image/text-to-imgae-without-m-e-v8.json"
-prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-image-editing/p2p_without_t.json"
-image_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-image-editing/images"
+prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-image-editing/p2p_t.json"
+image_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-image-editing/toxicity_images"
 description_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-image-editing/image_descriptions.json"
 
 generation:
-  models: ["omnigen"]
+  models: ["hqedit_dtm_dim"]

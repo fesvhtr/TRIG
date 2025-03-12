@@ -796,7 +796,7 @@ class CLIPScoreMetric(BaseMetric):
             print(f"计算CLIPScore时出错: {str(e)}")
             return float('nan')
 
-    def compute_batch(self, images, prompts, dimension):
+    def compute_batch(self, task, promp_data):
         """
         批量计算图片的CLIPScore
         Args:
@@ -806,44 +806,42 @@ class CLIPScoreMetric(BaseMetric):
         Returns:
             np.ndarray: CLIPScore分数数组
         """
-        try:
-            print(f"\n批量评估 {len(images)} 张图片")
+
             
-            # 导入extract_all_images和extract_all_captions函数
-            from .clipscore_main.clipscore import extract_all_images, extract_all_captions
+        # 导入extract_all_images和extract_all_captions函数
+        from .clipscore_main.clipscore import extract_all_images, extract_all_captions
+        
+        
+        results = {}
+        
+        # 按批次遍历 promp_data
+        for i in range(0, len(promp_data), batch_size):
+            # 取出当前批次数据
+            batch_data = promp_data[i:i+batch_size]
             
-            # 分批处理以避免内存问题
-            batch_size = 32
-            all_scores = []
+            # 分别提取图片路径、文本 prompt 以及 data_id
+            batch_images = [data['gen_image_path'] for data in batch_data]
+            batch_prompts = [data['prompt'] for data in batch_data]
+            batch_ids = [data['data_id'] for data in batch_data]
             
-            for i in range(0, len(images), batch_size):
-                batch_images = images[i:i+batch_size]
-                batch_prompts = prompts[i:i+batch_size]
+            # 提取图片和文本的特征
+            image_features = extract_all_images(batch_images, self.model, self.device, num_workers=0)
+            text_features = extract_all_captions(batch_prompts, self.model, self.device, num_workers=0)
+            
+            # 对特征进行归一化处理
+            image_features = image_features / np.sqrt(np.sum(image_features**2, axis=1, keepdims=True))
+            text_features = text_features / np.sqrt(np.sum(text_features**2, axis=1, keepdims=True))
+            
+            # 计算图片和文本之间的相似度
+            similarities = np.sum(image_features * text_features, axis=1)
+            batch_scores = 2.5 * np.clip(similarities, 0, None)
+            
+            # 将当前批次的结果存入字典，以 data_id 为键
+            for data_id, score in zip(batch_ids, batch_scores):
+                results[data_id] = score
                 
-                # 提取特征
-                image_features = extract_all_images(batch_images, self.model, self.device, num_workers=0)
-                text_features = extract_all_captions(batch_prompts, self.model, self.device, num_workers=0)
-                
-                # 归一化
-                image_features = image_features / np.sqrt(np.sum(image_features**2, axis=1, keepdims=True))
-                text_features = text_features / np.sqrt(np.sum(text_features**2, axis=1, keepdims=True))
-                
-                # 计算相似度
-                similarities = np.sum(image_features * text_features, axis=1)
-                batch_scores = 2.5 * np.clip(similarities, 0, None)
-                all_scores.extend(batch_scores)
+        return results
             
-            scores = np.array(all_scores)
-            mean_score = np.mean(scores)
-            
-            print(f"平均CLIPScore: {mean_score:.4f}")
-            print(f"分数范围: [{min(scores):.4f}, {max(scores):.4f}]")
-            
-            return scores
-            
-        except Exception as e:
-            print(f"批量计算CLIPScore时出错: {str(e)}")
-            return np.array([float('nan')] * len(images))  
 
 class InceptionScoreMetric(BaseMetric):
     def __init__(self, **kwargs):

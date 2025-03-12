@@ -85,7 +85,7 @@ class Generator:
         model = model_class()
         task  = self.config["task"]
         
-        output_path = os.path.join(project_root, 'data/output', task, model_name)
+        output_path = os.path.join(project_root, 'data/output/', task, model_name)
         print(f"Output path: {output_path}")
 
         if not os.path.exists(output_path):
@@ -98,39 +98,48 @@ class Generator:
                 end_idx = len(self.prompts_data)
             self.prompts_data = self.prompts_data[start_idx:end_idx]
 
+
+        self.prompts_data = self.prompts_data[::10]
         for prompt_data in tqdm(self.prompts_data):
             if prompt_data["data_id"] in file_list:
                 continue
 
-            if  "IQ-R_R-T" in prompt_data["data_id"] and model_name=='dalle3':
-                continue
+            # if  "IQ-R_R-T" in prompt_data["data_id"] and model_name=='dalle3':
+            #     continue
 
-            if prompt_data["parent_dataset"][0].startswith("<") and prompt_data["parent_dataset"][0].endswith(
-                    ">") and prompt_data["parent_dataset"][1] == "Origin":
-                parent_dim1 = prompt_data["parent_dataset"][0].split(", ")[0]
-                parent_dim2 = prompt_data["parent_dataset"][0].split(", ")[1]
-                parent_dim = f"{parent_dim1[1:]}_{parent_dim2[:-1]}"
-                idx = prompt_data['data_id'].split('_')[-1]
+            # if prompt_data["parent_dataset"][0].startswith("<") and prompt_data["parent_dataset"][0].endswith(
+            #         ">") and prompt_data["parent_dataset"][1] == "Origin":
+            #     parent_dim1 = prompt_data["parent_dataset"][0].split(", ")[0]
+            #     parent_dim2 = prompt_data["parent_dataset"][0].split(", ")[1]
+            #     parent_dim = f"{parent_dim1[1:]}_{parent_dim2[:-1]}"
+            #     idx = prompt_data['data_id'].split('_')[-1]
 
-                if os.path.exists(
-                        os.path.join(output_path, f'{parent_dim}_{idx}.png')):
-                    shutil.copy(os.path.join(output_path, f'{parent_dim}_{idx}.png'),
-                                os.path.join(output_path, f"{prompt_data['data_id']}.png"))
-                else:
-                    print(f"Parent image not found: {parent_dim}_{idx}.png")
-                    continue
-
+            #     if os.path.exists(
+            #             os.path.join(output_path, f'{parent_dim}_{idx}.png')):
+            #         shutil.copy(os.path.join(output_path, f'{parent_dim}_{idx}.png'),
+            #                     os.path.join(output_path, f"{prompt_data['data_id']}.png"))
+            #     else:
+            #         print(f"Parent image not found: {parent_dim}_{idx}.png")
+            #         continue
+            if False: pass
             else:
-                image_path = os.path.join(self.config["image_path"], prompt_data["img_id"])
+                if "image_path" in self.config:
+                    image_path = os.path.join(self.config["image_path"], prompt_data["img_id"])
                 prompt = prompt_data["prompt"]
+                if "dimensions" in prompt_data:
+                    dimensions = prompt_data["dimensions"]
                 item = prompt_data["item"] if "item" in prompt_data else None
                 if model_name == "flowedit":
                     src_prompt = description_data[prompt_data["img_id"]]
                 task_mapping = {
                     "t2i": lambda: model.generate(prompt),
                     "p2p": lambda: model.generate_p2p(prompt, image_path, src_prompt) 
-                    if model_name == "flowedit" else model.generate_p2p(prompt, image_path),
+                    if model_name == "flowedit" else model.generate_p2p(),
                     "s2p": lambda: model.generate_s2p(prompt, item, image_path),
+                    "t2i_dtm": lambda: model.generate(prompt, dimensions),
+                    "p2p_dtm": lambda: model.generate_p2p(prompt, image_path, src_prompt, dimensions) 
+                    if model_name == "flowedit" else model.generate_p2p(prompt, image_path, dimensions),
+                    "s2p_dtm": lambda: model.generate_s2p(prompt, item, image_path, dimensions),
                 }
                 image = task_mapping[task]()
 

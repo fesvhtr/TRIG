@@ -3,9 +3,9 @@ task: "t2i"
 prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-text-to-image/text-to-imgae-without-m-e-v8.json"
 
 evaluation:
-    image_dirs: ["/home/muzammal/Projects/TRIG/data/output/t2i/dalle3",]
+    image_dirs: ["/home/muzammal/Projects/TRIG/data/output/t2i_dtm/sana_dtm_dim",]
     result_dir: "data/result"
-    result_files: ["data/result/t2i/dalle3.json", ]
+    result_files: ["data/result/t2i/sana_dtm_dim_qwen_7B_t1.json", ]
 
 TRIG_metric: &TRIG_metric
   name: trig_api

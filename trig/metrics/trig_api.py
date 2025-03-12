@@ -120,7 +120,7 @@ class TRIGAPIMetric(BaseMetric):
 
 
 
-    def logprobs_score(self, top_logprobs):
+    def logprobs_score(self, top_logprobs, confidence=False):
         score = 0.0
 
         valid_tokens = ["ex", "excellent", "Excellent", "good", "Good", "medium", "Medium", "bad", "Bad", "terr", "Terr"]
@@ -149,7 +149,7 @@ class TRIGAPIMetric(BaseMetric):
 
         for token, prob in zip(filtered_tokens, normalized_probs):
             # print(token, prob)
-            if token in ["excellent", "Excellent"]:
+            if token in ["excellent", "Excellent", "ex"]:
                 score += 1.0 * prob
             elif token in ["good", "Good"]:
                 score += 0.75 * prob
@@ -160,6 +160,9 @@ class TRIGAPIMetric(BaseMetric):
             elif token in ["terr", "Terr"]:
                 score += 0 * prob
 
+        if confidence:
+            c = max(normalized_probs)
+            score = c * score
         
         return score
 

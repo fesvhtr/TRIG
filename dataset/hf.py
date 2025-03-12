@@ -18,6 +18,8 @@ def zip_subfolders(parent_folder):
     # 遍历父文件夹下的所有条目
     for item in tqdm(os.listdir(parent_folder)):
         item_path = os.path.join(parent_folder, item)
+        if 'rf' in item or 'omnigen' in item:
+            continue
         # 如果该条目是文件夹，则进行打包
         if os.path.isdir(item_path):
             zip_file_path = os.path.join(parent_folder, f"{item}.zip")

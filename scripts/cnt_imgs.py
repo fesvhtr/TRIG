@@ -28,6 +28,6 @@ def traverse_folder(path, indent=0):
 
 # 示例使用：
 if __name__ == "__main__":
-    root_folder = "/home/muzammal/Projects/TRIG/data/output/s2p"  # 请替换为你实际的文件夹路径
+    root_folder = "/home/muzammal/Projects/TRIG/data/output/p2p_dtm"  # 请替换为你实际的文件夹路径
     traverse_folder(root_folder)
 

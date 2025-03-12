@@ -6,7 +6,9 @@ import numpy as np
 from PIL import Image
 from transformers import AutoModelForCausalLM
 from trig.models.base import BaseModel
-
+import time
+from openai import OpenAI
+from trig.config import gpt_logit_dimension_msg, DIM_NAME_DICT
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class DALLE3Model(BaseModel):
@@ -387,4 +389,706 @@ class JanusProModel(BaseModel):
         prompt = sft_format + self.vl_chat_processor.image_start_tag
         image = self.janus_generate(self.vl_gpt, self.vl_chat_processor, prompt)
         return image
+
+
+class SD35DTMModel(BaseModel):
+    """
+    Stable Diffusion 3.5 with Finu-tuning with DTM
+    https://github.com/Stability-AI/sd3.5
+    """
+    def __init__(self):
+        self.model_name = "SD3.5"
+        self.model_id = "stabilityai/stable-diffusion-3.5-large"
+        from diffusers import StableDiffusion3Pipeline
+        
+        self.pipe = StableDiffusion3Pipeline.from_pretrained(
+            "stabilityai/stable-diffusion-3.5-large", 
+            torch_dtype=torch.bfloat16
+        )
+        self.pipe = self.pipe.to(device)
+        self.DTM_3d35 = {
+        "synergy": [
+            ("Content Alignment", "Originality"),   
+            ("Style Alignment", "Aesthetic")
+        ],
+        "bottleneck": [
+            ("Realism", "Toxic"), 
+            ("Style Alignment", "Toxic")
+        ],
+        "tilt": [
+            ("Realism", "Style Alignment") 
+        ],
+        "dispersion": [
+            ("Originality", "Bias")
+        ]
+        }
+
+        # uncomment if you want to use less GPU memory
+        # self.enable_model_cpu_offload()
+
+    def generate(self, prompt):
+        prompt = self.change(prompt, self.DTM_3d35)
+        image = self.pipe(prompt=prompt, prompt_3=prompt, num_inference_steps=28, guidance_scale=4.5,max_sequence_length=512).images[0]
+        return image
+
+    def send_request_with_retry(self, msg, max_retries=3, delay=2):
+        SYSTEM_MSG = """You are a prompt engineering expert specializing in multi-dimensional image generation optimization. I have discovered some tradeoff relationships in pairwise dimension, and you need to modify the original prompts to make the final result perform best in multiple dimensions.
+        **Optimization Rules:**
+        - Synergy (X & Y): Enhance both dimensions simultaneously
+        - Bottleneck (X-Y): Break limitations between conflicting dimensions
+        - Tilt (X↑Y): Prioritize X while maintaining minimum Y
+        - Dispersion (X~Y): Balance unstable dimension relationships
+         
+        **Modify Requirements:**
+        1. Firstly, understand the prompt, confirm whether the prompt involves multiple dimensions, and if it is found that two dimensions are involved that match the dimension pairs in the Optimisation Rules, then modify them according to the rule.
+        2. If multiple dimensions are not involved, then it is sufficient to optimise the details simply to the extent that they increase the effect.
+        3. Your modifications are to the content, you can refine the suppressed dimensions reasonably well, and you can reduce the dominant dimensions somewhat
+        4. However, you have to make sure that you don't add completely new content, the main content of your modified prompt can't be changed in any way, you can only fine-tune the details
+        
+        !!!!!!!!
+        You can't add words like ‘balancing dimension A and dimension B’, it's not allowed, you can only go into reasonable detail later, you can't refer to any specific dimension.
+
+        **Output Requirements:**
+        1. Keep prompts pithy and concise (<70 tokens, you must follow this)
+        2. Maintain original artistic intent
+        3. Use natural language phrasing"""
+        for attempt in range(max_retries):
+            try:
+                # api_key = 'sk-mqUwZI8bhIv746rG6f3fE830D8B146E789Fd11717aD8C4B1'
+                api_key = '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'
+                # client = OpenAI(api_key=api_key, base_url="https://api.bltcy.ai/v1")
+                client = OpenAI(api_key=api_key)
+                response = client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[ {"role": "system", "content": SYSTEM_MSG},
+                                {"role": "user", "content": msg}],
+                    max_tokens=500
+                )
+                return response.choices[0].message.content
+                
+            except Exception as e:
+                print(f"Request failed: {e}")
+                if attempt < max_retries - 1:
+                    wait_time = delay * (2 ** attempt)
+                    print(f"Retry {attempt + 1}/{max_retries}, waiting {wait_time} seconds...")
+                    time.sleep(wait_time)
+                else:
+                    print("Max retry limit reached, returning original prompt")
+                    return None
+
+
+    def change(self, prompt: str, DTM: dict) -> str:
+        instructions = []
+        for dim1, dim2 in DTM.get("synergy", []):
+            instructions.append(
+                f"Improve {dim1} & {dim2} jointly"
+            )
+        
+        # Bottleneck关系处理  
+        for dim1, dim2 in DTM.get("bottleneck", []):
+            instructions.append(
+                f"Break {dim1}-{dim2} limitation"
+            )
+        
+        # Tilt关系处理
+        for src_dim, target_dim in DTM.get("tilt", []):
+            instructions.append(
+                f"Prioritize {src_dim}↑ while maintaining {target_dim}"
+            )
+        
+        # Dispersion关系处理
+        for dim1, dim2 in DTM.get("dispersion", []):
+            instructions.append(
+                f"Stabilize {dim1}-{dim2} balance"
+            )
+
+        msg = '''
+        original input: {str1}
+        modify instrctions: {str2}
+        Output the final prompt (No more content than the original prompt)'''.format(str1=prompt, str2=" ".join(instructions))
+            
+        print('Original prompt:', prompt)
+        modified_prompt = self.send_request_with_retry(msg)
+        print('Modified prompt:', modified_prompt)
+        if ':' in modified_prompt:
+            modified_prompt = modified_prompt.split(':')[1].strip('"')
+        return modified_prompt if modified_prompt else prompt
+
+class FLUXDTMModel(BaseModel):
+
+
+    """
+    Stable Diffusion 3.5 with Finu-tuning with DTM
+    https://github.com/Stability-AI/sd3.5
+    """
+    def __init__(self):
+        self.model_name = "FLUX"
+        self.model_id = "black-forest-labs/FLUX.1-dev"
+        from diffusers import FluxPipeline
+        self.pipe = FluxPipeline.from_pretrained(
+            "black-forest-labs/FLUX.1-dev", 
+            torch_dtype=torch.bfloat16
+        ).to(device)
+        self.DTM_3d35 = {
+        "synergy": [
+            ("Content Alignment", "Originality"),   
+            ("Style Alignment", "Aesthetic")
+        ],
+        "bottleneck": [
+            ("Realism", "Toxic"), 
+            ("Style Alignment", "Toxic")
+        ],
+        "tilt": [
+            ("Realism", "Style Alignment") 
+        ],
+        "dispersion": [
+            ("Originality", "Bias")
+        ]
+        }
+
+
+    
+    def generate(self, prompt):
+        prompt = self.change(prompt, self.DTM_3d35)
+        image = self.pipe(
+            prompt,
+            height=1024,
+            width=1024,
+            guidance_scale=3.5,
+            num_inference_steps=50,
+            max_sequence_length=512,
+            generator=torch.Generator(device="cpu").manual_seed(0)
+        ).images[0]
+        return image   
+
+
+    def send_request_with_retry(self, msg, max_retries=3, delay=2):
+        SYSTEM_MSG = """You are a prompt engineering expert specializing in multi-dimensional image generation optimization. I have discovered some tradeoff relationships in pairwise dimension, and you need to modify the original prompts to make the final result perform best in multiple dimensions.
+        **Optimization Rules:**
+        - Synergy (X & Y): Enhance both dimensions simultaneously
+        - Bottleneck (X-Y): Break limitations between conflicting dimensions
+        - Tilt (X↑Y): Prioritize X while maintaining minimum Y
+        - Dispersion (X~Y): Balance unstable dimension relationships
+         
+        **Modify Requirements:**
+        1. Firstly, understand the prompt, confirm whether the prompt involves multiple dimensions, and if it is found that two dimensions are involved that match the dimension pairs in the Optimisation Rules, then modify them according to the rule.
+        2. If multiple dimensions are not involved, then it is sufficient to optimise the details simply to the extent that they increase the effect.
+        3. Your modifications are to the content, you can refine the suppressed dimensions reasonably well, and you can reduce the dominant dimensions somewhat
+        4. However, you have to make sure that you don't add completely new content, the main content of your modified prompt can't be changed in any way, you can only fine-tune the details
+        
+        !!!!!!!!
+        You can't add words like ‘balancing dimension A and dimension B’, it's not allowed, you can only go into reasonable detail later, you can't refer to any specific dimension.
+
+        **Output Requirements:**
+        1. Keep prompts pithy and concise (<70 tokens, you must follow this)
+        2. Maintain original artistic intent
+        3. Use natural language phrasing"""
+        for attempt in range(max_retries):
+            try:
+                # api_key = 'sk-mqUwZI8bhIv746rG6f3fE830D8B146E789Fd11717aD8C4B1'
+                api_key = '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'
+                # client = OpenAI(api_key=api_key, base_url="https://api.bltcy.ai/v1")
+                client = OpenAI(api_key=api_key)
+                response = client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[ {"role": "system", "content": SYSTEM_MSG},
+                                {"role": "user", "content": msg}],
+                    max_tokens=500
+                )
+                return response.choices[0].message.content
+                
+            except Exception as e:
+                print(f"Request failed: {e}")
+                if attempt < max_retries - 1:
+                    wait_time = delay * (2 ** attempt)
+                    print(f"Retry {attempt + 1}/{max_retries}, waiting {wait_time} seconds...")
+                    time.sleep(wait_time)
+                else:
+                    print("Max retry limit reached, returning original prompt")
+                    return None
+
+
+    def change(self, prompt: str, DTM: dict) -> str:
+        instructions = []
+        for dim1, dim2 in DTM.get("synergy", []):
+            instructions.append(
+                f"Improve {dim1} & {dim2} jointly"
+            )
+        
+        # Bottleneck关系处理  
+        for dim1, dim2 in DTM.get("bottleneck", []):
+            instructions.append(
+                f"Break {dim1}-{dim2} limitation"
+            )
+        
+        # Tilt关系处理
+        for src_dim, target_dim in DTM.get("tilt", []):
+            instructions.append(
+                f"Prioritize {src_dim}↑ while maintaining {target_dim}"
+            )
+        
+        # Dispersion关系处理
+        for dim1, dim2 in DTM.get("dispersion", []):
+            instructions.append(
+                f"Stabilize {dim1}-{dim2} balance"
+            )
+
+        msg = '''
+        original input: {str1}
+        modify instrctions: {str2}
+        Output the final prompt (No more content than the original prompt)'''.format(str1=prompt, str2=" ".join(instructions))
+            
+        print('Original prompt:', prompt)
+        modified_prompt = self.send_request_with_retry(msg)
+        print('Modified prompt:', modified_prompt)
+        if ':' in modified_prompt:
+            modified_prompt = modified_prompt.split(':')[1].strip('"')
+        return modified_prompt if modified_prompt else prompt
+
+class SanaDTMModel(BaseModel):
+
+
+    """
+    Stable Diffusion 3.5 with Finu-tuning with DTM
+    https://github.com/Stability-AI/sd3.5
+    """
+    def __init__(self):
+        self.model_name = "Sana"
+        from diffusers import SanaPipeline
+        self.pipe = SanaPipeline.from_pretrained(
+            "Efficient-Large-Model/Sana_1600M_1024px_MultiLing_diffusers", 
+            variant="fp16", 
+            torch_dtype=torch.float16,
+        )
+        self.pipe.to(device)
+
+        self.pipe.vae.to(torch.bfloat16)
+        self.pipe.text_encoder.to(torch.bfloat16)
+        self.DTM_3d35 = {
+        "synergy": [
+            ("Content Alignment", "Originality"),   
+            ("Style Alignment", "Aesthetic")
+        ],
+        "bottleneck": [
+            ("Realism", "Toxic"), 
+            ("Style Alignment", "Toxic")
+        ],
+        "tilt": [
+            ("Realism", "Style Alignment") 
+        ],
+        "dispersion": [
+            ("Originality", "Bias")
+        ]
+        }
+
+
+    
+    def generate(self, prompt):
+        prompt = self.change(prompt, self.DTM_3d35)
+        image = self.pipe(prompt=prompt, height=1024, width=1024, guidance_scale=4.5, num_inference_steps=20,
+                     generator=torch.Generator(device="cuda").manual_seed(42))[0]
+        image = image[0]
+        return image
+
+
+    def send_request_with_retry(self, msg, max_retries=3, delay=2):
+        SYSTEM_MSG = """You are a prompt engineering expert specializing in multi-dimensional image generation optimization. I have discovered some tradeoff relationships in pairwise dimension, and you need to modify the original prompts to make the final result perform best in multiple dimensions.
+        **Optimization Rules:**
+        - Synergy (X & Y): Enhance both dimensions simultaneously
+        - Bottleneck (X-Y): Break limitations between conflicting dimensions
+        - Tilt (X↑Y): Prioritize X while maintaining minimum Y
+        - Dispersion (X~Y): Balance unstable dimension relationships
+         
+        **Modify Requirements:**
+        1. Firstly, understand the prompt, confirm whether the prompt involves multiple dimensions, and if it is found that two dimensions are involved that match the dimension pairs in the Optimisation Rules, then modify them according to the rule.
+        2. If multiple dimensions are not involved, then it is sufficient to optimise the details simply to the extent that they increase the effect.
+        3. Your modifications are to the content, you can refine the suppressed dimensions reasonably well, and you can reduce the dominant dimensions somewhat
+        4. However, you have to make sure that you don't add completely new content, the main content of your modified prompt can't be changed in any way, you can only fine-tune the details
+        
+        !!!!!!!!
+        You can't add words like ‘balancing dimension A and dimension B’, it's not allowed, you can only go into reasonable detail later, you can't refer to any specific dimension.
+
+        **Output Requirements:**
+        1. Keep prompts pithy and concise (<70 tokens, you must follow this)
+        2. Maintain original artistic intent
+        3. Use natural language phrasing"""
+        for attempt in range(max_retries):
+            try:
+                # api_key = 'sk-mqUwZI8bhIv746rG6f3fE830D8B146E789Fd11717aD8C4B1'
+                api_key = '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'
+                # client = OpenAI(api_key=api_key, base_url="https://api.bltcy.ai/v1")
+                client = OpenAI(api_key=api_key)
+                response = client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[ {"role": "system", "content": SYSTEM_MSG},
+                                {"role": "user", "content": msg}],
+                    max_tokens=500
+                )
+                return response.choices[0].message.content
+                
+            except Exception as e:
+                print(f"Request failed: {e}")
+                if attempt < max_retries - 1:
+                    wait_time = delay * (2 ** attempt)
+                    print(f"Retry {attempt + 1}/{max_retries}, waiting {wait_time} seconds...")
+                    time.sleep(wait_time)
+                else:
+                    print("Max retry limit reached, returning original prompt")
+                    return None
+
+
+    def change(self, prompt: str, DTM: dict) -> str:
+        instructions = []
+        for dim1, dim2 in DTM.get("synergy", []):
+            instructions.append(
+                f"Improve {dim1} & {dim2} jointly"
+            )
+        
+        # Bottleneck关系处理  
+        for dim1, dim2 in DTM.get("bottleneck", []):
+            instructions.append(
+                f"Break {dim1}-{dim2} limitation"
+            )
+        
+        # Tilt关系处理
+        for src_dim, target_dim in DTM.get("tilt", []):
+            instructions.append(
+                f"Prioritize {src_dim}↑ while maintaining {target_dim}"
+            )
+        
+        # Dispersion关系处理
+        for dim1, dim2 in DTM.get("dispersion", []):
+            instructions.append(
+                f"Stabilize {dim1}-{dim2} balance"
+            )
+
+        msg = '''
+        original input: {str1}
+        modify instrctions: {str2}
+        Output the final prompt (No more content than the original prompt)'''.format(str1=prompt, str2=" ".join(instructions))
+            
+        print('Original prompt:', prompt)
+        modified_prompt = self.send_request_with_retry(msg)
+        print('Modified prompt:', modified_prompt)
+        if ':' in modified_prompt:
+            modified_prompt = modified_prompt.split(':')[1].strip('"')
+        return modified_prompt if modified_prompt else prompt
+
+
+class SD35DTMDimModel(BaseModel):
+    """
+    Stable Diffusion 3.5 with Dimensional Fine-tuning with DTM
+    https://github.com/Stability-AI/sd3.5
+    """
+    def __init__(self):
+        self.model_name = "SD3.5"
+        self.model_id = "stabilityai/stable-diffusion-3.5-large"
+        from diffusers import StableDiffusion3Pipeline
+        
+        self.pipe = StableDiffusion3Pipeline.from_pretrained(
+            "stabilityai/stable-diffusion-3.5-large", 
+            torch_dtype=torch.bfloat16
+        )
+        self.pipe = self.pipe.to(device)
+        
+        self.DTM_3d35 = {
+            "synergy": [
+                ["TA-C", "IQ-O"],   
+                ["TA-S", "IQ-A"],
+            ],
+            "bottleneck": [
+                ["IQ-R", "R-T"],
+                ["TA-S", "R-T"],
+            ],
+            "tilt": [
+                ["IQ-R", "TA-S"],
+            ],
+            "dispersion": [
+                ["IQ-O", "R-B"]
+            ]
+        }
+
+        # uncomment if you want to use less GPU memory
+        # self.enable_model_cpu_offload()
+
+    def generate(self, prompt, dimension):
+        prompt = self.change(prompt, self.DTM_3d35, dimension)
+        image = self.pipe(prompt=prompt, prompt_3=prompt, num_inference_steps=28, guidance_scale=4.5,max_sequence_length=512).images[0]
+        return image
+
+    def send_request_with_retry(self, msg, max_retries=3, delay=2):
+        SYSTEM_MSG = """You are a prompt engineering expert specializing in multi-dimensional image generation optimization. I have discovered some tradeoff relationships in pairwise dimension.
+        You need to modify the original prompt so that the final result of the image generation model performs best in multiple dimensions.
+
+        **Optimization Rules:**
+
+        - Synergy (X & Y): Enhance both dimensions simultaneously
+        - Bottleneck (X-Y): Break limitations between conflicting dimensions
+        - Tilt (X↑Y): Prioritize X while maintaining minimum Y
+        - Dispersion (X~Y): Balance unstable dimension relationships
+        - No trade-off: No trade-off relationship between the two dimensions, no need to modify
+         
+        **Modify Requirements:**
+        1. What you need to do is to understand the original prompt and balance and modify the content of the different dimensions according to the Optimisation Rules only, 
+        but not to add direct relational indications of the dimensions and not to change the content massively. Note that you are balancing and trade-off.
+        2. If no relationship exists, then no change is needed, if the prompt is long, streamline as required
+        3. If the relationship exists, it's the detail, not the content, that you need to make changes to; 
+        you can't have the generated image have an overall change in content, you have only help the model make the trade-offs by making changes to the detail.
+        4. Important!!!!: You can't add direct words like 'balancing dimension A and dimension B', it's not allowed, you can only go into reasonable detail later, you can't refer to any specific dimension.
+        
+        **Output Requirements:**
+        1. Very Important: Keep prompts pithy and concise (must <50 tokens, you must follow this)
+        2. Maintain original artistic intent
+        3. Use natural language phrasing"""
+        for attempt in range(max_retries):
+            try:
+                # api_key = 'sk-mqUwZI8bhIv746rG6f3fE830D8B146E789Fd11717aD8C4B1'
+                api_key = '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'
+                # client = OpenAI(api_key=api_key, base_url="https://api.bltcy.ai/v1")
+                client = OpenAI(api_key=api_key)
+                response = client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[ {"role": "system", "content": SYSTEM_MSG},
+                                {"role": "user", "content": msg}],
+                    max_tokens=500
+                )
+                return response.choices[0].message.content
+                
+            except Exception as e:
+                print(f"Request failed: {e}")
+                if attempt < max_retries - 1:
+                    wait_time = delay * (2 ** attempt)
+                    print(f"Retry {attempt + 1}/{max_retries}, waiting {wait_time} seconds...")
+                    time.sleep(wait_time)
+                else:
+                    print("Max retry limit reached, returning original prompt")
+                    return None
+
+
+    def change(self, prompt, DTM, dimension):
+        
+        dim_def_dict = gpt_logit_dimension_msg['t2i']
+        # id
+        dim1 = dimension[0]
+        dim2 = dimension[1]
+        dim_def = '1. ' + dim_def_dict[dim1] + '\n' + '2. ' + dim_def_dict[dim2]
+        
+        
+        instructions = []
+        tradeoff = 'No Tradeoff'
+        for key, value in DTM.items():
+            for dim_pair in value:
+                if (dim_pair[0] == dim1 and dim_pair[1] == dim2) or (dim_pair[0] == dim2 and dim_pair[1] == dim1):
+                    tradeoff = key
+                    break
+        # now name
+        dim1 = DIM_NAME_DICT[dim1]
+        dim2 = DIM_NAME_DICT[dim2]
+
+        if key == 'synergy':
+            print('synergy')
+            instructions.append(
+                f"Improve {dim1} & {dim2} jointly"
+            )
+        elif key == 'bottleneck':
+            print('bottleneck')
+            instructions.append(
+                f"Break {dim1} - {dim2} limitation"
+            )
+        elif key == 'tilt':
+            print('tilt')
+            instructions.append(
+                f"Prioritize {dim1}↑ while maintaining {dim2}"
+            )
+        elif key == 'dispersion':
+            print('dispersion')
+            instructions.append(
+                f"Stabilize {dim1} - {dim2} balance"
+            )
+
+        
+        msg = '''
+
+        Original input: {str1}\n
+        Dimension Definition: {str0}\n
+        Modify instrctions: {str2}\n
+        Output the final prompt:'''.format(str1=prompt, str0=dim_def, str2=" ".join(instructions))
+            
+        print('Sending request for DTM')
+        # print(msg)
+
+        modified_prompt = self.send_request_with_retry(msg)
+        if ':' in modified_prompt:
+            modified_prompt = modified_prompt.split(':')[1].strip('"')
+        return modified_prompt if modified_prompt else prompt
+
+class SanaDTMDimModel(BaseModel):
+    """
+    Stable Diffusion 3.5 with Dimensional Fine-tuning with DTM
+    https://github.com/Stability-AI/sd3.5
+    """
+    def __init__(self):
+        self.model_name = "Sana"
+        from diffusers import SanaPipeline
+        self.pipe = SanaPipeline.from_pretrained(
+            "Efficient-Large-Model/Sana_1600M_1024px_MultiLing_diffusers", 
+            variant="fp16", 
+            torch_dtype=torch.float16,
+        )
+        self.pipe.to(device)
+
+        self.pipe.vae.to(torch.bfloat16)
+        self.pipe.text_encoder.to(torch.bfloat16)
+        
+        self.DTM_3d35 = {
+            "synergy": [
+                ["TA-C", "IQ-O"],   
+                ["TA-S", "IQ-A"],
+            ],
+            "bottleneck": [
+                ["IQ-R", "R-T"],
+                ["TA-S", "R-T"],
+            ],
+            "tilt": [
+                ["IQ-R", "TA-S"],
+            ],
+            "dispersion": [
+                ["IQ-O", "R-B"]
+            ]
+        }
+
+        # uncomment if you want to use less GPU memory
+        # self.enable_model_cpu_offload()
+
+    def generate(self, prompt, dimension):
+        prompt = self.change(prompt, self.DTM_3d35, dimension)
+        image = self.pipe(prompt=prompt, height=1024, width=1024, guidance_scale=4.5, num_inference_steps=20,
+                generator=torch.Generator(device="cuda").manual_seed(42))[0]
+        image = image[0]
+        return image
+
+    def send_request_with_retry(self, msg, max_retries=3, delay=2):
+        SYSTEM_MSG = """You are a prompt engineering expert specializing in multi-dimensional image generation optimization. I have discovered some tradeoff relationships in pairwise dimension.
+        You need to modify the original prompt so that the final result of the image generation model performs best in multiple dimensions.
+        You will only receive one of the following relationships, and you will know the relationship between the two Dimensions and the trade-off changes you need to make
+
+        **Optimization Rules:**
+
+        - Synergy (X & Y): Enhance both dimensions simultaneously
+        - Bottleneck (X-Y): Break limitations between conflicting dimensions
+        - Tilt (X↑Y): Prioritize X while maintaining minimum Y
+        - Dispersion (X~Y): Balance unstable dimension relationships
+        - No trade-off: No trade-off relationship between the two dimensions, no need to modify
+         
+        **Modify Requirements:**
+        1. What you need to do is to understand the original prompt and balance and modify the content of the different dimensions according to the Optimisation Rules only, 
+        but not to add direct relational indications of the dimensions and not to change the content massively. Note that you are balancing and trade-off.
+        2. If no relationship exists, then no change is needed,
+        3. if the prompt is very long, streamline as required.Retain important information to enhance results
+        4. If the relationship exists, it's the detail, not the content, that you need to make changes to; 
+        you can't have the generated image have an overall change in content, you have only help the model make the trade-offs by making changes to the detail.
+        5. Important!!!!: You can't add direct words like 'balancing dimension A and dimension B', it's not allowed, you can only go into reasonable detail later, you can't refer to any specific dimension.
+        
+        **Output Requirements:**
+        1. Very Important: Keep prompts pithy and concise (must <50 tokens, you must follow this)
+        2. Maintain original artistic intent
+        3. Use natural language phrasing"""
+        for attempt in range(max_retries):
+            try:
+                # api_key = 'sk-mqUwZI8bhIv746rG6f3fE830D8B146E789Fd11717aD8C4B1'
+                api_key = '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'
+                # client = OpenAI(api_key=api_key, base_url="https://api.bltcy.ai/v1")
+                client = OpenAI(api_key=api_key)
+                response = client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[ {"role": "system", "content": SYSTEM_MSG},
+                                {"role": "user", "content": msg}],
+                    max_tokens=500
+                )
+                return response.choices[0].message.content
+                
+            except Exception as e:
+                print(f"Request failed: {e}")
+                if attempt < max_retries - 1:
+                    wait_time = delay * (2 ** attempt)
+                    print(f"Retry {attempt + 1}/{max_retries}, waiting {wait_time} seconds...")
+                    time.sleep(wait_time)
+                else:
+                    print("Max retry limit reached, returning original prompt")
+                    return None
+
+
+    def change(self, prompt, DTM, dimension):
+        
+        dim_def_dict = gpt_logit_dimension_msg['t2i']
+        # id
+        dim1 = dimension[0]
+        dim2 = dimension[1]
+        dim_def = '1. ' + dim_def_dict[dim1] + '\n' + '2. ' + dim_def_dict[dim2]
+        
+        
+        instructions = []
+        tradeoff = 'No Tradeoff'
+        for key, value in DTM.items():
+            for dim_pair in value:
+                if (dim_pair[0] == dim1 and dim_pair[1] == dim2) or (dim_pair[0] == dim2 and dim_pair[1] == dim1):
+                    tradeoff = key
+                    break
+        # now name
+        dim1_name = DIM_NAME_DICT[dim1]
+        dim2_name = DIM_NAME_DICT[dim2]
+
+        if {dim1, dim2} == {"TA-C", "IQ-0"} and key == "synergy":
+            instructions.append(
+                "Enhance content alignment (TA-C) while ensuring high image originality (IQ-0). "
+                "Add detail to the subject content and also use this way to enrich originality"
+            )
+        elif {dim1, dim2} == {"TA-S", "IQ-A"} and key == "synergy":
+            instructions.append(
+                "Balance Style (TA-S) with Aesthetics (IQ-A). "
+                "The stylisation will be enhanced along with the aesthetics, and you can achieve both by refining the details of the style"
+            )
+        elif {dim1, dim2} == {"IQ-R", "R-T"} and key == "bottleneck":
+            instructions.append(
+                "Optimize image realism (IQ-R) while maintaining Relation (R-T)." 
+                "You don't have to sacrifice realism to avoid toxicity and add realistic details to improve it, you can cut and compress the toxic content as appropriate"
+            )
+        elif {dim1, dim2} == {"TA-S", "R-T"} and key == "bottleneck":
+            instructions.append(
+                "Enhance Style Alignment (TA-S) while preserving Toxicity (R-T). "
+                "You don't have to sacrifice stylisation to avoid toxicity and add stylistic details to improve the effect, you can cut and compress toxic content as appropriate"
+            )
+        elif {dim1, dim2} == {"IQ-R", "TA-S"} and key == "tilt":
+            instructions.append(
+                "Prioritize image realism (IQ-R) while keeping a sufficient level of Style Alignment (TA-S). "
+                "Prioritise or add authentic detail, but ensure basic and clear spatial relationship"
+            )
+        elif {dim1, dim2} == {"IQ-O", "R-B"} and key == "dispersion":
+            instructions.append(
+                "Stabilize image originality (IQ-O) and prevent Bias (R-B). "
+                "Improve the originality of your images by adding details"
+            )
+        else:
+            instructions.append(
+                "No tradeoff relationship between the two dimensions, no need to modify"
+                "If the prompt itself isn't very long, you can add slightly more detail on each of the two dimensions. But don't get into other Dimension"
+                )
+        
+        msg = '''
+
+        Original prompt: {str1}\n
+        Dimension Definition: {str0}\n
+        Modify instrctions: {str2}\n
+        Output the final prompt:'''.format(str1=prompt, str0=dim_def, str2=" ".join(instructions))
+            
+        print('Sending request for DTM')
+        # print(msg)
+
+        print('Original prompt:', prompt)
+        modified_prompt = self.send_request_with_retry(msg)
+        print('Modified prompt:', modified_prompt)
+        if ':' in modified_prompt:
+            modified_prompt = modified_prompt.split(':')[1].strip('"')
+        return modified_prompt if modified_prompt else prompt
+
 

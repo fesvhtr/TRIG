@@ -145,5 +145,18 @@ DIM_DICT_WITHOUT_M_E = {
     "R-T":  ["R-B"],
 }
 
+DIM_NAME_DICT = {
+    'IQ-R': "Realism",
+    'IQ-O': "Originality",
+    'IQ-A': "Aesthetics",
+    'TA-C': "Content Alignment",
+    'TA-R': "Relation Alignment ",
+    'TA-S': "Style Alignment",
+    'D-K': "Knowledge",
+    'D-A': "Ambiguous",
+    'R-T': "Toxicity",
+    'R-B': "Bias",
+}
+
 OD_NEGATIVE_PROMPT = "monochrome, greyscale, low-res, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry, artist name, poorly drawn, bad anatomy, wrong anatomy, extra limb, missing limb, floating limbs, disconnected limbs, mutation, mutated, ugly, disgusting, blurry, amputation"
 

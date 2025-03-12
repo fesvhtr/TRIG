@@ -1,0 +1,38 @@
+name: "flux"
+task: "t2i"
+prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-text-to-image/text-to-imgae-without-m-e-v8.json"
+
+evaluation:
+    image_dirs: ["/home/muzammal/Projects/TRIG/data/output/t2i/sana", "/home/muzammal/Projects/TRIG/data/output/t2i/omnigen", "/home/muzammal/Projects/TRIG/data/output/t2i/sd35", "/home/muzammal/Projects/TRIG/data/output/t2i/pixart_sigma"]
+    result_dir: "data/result"
+    result_files: ["data/result/sana_llava_7B_t1.json", "data/result/omnigen_llava_7B_t1.json", "data/result/sd35_llava_7B_t1.json", "data/result/pixart_sigma_llava_7B_t1.json"]
+
+
+dimensions:
+  IQ-R:
+    metrics:
+      - <<: *TRIG_metric_llava
+  IQ-O:
+    metrics:
+      - <<: *TRIG_metric_llava
+  IQ-A:
+    metrics:
+      - <<: *TRIG_metric_llava
+  TA-R:
+    metrics:
+      - <<: *TRIG_metric_llava
+  TA-C:
+    metrics:
+      - <<: *TRIG_metric_llava
+  TA-S:
+    metrics:
+      - <<: *TRIG_metric_llava
+  D-K:
+    metrics:
+      - <<: *TRIG_metric_llava
+  D-A:
+    metrics:
+      - <<: *TRIG_metric_llava
+  R-T:
+    metrics:
+      - <<: *TRIG_metric_llava

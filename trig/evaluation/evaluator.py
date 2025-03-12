@@ -84,8 +84,13 @@ class Evaluator:
             combination = "_".join(self.parse_dimensions(filename))
             image_path = os.path.join(image_dir, filename)
             data_id = os.path.splitext(filename)[0]
+            # FIXME: logic for Toxicity dataset
+            try:
+                promp_data = self.prompt_dic[data_id]
+            except Exception as e:
+                promp_data = {}
+                continue
 
-            promp_data = self.prompt_dic[data_id]
             promp_data["gen_image_path"] = image_path
             
             if "image_path" in self.config:
@@ -139,6 +144,7 @@ class Evaluator:
             for combination, prompt_data in tqdm(grouped.items()):
                 print(f"Combination: {combination}")
                 if combination in exist_combination:
+                    print(f"Combination '{combination}' already evaluated.")
                     continue
                 print(f"Evaluating combination {combination} with {len(prompt_data)} images...")
                 # print(f"Prompt data: {prompt_data[0]}")

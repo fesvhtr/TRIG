@@ -13,7 +13,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"  # 如果是多 GPU 服务器，这里�
 class AestheticPredictor:
     def __init__(self, **kwargs):
         self.model = MLP(768)  # CLIP embedding dim is 768 for CLIP ViT L 14
-        model_weights = torch.load(r"TRIG/trig/utils/sac+logos+ava1-l14-linearMSE.pth",map_location=torch.device('cpu'))
+        model_weights = torch.load(r"/home/muzammal/Projects/TRIG/trig/utils/sac+logos+ava1-l14-linearMSE.pth",map_location=torch.device('cpu'))
         self.model.load_state_dict(model_weights)
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -68,6 +68,11 @@ def normalized(a, axis=-1, order=2):
 
 if __name__ == "__main__":
     aesthetic_predictor = AestheticPredictor()
-    img_path = r"H:\ProjectsPro\TRIG\demo.jpg"
-    score = aesthetic_predictor.compute(img_path)
-    print(score)
+    total = []
+    for img in os.listdir(r"/home/muzammal/Projects/TRIG/data/output/HEIM/sd35"):
+        if 'aesthetics' in img:
+            img_path = os.path.join(r"/home/muzammal/Projects/TRIG/data/output/HEIM/sd35", img)
+            score = aesthetic_predictor.compute(img_path)
+            total.append(score)
+    
+    print(sum(total)/len(total))
