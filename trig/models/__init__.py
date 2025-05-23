@@ -15,6 +15,11 @@ AVAILABLE_Model = {
     'flux': 'text_to_image_models.FLUXModel', 
     'janus': 'text_to_image_models.JanusModel',
     'janus_flow': 'text_to_image_models.JanusFlowModel',
+    'sd15': 'text_to_image_models.SD15Model',
+    # SD1.5 models after RL by DDPO
+    'sd15_ddpo': 'text_to_image_models.SD15DDPOModel',
+    # FLUX models after LoRA FT
+    'flux_ft': 'text_to_image_models.FLUXFTModel',
     # p2p models
     'instructp2p': 'image_editing_models.InstructPix2PixModel',
     'freediff': 'image_editing_models.FreeDiffModel',

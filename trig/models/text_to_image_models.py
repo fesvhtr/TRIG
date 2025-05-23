@@ -79,7 +79,54 @@ class SDXLModel(BaseModel):
             print(f"Error generating image with {self.model_name}: {e}")
             return None
 
+class SD15Model(BaseModel):
+    """
+    ICLR 2024
+    SDXL: Improving Latent Diffusion Models for High-Resolution Image Synthesis
+    https://github.com/Stability-AI/generative-models
+    """
+    def __init__(self):
+        self.model_name = "SD1.5"
+        from diffusers import StableDiffusionPipeline
+        self.pipe = StableDiffusionPipeline.from_pretrained(
+            "sd-legacy/stable-diffusion-v1-5", 
+            torch_dtype=torch.float16, 
+        )
+        
+        self.pipe.to(device)
 
+    def generate(self, prompt):
+        try:
+            image = self.pipe(prompt).images[0]
+            return image
+        except Exception as e:
+            print(f"Error generating image with {self.model_name}: {e}")
+            return None
+        
+class SD15DDPOModel(BaseModel):
+    """
+    ICLR 2024
+    SDXL: Improving Latent Diffusion Models for High-Resolution Image Synthesis
+    https://github.com/Stability-AI/generative-models
+    """
+    def __init__(self):
+        self.model_name = "SDXL"
+        from diffusers import StableDiffusionPipeline
+        self.pipe = StableDiffusionPipeline.from_pretrained(
+            "sd-legacy/stable-diffusion-v1-5", 
+            torch_dtype=torch.float16, 
+        )
+        self.pipe.load_lora_weights("/home/muzammal/Projects/TRIG/scripts/save/checkpoints/checkpoint_13/pytorch_lora_weights.safetensors")
+        self.pipe.to(device)
+
+    def generate(self, prompt):
+        try:
+            image = self.pipe(prompt).images[0]
+            return image
+        except Exception as e:
+            print(f"Error generating image with {self.model_name}: {e}")
+            return None
+            
 class PixartSigmaModel(BaseModel):
     """
     ECCV 2024
@@ -148,6 +195,37 @@ class FLUXModel(BaseModel):
             "black-forest-labs/FLUX.1-dev", 
             torch_dtype=torch.bfloat16
         ).to(device)
+
+        # uncomment if you want to use less GPU memory
+        # self.pipe.enable_model_cpu_offload()
+    
+    def generate(self, prompt):
+        image = self.pipe(
+            prompt,
+            height=1024,
+            width=1024,
+            guidance_scale=3.5,
+            num_inference_steps=50,
+            max_sequence_length=512,
+            generator=torch.Generator(device="cpu").manual_seed(0)
+        ).images[0]
+        return image   
+
+class FLUXFTModel(BaseModel):
+    """
+    FLUX from Black Forest Labs
+    https://github.com/black-forest-labs/flux
+    """
+    def __init__(self):
+        self.model_name = "FLUX"
+        self.model_id = "black-forest-labs/FLUX.1-dev"
+        lora_path = "/home/muzammal/Projects/TRIG/trig/ft/flux_ft/pytorch_lora_weights.safetensors"
+        from diffusers import FluxPipeline
+        self.pipe = FluxPipeline.from_pretrained(
+            "black-forest-labs/FLUX.1-dev", 
+            torch_dtype=torch.bfloat16
+        ).to(device)
+        self.pipe.load_lora_weights(lora_path)
 
         # uncomment if you want to use less GPU memory
         # self.pipe.enable_model_cpu_offload()

@@ -1,8 +1,8 @@
 name: "test"
-task: "s2p_dtm"
-prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-text-to-image/text-to-imgae-without-m-e-v8.json"
+task: "t2i"
+prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-text-to-image/text-to-image-test.json"
 # # prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-image-editing/p2p_without_t.json"
 # image_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-image-editing/images"
 
 generation:
-  models: ["flux_dtm_dim"]
+  models: ["flux_ft"]

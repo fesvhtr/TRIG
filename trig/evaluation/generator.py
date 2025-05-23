@@ -98,8 +98,6 @@ class Generator:
                 end_idx = len(self.prompts_data)
             self.prompts_data = self.prompts_data[start_idx:end_idx]
 
-
-        self.prompts_data = self.prompts_data[::10]
         for prompt_data in tqdm(self.prompts_data):
             if prompt_data["data_id"] in file_list:
                 continue

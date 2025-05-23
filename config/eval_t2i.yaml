@@ -1,11 +1,11 @@
-name: "flux"
+name: "sdxl"
 task: "t2i"
 prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-text-to-image/text-to-imgae-without-m-e-v8.json"
 
 evaluation:
-    image_dirs: ["/home/muzammal/Projects/TRIG/data/output/t2i_dtm/sana_dtm_dim",]
+    image_dirs: ["/home/muzammal/Projects/TRIG/data/output/t2i/sdxl",]
     result_dir: "data/result"
-    result_files: ["data/result/t2i/sana_dtm_dim_qwen_7B_t1.json", ]
+    result_files: ["data/result/t2i/sdxl_qwen_72B_t1.json", ]
 
 TRIG_metric: &TRIG_metric
   name: trig_api
@@ -16,7 +16,7 @@ TRIG_metric: &TRIG_metric
 TRIG_metric_72B: &TRIG_metric_72B
   name: trig_api
   endpoint: "http://localhost:8000/v1/"
-  model_name: PointerHQ/Qwen2.5-VL-72B-Instruct-Pointer-AWQ
+  model_name: Qwen/Qwen2-VL-72B-Instruct-AWQ
   top_logprobs: 5
 
 TRIG_metric_GPT: &TRIG_metric_GPT
@@ -35,31 +35,31 @@ TRIG_metric_llava: &TRIG_metric_llava
 dimensions:
   IQ-R:
     metrics:
-      - <<: *TRIG_metric
+      - <<: *TRIG_metric_72B
   IQ-O:
     metrics:
-      - <<: *TRIG_metric
+      - <<: *TRIG_metric_72B
   IQ-A:
     metrics:
-      - <<: *TRIG_metric
+      - <<: *TRIG_metric_72B
   TA-R:
     metrics:
-      - <<: *TRIG_metric
+      - <<: *TRIG_metric_72B
   TA-C:
     metrics:
-      - <<: *TRIG_metric
+      - <<: *TRIG_metric_72B
   TA-S:
     metrics:
-      - <<: *TRIG_metric
+      - <<: *TRIG_metric_72B
   D-K:
     metrics:
-      - <<: *TRIG_metric
+      - <<: *TRIG_metric_72B
   D-A:
     metrics:
-      - <<: *TRIG_metric
+      - <<: *TRIG_metric_72B
   R-T:
     metrics:
-      - <<: *TRIG_metric
+      - <<: *TRIG_metric_72B
   R-B:  
     metrics:
-      - <<: *TRIG_metric
+      - <<: *TRIG_metric_72B

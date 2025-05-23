@@ -2,10 +2,10 @@
 
 # Set default values (can be modified if needed)
 START_IDX=${1:--0}       # Starting index (default: 0)
-STEP_SIZE=${2:-1000}    # Range for each task (default: 1000)
-NUM_TASKS=${3:-3}       # Number of tasks to run (default: 5)
+STEP_SIZE=${2:-400}    # Range for each task (default: 1000)
+NUM_TASKS=${3:-2}       # Number of tasks to run (default: 5)
 
-CONFIG_PATH="/home/muzammal/Projects/TRIG/config/p2p_t.yaml"
+CONFIG_PATH="/home/muzammal/Projects/TRIG/config/gen.yaml"
 
 
 # Run multiple eval.py tasks in parallel
