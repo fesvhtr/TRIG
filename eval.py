@@ -15,16 +15,6 @@ if __name__ == "__main__":
         default="/home/muzammal/Projects/TRIG/config/flux.yaml",
         help="Path to the YAML configuration file."
     )
-    parser.add_argument(
-        "--start_idx",
-        type=int,
-        help="Index to start from."
-    )
-    parser.add_argument(
-        "--end_idx",
-        type=int,
-        help="Index to end at."
-    )
     args = parser.parse_args()
     
     config_path = args.config
@@ -32,12 +22,14 @@ if __name__ == "__main__":
     # read yaml file in config folder
     with open(config_path, "r") as file:
         config = yaml.safe_load(file)
+    start_idx = config["start_idx"] if "start_idx" in config else None
+    end_idx = config["end_idx"] if "end_idx" in config else None
 
     # step 1: generate images
     if "generation" in config:
         from trig.evaluation.generator import Generator
         generator = Generator(config_path=config_path)
-        generator.generate_batch_models(start_idx=args.start_idx, end_idx=args.end_idx)
+        generator.generate_batch_models(start_idx=start_idx, end_idx=end_idx)
 
     # step 2: evaluate images
     if "evaluation" in config:

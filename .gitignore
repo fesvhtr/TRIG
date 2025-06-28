@@ -68,7 +68,9 @@ data/result
 data/ssrencoder
 hf_cache
 dataset/Trig/Trig-image-editing/toxicity_images
+dataset/Trig/Trig-image-editing/image-editing-images
 dataset/Trig/Trig-subject-driven/toxicity_images
+dataset/Trig/Trig-subject-driven/subject-driven-images
 config/eval.yaml
 config/gen.yaml
 wandb/
@@ -79,3 +81,10 @@ dataset/HEIM/
 
 trig/ft/flux_ft
 trig/ft/flux_ft_ds
+
+dataset/Trig/Trig-text-to-image/text-to-image.parquet
+dataset/Trig/Trig-subject-driven/*.json
+dataset/Trig/Trig-text-to-image/*.json
+dataset/Trig/Trig-image-editing/*.json
+
+dataset/Trig/HF/

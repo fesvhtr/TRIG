@@ -25,7 +25,10 @@ class BlipDiffusionModel(BaseModel):
         self.negative_prompt = "over-exposure, under-exposure, saturated, duplicate, out of frame, lowres, cropped, worst quality, low quality, jpeg artifacts, morbid, mutilated, out of frame, ugly, bad anatomy, bad proportions, deformed, blurry, duplicate"
 
     def generate_s2p(self, prompt, item, input_image):
-        cond_image = load_image(input_image)
+        if isinstance(input_image, str):
+            cond_image = load_image(input_image)
+        else:
+            cond_image = input_image
         image = self.pipe(
             prompt,
             cond_image,
@@ -116,7 +119,9 @@ class OminiControlModel(BaseModel):
         seed_everything(0)
 
     def generate_s2p(self, prompt, item, input_image):
-        input_image = Image.open(input_image).convert("RGB")
+        if isinstance(input_image, str):
+            input_image = Image.open(input_image).convert("RGB")
+        
         condition = self.Condition("subject", input_image, position_delta=(0, 32))
         image = self.omini_generate(
             self.pipe,
@@ -143,7 +148,9 @@ class XFluxModel(BaseModel):
         self.pipe.set_ip(None, "XLabs-AI/flux-ip-adapter", "ip_adapter.safetensors")
 
     def generate_s2p(self, prompt, item, input_image):
-        input_image = Image.open(input_image)
+        if isinstance(input_image, str):
+            input_image = Image.open(input_image).convert("RGB")
+        
         image = self.pipe(
             prompt=prompt,
             controlnet_image=None,
@@ -197,7 +204,9 @@ class XFluxDTMDimModel(BaseModel):
 
     def generate_s2p(self, prompt, item, input_image, dimension):
         prompt = self.change(prompt, self.DTM_3d35, dimension)
-        input_image = Image.open(input_image)
+        if isinstance(input_image, str):
+            input_image = Image.open(input_image).convert("RGB")
+        
         image = self.pipe(
             prompt=prompt,
             controlnet_image=None,

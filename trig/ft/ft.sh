@@ -16,7 +16,7 @@ accelerate launch --config_file ./accelerate.yaml train_lora_flux_advanced.py \
   --gradient_checkpointing \
   --learning_rate=4e-4 \
   --text_encoder_lr=5e-6 \
-    --train_text_encoder \
+  --train_text_encoder \
   --optimizer="AdamW" \
   --lr_scheduler="constant" \
   --lr_warmup_steps=0 \
