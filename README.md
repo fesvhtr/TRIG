@@ -2,8 +2,15 @@
 Trade-offs and Relationships in Image Generation: How Do Different Evaluation Dimensions Interact?
 
 ## About
-Here is a fast and easy-to-use library for image generation model inference and evaluation.
 
+## TODO
+
+1. [x] v0: Release the TRIG dataset and evaluation pipeline.
+2. [x] v1: Release the Finetune pipeline and experiments.
+3. [ ] v1: Release the additional metrics toolkit.
+3. [ ] v1: Release the RL (DDPO) pipeline and experiments.
+4. [ ] v1.5: 
+5. [ ] v2:
 
 ## Setup
 ### Installation
@@ -13,7 +20,7 @@ conda activate trig
 conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
 pip install -r requirements.txt
 ```
-We recommand to use TRIG metric by [vllm](https://github.com/vllm-project/vllm). Please install with
+We recommand to use TRIG score by [vllm](https://github.com/vllm-project/vllm). Please install with
 ```
 # for Qwen2.5vl, please update your transformers
 pip install git+https://github.com/huggingface/transformers@f3f6c86582611976e72be054675e2bf0abb5f775
@@ -31,8 +38,7 @@ vllm serve Qwen/Qwen2-VL-72B-Instruct-AWQ --dtype float16 --port 8000 --gpu-memo
 ```
 
 ## Getting Started
-### TRIG Benchmark
-#### Auto Evaluation
+### Auto Evaluation pipeline on TRIG Benchmark
 1. First Please set up a yaml file in config folder to run an experiment, as the format below:
 ```yaml
 name: "test" # name for this experiment
@@ -55,56 +61,66 @@ dimensions:
         metrics: ["GPTLogitMetric"]
     TA-S:
         metrics: ["GPTLogitMetric", "AnotherMetric"]
-    Other Dimensions:
+    Other Dimensions You Want:
         metrics: ["OtherMetric"]
-```
-All the available models & metrics & relation functions could be found [there]().
 
-2. Run the eval.py
+relation:
+  models: ["flux"]
+  res: "formatted_flux"
+  metric: "spearman_corr"
+  plot: true
+  heatmap: true
+  tsne: true
+  tradeoff: true
+  quadrant_analysis: true
+  thresholds:
+    synergy: 0.8 
+    bottleneck: 0.5 
+    
+  insight_thresholds:
+    synergy_density: 0.4
+    bottleneck_density: 0.4
+    dominance_ratio: 0.8
+    tradeoff_corr: 0.6
+```
+More examples could be found in the config folder.
+
+2. Run ```eval.py```
 ```
 python eval.py --config your_config.yaml
-
-python eval.py --config config/relation.yaml   
 ```
-3. 
-   - Generated images will be saved to data/output/your_task/your_model
-   - Evaluation result will be saved to 
-   - Relation result will be saved to 
+3. Outputs:
+- Generated images will be saved to ```data/output/your_task/your_model/```
+- Evaluation result will be saved to ```data/output/your_task/your_model.json```
+- Relation result will be saved to ```data/output/your_model/```
+4. Notes:
+TBD
 
-#### Manual Evaluation
+### Manual Evaluation by metrics toolkit
+All the metrics could be used **independently**. For example:
+```
+metric_class = trig.metrics.import_metric("aesthetic_predictor")
+metric_instance = metric_class()
+# Single Evaluation
+score = metric_instance.compute(image_path="/path/to/image", prompt="prompt")
+# Batch Evaluation
+score = metric_instance.compute_batch_manual(images=["/path/to/image"], prompts=["prompt"])
+```
 
-### Metric Tool Set
+
+### Finetuning by TRIG Result
+TBD
+### RL (DDPO) on SD 1.5
+TBD
+### DTM (Dimension Trade-off Map)
+TBD
 ## Support List
-### Metric Zoo
-**A. Omni Metric**  
-**TRIG Score**
+[Model Zoo]()  
+[Metric Zoo]()
 
-**B. General Metric**
-1. CLIPScore
-
-**C. Specific Metric**  
-Image Quality - Relism
-1. FID ()
-2. IS ()
-3. dasdad ()
-
-Image Quality - Originality
-1. FID ()
-2. IS ()
-3. dasdad ()
-
-Image Quality - Aesthetics
-1. FID ()
-2. IS ()
-3. dasdad ()
-
-Task Alignment - Content Alignment
-1. FID ()
-2. IS ()
-3. dasdad ()
-### Model Zoo
-
-
-
-
-### Citation
+## Acknowledgement
+TBD
+## Citation
+```
+TBD
+```

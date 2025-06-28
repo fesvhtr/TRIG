@@ -23,7 +23,7 @@ AVAILABLE_Metric = {
     'NSFW': 'classic.NSFWMetric',#算法返回格式有问题，和目前格式不匹配
     'clipscore': 'classic.CLIPScoreMetric',
     'inception_score': 'classic.InceptionScoreMetric',
-    'aesthetic_predictor': 'classic.AestheticPredictorMetric',
+    'aesthetic_predictor': 'aesthetic_predictor.AestheticPredictor',
 }
 
 
