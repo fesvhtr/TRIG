@@ -1,8 +1,6 @@
 # TRIG
 Trade-offs and Relationships in Image Generation: How Do Different Evaluation Dimensions Interact?
 
-## About
-
 ## TODO
 
 1. [x] v0: Release the TRIG dataset and evaluation pipeline.

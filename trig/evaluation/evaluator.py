@@ -98,6 +98,7 @@ class Evaluator:
             grouped[combination].append(promp_data)
 
         return grouped
+    
 
     def evaluate_dim_pair(self, combination, prompt_data):
         combined_scores = defaultdict(lambda: defaultdict(list))

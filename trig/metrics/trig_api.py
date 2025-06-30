@@ -85,6 +85,7 @@ class TRIGAPIMetric(BaseMetric):
 
 
     def compute(self, image_path, prompt, *args):
+        # NOTE: ugly code here, need to refactor
         gen_image = encode_image(image_path)
         src_img = encode_image(args[0]) if len(args) >= 1 else None
         item = args[1] if len(args) == 2 else None 
@@ -182,6 +183,7 @@ class TRIGAPIMetric(BaseMetric):
                 if task == 's2p':
                     results[data['data_id']] = self.compute(data['gen_image_path'], data['prompt'], data['img_id'], data['item'])
             return results
+    
 
 if __name__ == "__main__":
     API_KEY = "sk-3816bf9e709540598d239fc684fe0423"

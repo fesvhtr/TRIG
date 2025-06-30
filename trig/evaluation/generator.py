@@ -8,6 +8,7 @@ import shutil
 import requests
 import multiprocessing
 from tqdm import tqdm
+from datasets import load_dataset
 
 project_root = Path(__file__).resolve().parents[2]
 
@@ -20,7 +21,7 @@ class Generator:
         print("Experiment name:", self.config["name"])
         print("Task:", self.config["task"])
         print("Models:", self.config["generation"]["models"])
-        self.prompts_data = self.load_prompts(self.config["prompt_path"])
+        self.prompts_data = self.load_prompts()
         if "description_path" in self.config:
             self.description_data = self.load_descriptions(self.config["description_path"])
         print("-" * 50)
@@ -34,24 +35,36 @@ class Generator:
         print(f"Models loaded: {models.keys()}")
         return models
 
-    def load_prompts(self, prompt_file):
-        with open(prompt_file, 'r') as file:
-            prompts_data = json.load(file)
+    def load_prompts(self):
+        if self.config["prompt_path"] is not None:
+            # Not recommended, use datasets instead
+            with open(self.config["prompt_path"], 'r') as file:
+                prompts_data = json.load(file)
 
-        # check details
-        total_len = len(prompts_data)
-        uni_len = sum(
-            1
-            for prompt in prompts_data
-            if "parent_dataset" in prompt
-            and len(prompt["parent_dataset"]) == 2
-            and prompt["parent_dataset"][0].startswith("<")
-            and prompt["parent_dataset"][0].endswith(">")
-            and prompt["parent_dataset"][1] == "Origin"
-        )
-        print(total_len, uni_len)
+            # check details
+            total_len = len(prompts_data)
+            uni_len = sum(
+                1
+                for prompt in prompts_data
+                if "parent_dataset" in prompt
+                and len(prompt["parent_dataset"]) == 2
+                and prompt["parent_dataset"][0].startswith("<")
+                and prompt["parent_dataset"][0].endswith(">")
+                and prompt["parent_dataset"][1] == "Origin"
+            )
+            print(total_len, uni_len)
 
-        return prompts_data
+            return prompts_data
+        else:
+            split_dir = {
+                "t2i": "text-to-image",
+                "p2p": "image-editing",
+                "s2p": "subject-driven",
+            }
+            prompts_data = load_dataset("TRIG-bench/TRIG", split=split_dir[self.config["task"]])
+            return prompts_data
+    
+    
 
     def load_descriptions(self, description_file):
         with open(description_file, 'r') as file:
@@ -99,6 +112,7 @@ class Generator:
             self.prompts_data = self.prompts_data[start_idx:end_idx]
 
         for prompt_data in tqdm(self.prompts_data):
+            # TODO: Align HF dataset format
             if prompt_data["data_id"] in file_list:
                 continue
 
@@ -119,29 +133,28 @@ class Generator:
             #     else:
             #         print(f"Parent image not found: {parent_dim}_{idx}.png")
             #         continue
-            if False: pass
-            else:
-                if "image_path" in self.config:
-                    image_path = os.path.join(self.config["image_path"], prompt_data["img_id"])
-                prompt = prompt_data["prompt"]
-                if "dimensions" in prompt_data:
-                    dimensions = prompt_data["dimensions"]
-                item = prompt_data["item"] if "item" in prompt_data else None
-                if model_name == "flowedit":
-                    src_prompt = description_data[prompt_data["img_id"]]
-                task_mapping = {
-                    "t2i": lambda: model.generate(prompt),
-                    "p2p": lambda: model.generate_p2p(prompt, image_path, src_prompt) 
-                    if model_name == "flowedit" else model.generate_p2p(),
-                    "s2p": lambda: model.generate_s2p(prompt, item, image_path),
-                    "t2i_dtm": lambda: model.generate(prompt, dimensions),
-                    "p2p_dtm": lambda: model.generate_p2p(prompt, image_path, src_prompt, dimensions) 
-                    if model_name == "flowedit" else model.generate_p2p(prompt, image_path, dimensions),
-                    "s2p_dtm": lambda: model.generate_s2p(prompt, item, image_path, dimensions),
-                }
-                image = task_mapping[task]()
 
-                self.save_image(image, output_path, prompt_data["data_id"])
+
+            if "image_path" in self.config:
+                image = os.path.join(self.config["image_path"], prompt_data["img_id"])
+            prompt = prompt_data["prompt"]
+            if "dimensions" in prompt_data:
+                dimensions = prompt_data["dimensions"]
+            item = prompt_data["item"] if "item" in prompt_data else None
+            #  deprecated
+            # if model_name == "flowedit":
+            #     src_prompt = description_data[prompt_data["img_id"]]
+            task_mapping = {
+                "t2i": lambda: model.generate(prompt),
+                "p2p": lambda: model.generate_p2p(prompt, image),
+                "s2p": lambda: model.generate_s2p(prompt, item, image),
+                "t2i_dtm": lambda: model.generate(prompt, dimensions),
+                "p2p_dtm": lambda: model.generate_p2p(prompt, image, dimensions),
+                "s2p_dtm": lambda: model.generate_s2p(prompt, item, image, dimensions),
+            }
+            image = task_mapping[task]()
+
+            self.save_image(image, output_path, prompt_data["data_id"])
 
 
 if __name__ == "__main__":

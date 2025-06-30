@@ -6,7 +6,7 @@ import numpy as np
 
 class BaseMetric(ABC):
 
-    def __init__(self, dimension, **kwargs):
+    def __init__(self, dimension: Any = None, **kwargs):
         self.dimension = dimension
         super().__init__()
 

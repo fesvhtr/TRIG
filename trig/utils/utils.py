@@ -21,11 +21,30 @@ def load_config(config_path):
         return yaml.safe_load(f)
 
 
-def encode_image(image_path):
+def encode_image(image_input):
     image = {}
-    with open(image_path, "rb") as image_file:
-        image['base64'] = base64.b64encode(image_file.read()).decode('utf-8')
-    image['type'] = get_image_type(image_path)
+    
+    # Detect input type: file path string or PIL Image object
+    if isinstance(image_input, str):
+        # Handle file path
+        with open(image_input, "rb") as image_file:
+            image['base64'] = base64.b64encode(image_file.read()).decode('utf-8')
+        image['type'] = get_image_type(image_input)
+    elif isinstance(image_input, Image.Image):
+        # Handle PIL Image object
+        buffer = BytesIO()
+        # Get image format, default to PNG if not available
+        image_format = image_input.format if image_input.format else 'PNG'
+        # Save to byte stream
+        image_input.save(buffer, format=image_format)
+        buffer.seek(0)
+        # Encode to base64
+        image['base64'] = base64.b64encode(buffer.getvalue()).decode('utf-8')
+        # Set type
+        image['type'] = image_format.lower()
+    else:
+        raise ValueError("image_input must be either a file path (str) or a PIL Image object")
+    
     return image
 
 
