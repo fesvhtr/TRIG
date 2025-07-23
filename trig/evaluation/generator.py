@@ -36,7 +36,7 @@ class Generator:
         return models
 
     def load_prompts(self):
-        if self.config["prompt_path"] is not None:
+        if "prompt_path" in self.config:
             # Not recommended, use datasets instead
             with open(self.config["prompt_path"], 'r') as file:
                 prompts_data = json.load(file)
@@ -57,16 +57,19 @@ class Generator:
             return prompts_data
         else:
             split_dir = {
-                "t2i": "text-to-image",
-                "p2p": "image-editing",
-                "s2p": "subject-driven",
+                "t2i": "text_to_image",
+                "p2p": "image_editing",
+                "s2p": "subject_driven",
             }
+            print("Loading dataset from Hugging Face, task: ", split_dir[self.config["task"]])
             prompts_data = load_dataset("TRIG-bench/TRIG", split=split_dir[self.config["task"]])
+            print("Dataset loaded")
             return prompts_data
     
     
 
     def load_descriptions(self, description_file):
+        # deprecated
         with open(description_file, 'r') as file:
             description_data = json.load(file)
         return description_data
@@ -79,7 +82,6 @@ class Generator:
             self.generate_single_model(model_name, start_idx, end_idx)
 
     def save_image(self, image, output_path, filename):
-
         file_path = os.path.join(output_path, f"{filename}.png")
 
         try:
@@ -134,16 +136,23 @@ class Generator:
             #         print(f"Parent image not found: {parent_dim}_{idx}.png")
             #         continue
 
-
+            
             if "image_path" in self.config:
+                # if use json (not recommended), image is a path to the image
                 image = os.path.join(self.config["image_path"], prompt_data["img_id"])
+            else:
+                # from HF dataset, image is a PIL Image object
+                image = prompt_data["image"].convert("RGB")
+
             prompt = prompt_data["prompt"]
             if "dimensions" in prompt_data:
                 dimensions = prompt_data["dimensions"]
             item = prompt_data["item"] if "item" in prompt_data else None
+
             #  deprecated
             # if model_name == "flowedit":
             #     src_prompt = description_data[prompt_data["img_id"]]
+
             task_mapping = {
                 "t2i": lambda: model.generate(prompt),
                 "p2p": lambda: model.generate_p2p(prompt, image),

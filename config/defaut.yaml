@@ -1,12 +1,15 @@
 name: "default" # experiment name
-task: "t2i" # "t2i" for text-to-image, "p2p" for image editing, "s2p" for subject driven generation
-prompt_path: "/home/muzammal/Projects/TRIG/dataset/Trig/Trig-text-to-image/text-to-imgae-without-m-e-v8.json" # path to the prompt file
+task: "t2i" # "t2i" for text-to-image, "p2p" for image-editing, "s2p" for subject-driven
+
+# if cannot access HF dataset, use json file like this
+# prompt_path: "/path/to/text-to-imgae.json" # path to the prompt file
 
 generation:
     # t2i models: ["dalle3", "sdxl", "omnigen", "pixart_sigma", "onediffusion", "sana", "sd35", 'flux']
     # p2p models: []
     # s2p models: []
     # general models: []
+    # dtm models: []
     # results will be saved in data/output/your_task/your_model
     models: ["flux", "sd35"]
 
@@ -15,75 +18,82 @@ evaluation:
     image_dirs: ["../data/output/t2i/flux", "../data/output/t2i/sd35"] # path to the generated images
     result_dir: "data/result"
     # should in same order as image_dirs, if not provided, will save in result_dir/your_model_name.json
-    result_files: ["data/result/demo2.json"]
+    # result_files: ["../data/result/t2i/flux_TRIG.json", "../data/result/t2i/sd35_TRIG.json"]
 
 # set your metrics here with parameters
 TRIG_metric_GPT: &TRIG_metric_GPT
   name: trig_api
   API_KEY: "your_api_key"
-  endpoint: "https://api.bltcy.ai/v1"
-  model_name: gpt-4o
+  endpoint: "http://localhost:10021/v1/"
+  model_name: Qwen/Qwen2.5-VL-7B-Instruct
   top_logprobs: 5
 
 dimensions:
-  IQ-R:
+  # AL-v0: Means all dimensions in TRIG v0 paper are used
+  AL-v0:
     metrics:
-      # metrics with parameters
+      # 1. metrics with parameters
       - <<: *TRIG_metric_72B
 
-      # metrics with parameters (another example)
+      # 2. metrics with parameters (another example)
       # - name: trig_api
       #   API_KEY: "your_api_key"
       #   endpoint: "https://api.bltcy.ai/v1"
       #   model_name: gpt-4o
       #   top_logprobs: 5
 
-      # metrics without parameters
+      # 3. metrics without parameters
       # - name: trig_api
 
-  IQ-O:
-    metrics:
-      - <<: *TRIG_metric_72B
-  IQ-A:
-    metrics:
-      - <<: *TRIG_metric_72B
-  TA-R:
-    metrics:
-      - <<: *TRIG_metric_72B
-  TA-C:
-    metrics:
-      - <<: *TRIG_metric_72B
-  TA-S:
-    metrics:
-      - <<: *TRIG_metric_72B
-  D-K:
-    metrics:
-      - <<: *TRIG_metric_72B
-  D-A:
-    metrics:
-      - <<: *TRIG_metric_72B
-  R-T:
-    metrics:
-      - <<: *TRIG_metric_72B
-  R-B:  
-    metrics:
-      - <<: *TRIG_metric_72B
+  # Or you can select the dimensions you want to evaluate, and specify the metrics for each dimension as below
+  # Only the examples with these dimensions will be evaluated.
+
+  # IQ-R:
+  #   metrics:
+  #     - <<: *TRIG_metric_72B
+  # IQ-O:
+  #   metrics:
+  #     - <<: *TRIG_metric_72B
+  # IQ-A:
+  #   metrics:
+  #     - <<: *TRIG_metric_72B
+  # TA-R:
+  #   metrics:
+  #     - <<: *TRIG_metric_72B
+  # TA-C:
+  #   metrics:
+  #     - <<: *TRIG_metric_72B
+  # TA-S:
+  #   metrics:
+  #     - <<: *TRIG_metric_72B
+  # D-K:
+  #   metrics:
+  #     - <<: *TRIG_metric_72B
+  # D-A:
+  #   metrics:
+  #     - <<: *TRIG_metric_72B
+  # R-T:
+  #   metrics:
+  #     - <<: *TRIG_metric_72B
+  # R-B:  
+  #   metrics:
+  #     - <<: *TRIG_metric_72B
 
 relation:
   models: ["flux"]
   res: "formatted_flux"
-  metric: "spearman_corr"  # 可选值: pearson_corr, spearman_corr, paretoF
+  metric: "spearman_corr"  # Options: pearson_corr, spearman_corr, paretoF
   plot: true
   heatmap: true
   tsne: true
   tradeoff: true
   quadrant_analysis: true
   thresholds:
-    synergy: 0.8      # 协同区阈值
-    bottleneck: 0.5   # 瓶颈区阈值
+    synergy: 0.8      # Synergy zone threshold
+    bottleneck: 0.5   # Bottleneck zone threshold
     
   insight_thresholds:
-    synergy_density: 0.4    # 协同区密度阈值
-    bottleneck_density: 0.4 # 瓶颈区密度阈值
-    dominance_ratio: 0.8    # 主导比例阈值（0.5表示比例阈值为2）
-    tradeoff_corr: 0.6      # 零和博弈判定的相关系数阈值
+    synergy_density: 0.4    # Synergy zone density threshold
+    bottleneck_density: 0.4 # Bottleneck zone density threshold
+    dominance_ratio: 0.8    # Dominance ratio threshold (0.5 means ratio threshold is 2)
+    tradeoff_corr: 0.6      # Correlation coefficient threshold for zero-sum game determination

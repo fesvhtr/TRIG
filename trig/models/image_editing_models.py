@@ -1,4 +1,6 @@
 import torch
+import tempfile
+import os
 from PIL import Image
 from diffusers.utils import load_image
 from trig.models.base import BaseModel
@@ -26,8 +28,8 @@ class InstructPix2PixModel(BaseModel):
         self.pipe.scheduler = EulerAncestralDiscreteScheduler.from_config(self.pipe.scheduler.config)
 
     def generate_p2p(self, prompt, input_image):
-        # print(input_image)
-        input_image = load_image(input_image)
+        if isinstance(input_image, str):
+            input_image = load_image(input_image)
         image = self.pipe(
             prompt, 
             image=input_image, 
@@ -71,13 +73,30 @@ class FreeDiffModel(BaseModel):
         
         return image
 
-    def get_latents(self, ipath):
-        img_np = self.invutils.load_512(ipath)
-        img_latn = self.invutils.img2latn(img_np, self.model, device)
-        uncond_emb = self.invutils.encode_text("", self.model)
-        xT, xts = self.invutils.ddim_inversion_null_fixpt(img_latn, self.model, uncond_emb, save_all=True, FP_STEPS=5, INV_STEPS=self.num_infer_steps)
+    def get_latents(self, input_image):
+        # Handle both path and PIL Image object
+        temp_file = None
+        try:
+            if isinstance(input_image, str):
+                # input_image is a path
+                image_path = input_image
+            else:
+                # input_image is a PIL Image object, save to temporary file
+                temp_file = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
+                input_image.save(temp_file.name, 'PNG')
+                image_path = temp_file.name
+                temp_file.close()
+            
+            img_np = self.invutils.load_512(image_path)
+            img_latn = self.invutils.img2latn(img_np, self.model, device)
+            uncond_emb = self.invutils.encode_text("", self.model)
+            xT, xts = self.invutils.ddim_inversion_null_fixpt(img_latn, self.model, uncond_emb, save_all=True, FP_STEPS=5, INV_STEPS=self.num_infer_steps)
 
-        return xT, xts
+            return xT, xts
+        finally:
+            # Clean up temporary file if created
+            if temp_file and os.path.exists(temp_file.name):
+                os.unlink(temp_file.name)
 
 
 class HQEditModel(BaseModel):
@@ -102,7 +121,10 @@ class HQEditModel(BaseModel):
         image_guidance_scale = 1.5
         guidance_scale = 7.0
         res = 512
-        image = load_image(input_image).resize((res, res))
+        if isinstance(input_image, str):
+            image = load_image(input_image).resize((res, res))
+        else:
+            image = input_image.resize((res, res))
 
         edited_image = self.pipe(
             prompt=prompt,
@@ -132,7 +154,10 @@ class RFInversionModel(BaseModel):
         self.pipe.to("cuda")
 
     def generate_p2p(self, prompt, input_image):
-        image = load_image(input_image)
+        if isinstance(input_image, str):
+            image = load_image(input_image)
+        else:
+            image = input_image
         inverted_latents, image_latents, latent_image_ids = self.pipe.invert(
             image=image, 
             num_inversion_steps=28, 
@@ -165,13 +190,30 @@ class RFSolverEditModel(BaseModel):
         self.pipe = RFEditPipeline
 
     def generate_p2p(self, prompt, input_image):
-        image = self.pipe(
-            source_img_dir=input_image,
-            source_prompt='',
-            target_prompt=prompt,   
-        )
-        
-        return image
+        # Handle both path and PIL Image object
+        temp_file = None
+        try:
+            if isinstance(input_image, str):
+                # input_image is a path
+                image_path = input_image
+            else:
+                # input_image is a PIL Image object, save to temporary file
+                temp_file = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
+                input_image.save(temp_file.name, 'PNG')
+                image_path = temp_file.name
+                temp_file.close()
+            
+            image = self.pipe(
+                source_img_dir=image_path,
+                source_prompt='',
+                target_prompt=prompt,   
+            )
+            
+            return image
+        finally:
+            # Clean up temporary file if created
+            if temp_file and os.path.exists(temp_file.name):
+                os.unlink(temp_file.name)
 
 class HQEditDTMDimModel(BaseModel):
     """
@@ -215,7 +257,10 @@ class HQEditDTMDimModel(BaseModel):
         image_guidance_scale = 1.5
         guidance_scale = 7.0
         res = 512
-        image = load_image(input_image).resize((res, res))
+        if isinstance(input_image, str):
+            image = load_image(input_image).resize((res, res))
+        else:
+            image = input_image.resize((res, res))
 
         edited_image = self.pipe(
             prompt=prompt,

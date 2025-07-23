@@ -73,7 +73,10 @@ class SSREncoderModel(BaseModel):
         self.ssr_model.load_SSR(ssr_ckpt[0], ssr_ckpt[1])
 
     def generate_s2p(self, prompt, item, input_image):
-        pil_img = load_image(input_image)
+        if isinstance(input_image, str):
+            pil_img = load_image(input_image)
+        else:
+            pil_img = input_image
         image = self.ssr_model.generate(
             pil_image=pil_img,
             concept=item,

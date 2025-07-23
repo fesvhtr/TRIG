@@ -2,9 +2,9 @@ from huggingface_hub import HfApi
 
 api = HfApi()
 api.upload_file(
-    path_in_repo="output/t2i/sd15.zip", 
-    path_or_fileobj="/home/muzammal/Projects/TRIG/data/output/t2i/sd15.zip",  
-    repo_id="TRIG-bench/TRIG", 
+    path_in_repo="sana_dtm_dim.zip", 
+    path_or_fileobj="/home/muzammal/Projects/TRIG/data/output/t2i_dtm/sana_dtm_dim.zip",  
+    repo_id="TRIG-bench/FLUX_FT_output", 
     repo_type="dataset" 
 )
 

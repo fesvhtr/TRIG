@@ -11,9 +11,9 @@ class BaseMetric(ABC):
         super().__init__()
 
     @abstractmethod
-    def compute(self, image_path: str, prompt: str) -> float:
+    def compute(self, image_path: str, prompt: str, *args) -> float:
         pass
 
     @abstractmethod
-    def compute_batch(self, images: List[str], prompts: List[str], dimension: Any = None) -> np.ndarray:
+    def compute_batch(self, task: str, promp_data: List[Dict[str, Any]]) -> Dict[str, float]:
         pass

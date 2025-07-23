@@ -1,4 +1,6 @@
 import torch
+import tempfile
+import os
 from PIL import Image
 
 from trig.models.base import BaseModel
@@ -34,19 +36,55 @@ class OmniGenModel(BaseModel):
         return image
     
     def generate_p2p(self, prompt, input_image):
-        width, height = Image.open(input_image).size
-        width = int((width/2) // 16) * 16
-        height = int((height/2) // 16) * 16
-        prompt=f"Generate a new photo using the following picture and text as conditions: <img><|image_1|><img>\n {prompt}"
-        images = self.pipe(prompt=prompt, input_images=[input_image], height=height, width=width, guidance_scale=2.5, 
-                           img_guidance_scale=1.6, seed=0)[0]
-        return images
+        # Handle both path and PIL Image object
+        temp_file = None
+        try:
+            if isinstance(input_image, str):
+                # input_image is a path
+                image_path = input_image
+                pil_image = Image.open(input_image)
+            else:
+                # input_image is a PIL Image object, save to temporary file
+                pil_image = input_image
+                temp_file = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
+                input_image.save(temp_file.name, 'PNG')
+                image_path = temp_file.name
+                temp_file.close()
+            
+            width, height = pil_image.size
+            width = int((width/2) // 16) * 16
+            height = int((height/2) // 16) * 16
+            prompt=f"Generate a new photo using the following picture and text as conditions: <img><|image_1|><img>\n {prompt}"
+            images = self.pipe(prompt=prompt, input_images=[image_path], height=height, width=width, guidance_scale=2.5, 
+                               img_guidance_scale=1.6, seed=0)[0]
+            return images
+        finally:
+            # Clean up temporary file if created
+            if temp_file and os.path.exists(temp_file.name):
+                os.unlink(temp_file.name)
     
     def generate_s2p(self, prompt, item, input_image):
-        prompt = f"The {item} is in <img><|image_1|></img>. {prompt}"
-        images = self.pipe(prompt=prompt, input_images=[input_image], height=512, width=512, guidance_scale=2.5, 
-                           img_guidance_scale=1.6, seed=0)[0]
-        return images
+        # Handle both path and PIL Image object
+        temp_file = None
+        try:
+            if isinstance(input_image, str):
+                # input_image is a path
+                image_path = input_image
+            else:
+                # input_image is a PIL Image object, save to temporary file
+                temp_file = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
+                input_image.save(temp_file.name, 'PNG')
+                image_path = temp_file.name
+                temp_file.close()
+            
+            prompt = f"The {item} is in <img><|image_1|></img>. {prompt}"
+            images = self.pipe(prompt=prompt, input_images=[image_path], height=512, width=512, guidance_scale=2.5, 
+                               img_guidance_scale=1.6, seed=0)[0]
+            return images
+        finally:
+            # Clean up temporary file if created
+            if temp_file and os.path.exists(temp_file.name):
+                os.unlink(temp_file.name)
 
 
 class OneDiffusionModel(BaseModel):
@@ -79,8 +117,9 @@ class OneDiffusionModel(BaseModel):
         return image
     
     def generate_p2p(self, prompt, input_image):
-        input_image = Image.open(input_image)
-        width, height = Image.open(input_image).size
+        if isinstance(input_image, str):
+            input_image = Image.open(input_image)
+        width, height = input_image.size
         width = int((width/2) // 16) * 16
         height = int((height/2) // 16) * 16
         image = self.pipe.img2img(image=input_image, prompt=f"[[image_editing]] {prompt}", negative_prompt=self.OD_NEGATIVE_PROMPT, 
@@ -88,8 +127,9 @@ class OneDiffusionModel(BaseModel):
         return image
     
     def generate_s2p(self, prompt, item, input_image):
-        input_image = Image.open(input_image)
-        width, height = Image.open(input_image).size
+        if isinstance(input_image, str):
+            input_image = Image.open(input_image)
+        width, height = input_image.size
         width = int((width/2) // 16) * 16
         height = int((height/2) // 16) * 16
         image = self.pipe.img2img(image=input_image, prompt=f"[[subject_driven]] <item: {item}> [[img0]] {prompt}", negative_prompt=self.OD_NEGATIVE_PROMPT, 

@@ -7,8 +7,8 @@ Trade-offs and Relationships in Image Generation: How Do Different Evaluation Di
 2. [x] v1: Release the Finetune pipeline and experiments.
 3. [ ] v1: Release the additional metrics toolkit.
 3. [ ] v1: Release the RL (DDPO) pipeline and experiments.
-4. [ ] v1.5: 
-5. [ ] v2:
+4. [ ] v1.5: TBD.
+5. [ ] v2: TBD.
 
 ## Setup
 ### Installation

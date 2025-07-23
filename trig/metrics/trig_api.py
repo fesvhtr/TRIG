@@ -190,12 +190,27 @@ if __name__ == "__main__":
     # Example usage
     metric = TRIGAPIMetric(API_KEY=API_KEY, model_name="qwen2.5-vl-72b-instruct",endpoint="https://dashscope.aliyuncs.com/compatible-mode/v1", dimension='TA-C', top_logprobs=5,)
     image_path = r"/home/muzammal/Projects/TRIG/demo.jpg"
-    prompt = ["A old building like a main building of a university",
-              "A old building like a main building of a university with green grass and blue sky",
-              "A dog swimming in the water",
-              "A new techinical building with a grey sky",
-              "A beautiful sunset with a beach"]
 
-    for i in prompt:
-        result = metric.compute(image_path, i)
-        print(result)
+    
+    # Example 1: Text-to-Image (t2i) independent computation
+    print("\n1. Text-to-Image (t2i) independent computation:")
+    metric.task = 't2i'  # Set task type
+    prompt_t2i = "A beautiful sunset with a beach"
+    result_t2i = metric.compute(image_path, prompt_t2i)
+    print(f"T2I Score: {result_t2i}")
+    
+    # Example 2: Photo-to-Photo (p2p) independent computation
+    print("\n2. Photo-to-Photo (p2p) independent computation:")
+    metric.task = 'p2p'  # Set task type
+    src_image_path = image_path  # Using the same image as example here
+    prompt_p2p = "Change the sky to be more dramatic with storm clouds"
+    result_p2p = metric.compute(image_path, prompt_p2p, src_image_path)
+    print(f"P2P Score: {result_p2p}")
+    
+    # Example 3: Subject-to-Photo (s2p) independent computation
+    print("\n3. Subject-to-Photo (s2p) independent computation:")
+    metric.task = 's2p'  # Set task type
+    prompt_s2p = "A photo of the building in a winter scene with snow"
+    item_name = "university building"
+    result_s2p = metric.compute(image_path, prompt_s2p, src_image_path, item_name)
+    print(f"S2P Score: {result_s2p}")
