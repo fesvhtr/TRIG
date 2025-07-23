@@ -12,7 +12,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--config",
         type=str,
-        default="/home/muzammal/Projects/TRIG/config/flux.yaml",
+        default="config/flux.yaml",
         help="Path to the YAML configuration file."
     )
     args = parser.parse_args()

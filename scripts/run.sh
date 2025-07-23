@@ -12,9 +12,9 @@ CONFIG_PATH="/home/muzammal/Projects/TRIG/config/gen.yaml"
 for ((i=0; i<NUM_TASKS; i++))
 do
     END_IDX=$((START_IDX + STEP_SIZE))
-    echo "Launching eval.py from index $START_IDX to $END_IDX"
+    echo "Launching main.py from index $START_IDX to $END_IDX"
 
-    CUDA_VISIBLE_DEVICES=2 python eval.py --config "$CONFIG_PATH" --start_idx "$START_IDX" --end_idx "$END_IDX" &
+    CUDA_VISIBLE_DEVICES=2 python main.py --config "$CONFIG_PATH" --start_idx "$START_IDX" --end_idx "$END_IDX" &
 
     START_IDX=$END_IDX
 done
