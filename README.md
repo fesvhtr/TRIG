@@ -1,11 +1,13 @@
 # TRIG
+[![paper](https://img.shields.io/badge/cs.CV-2507.22100-b31b1b?logo=arxiv&logoColor=red)](https://arxiv.org/abs/2507.22100)
+[![Dataset](https://img.shields.io/badge/Dataset-TRIG-orange)](https://huggingface.co/datasets/TRIG-bench/TRIG)
+[![Collection](https://img.shields.io/badge/Collection-Download-blue)](https://huggingface.co/collections/TRIG-bench/trigv1-6862b38b91af9bec3a4a05cb)   
 Trade-offs and Relationships in Image Generation: How Do Different Evaluation Dimensions Interact?
 
 ## TODO
 
 1. [x] v0: Release the TRIG dataset and evaluation pipeline.
 2. [x] v1: Release the Finetune pipeline and experiments.
-3. [ ] v1: Release the additional metrics toolkit.
 3. [ ] v1: Release the RL (DDPO) pipeline and experiments.
 4. [ ] v1.5: TBD.
 5. [ ] v2: TBD.
@@ -83,9 +85,9 @@ relation:
 ```
 More examples could be found in the config folder.
 
-2. Run ```eval.py```
+2. Run ```main.py```
 ```
-python eval.py --config your_config.yaml
+python main.py --config your_config.yaml
 ```
 3. Outputs:
 - Generated images will be saved to ```data/output/your_task/your_model/```
@@ -106,19 +108,27 @@ score = metric_instance.compute_batch_manual(images=["/path/to/image"], prompts=
 ```
 
 
-### Finetuning by TRIG Result
-TBD
-### RL (DDPO) on SD 1.5
-TBD
-### DTM (Dimension Trade-off Map)
-TBD
-## Support List
-[Model Zoo]()  
-[Metric Zoo]()
+### Finetuning by DTM
+1. Select the dimension and trade-off type you want to optimize. for example, in the paper, we choose Knowledge & Ambiguity, and try to balance these two dimensions.
+2. Follow the TRIG principle, we create [a original set](https://huggingface.co/datasets/TRIG-bench/flux-ft-ds) which covers the two dim.
+3. We generate images with this set, the ouput images are in [flux_ft_train.zip](https://huggingface.co/datasets/TRIG-bench/flux_ft_train/blob/main/flux_ft_train.zip).
+4. Test these images, select [good samples](https://huggingface.co/datasets/TRIG-bench/flux_ft_train/blob/main/flux_ft_72B_filtered_ids.json) with trade-off as expected.
+5. Use these selected image to do LoRA finetune on flux.
+6. Then we got the [balanced flux model](https://huggingface.co/TRIG-bench/FLUX_FT_LoRA_TRIG_epoch10).
+
+### Prompt Engineering by DTM
+use model name 'sd35_dtm_dim', 'sana_dtm_dim', 'xflux_dtm_dim' and 'hqedit_dtm_dim' in the yaml config file to generate with Prompt Engineering.
 
 ## Acknowledgement
-TBD
+Many thanks to the great works in GenAI Models like [FLUX](https://huggingface.co/black-forest-labs/FLUX.1-dev), Benchmarks like [HEIM](https://crfm.stanford.edu/helm/heim/latest/), Metric like [VQAScore](https://github.com/linzhiqiu/t2v_metrics).
+
 ## Citation
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
 ```
-TBD
+@article{zhang2025trade,
+  title={Trade-offs in Image Generation: How Do Different Dimensions Interact?},
+  author={Zhang, Sicheng and Xie, Binzhu and Yan, Zhonghao and Zhang, Yuli and Zhou, Donghao and Chen, Xiaofei and Qiu, Shi and Liu, Jiaqi and Xie, Guoyang and Lu, Zhichao},
+  journal={arXiv preprint arXiv:2507.22100},
+  year={2025}
+}
 ```
