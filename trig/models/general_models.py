@@ -16,9 +16,18 @@ class OmniGenModel(BaseModel):
     https://github.com/VectorSpaceLab/OmniGen
     """
     def __init__(self):
+        super().__init__()
         self.model_name = "OmniGen"
+        self.default_model_id = "Shitao/OmniGen-v1"
+        
+        # 加载配置文件
+        self.load_local_config()
+        
+        # 获取模型路径（配置文件或HuggingFace）
+        model_path = self.get_model_path(self.default_model_id, "OMNIGEN_MODEL_PATH")
+        
         from trig.models.OmniGen import OmniGenPipeline
-        self.pipe = OmniGenPipeline.from_pretrained("Shitao/OmniGen-v1")
+        self.pipe = OmniGenPipeline.from_pretrained(model_path)
 
     def generate(self, prompt, task='t2i', input_image=None, item=None):
         if task == 't2i':
@@ -94,9 +103,18 @@ class OneDiffusionModel(BaseModel):
     https://github.com/lehduong/OneDiffusion
     """
     def __init__(self):
+        super().__init__()
         self.model_name = "OneDiffusion"
+        self.default_model_id = "lehduong/OneDiffusion"
+        
+        # 加载配置文件
+        self.load_local_config()
+        
+        # 获取模型路径（配置文件或HuggingFace）
+        model_path = self.get_model_path(self.default_model_id, "ONEDIFFUSION_MODEL_PATH")
+        
         from trig.models.onediffusion import OneDiffusionPipeline
-        self.pipe = OneDiffusionPipeline.from_pretrained("lehduong/OneDiffusion").to(device=device, dtype=torch.bfloat16)
+        self.pipe = OneDiffusionPipeline.from_pretrained(model_path).to(device=device, dtype=torch.bfloat16)
         self.OD_NEGATIVE_PROMPT = "monochrome, greyscale, low-res, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry, artist name, poorly drawn, bad anatomy, wrong anatomy, extra limb, missing limb, floating limbs, disconnected limbs, mutation, mutated, ugly, disgusting, blurry, amputation"
 
     def generate(self, prompt, task='t2i', input_image=None, item=None):

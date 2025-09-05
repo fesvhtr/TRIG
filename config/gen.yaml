@@ -1,5 +1,5 @@
 name: "test"
-task: "t2i"
+task: "t2i_ml"
 
 generation:
   models: ["flux"]

@@ -17,10 +17,10 @@ class DALLE3Model(BaseModel):
     """
     def __init__(self):
         self.model_name = "dalle3"
-        api_key = 'sk-mqUwZI8bhIv746rG6f3fE830D8B146E789Fd11717aD8C4B1'
+        api_key = 'TBD'
         from openai import OpenAI
         # self.pipe = OpenAI(api_key=API_KEY)
-        self.pipe = OpenAI(api_key=api_key, base_url="https://api.bltcy.ai/v1")
+        self.pipe = OpenAI(api_key=api_key, base_url="TBD")
 
     def generate(self, prompt, **kwargs):
         cnt = 0
@@ -61,10 +61,19 @@ class SDXLModel(BaseModel):
     https://github.com/Stability-AI/generative-models
     """
     def __init__(self):
+        super().__init__()
         self.model_name = "SDXL"
+        self.default_model_id = "stabilityai/stable-diffusion-xl-base-1.0"
+        
+        # 加载配置文件
+        self.load_local_config()
+        
+        # 获取模型路径（配置文件或HuggingFace）
+        model_path = self.get_model_path(self.default_model_id, "SDXL_MODEL_PATH")
+        
         from diffusers import DiffusionPipeline
         self.pipe = DiffusionPipeline.from_pretrained(
-            "stabilityai/stable-diffusion-xl-base-1.0", 
+            model_path, 
             torch_dtype=torch.float16, 
             use_safetensors=True,
             variant="fp16"
@@ -86,10 +95,19 @@ class SD15Model(BaseModel):
     https://github.com/Stability-AI/generative-models
     """
     def __init__(self):
+        super().__init__()
         self.model_name = "SD1.5"
+        self.default_model_id = "sd-legacy/stable-diffusion-v1-5"
+        
+        # 加载配置文件
+        self.load_local_config()
+        
+        # 获取模型路径（配置文件或HuggingFace）
+        model_path = self.get_model_path(self.default_model_id, "SD15_MODEL_PATH")
+        
         from diffusers import StableDiffusionPipeline
         self.pipe = StableDiffusionPipeline.from_pretrained(
-            "sd-legacy/stable-diffusion-v1-5", 
+            model_path, 
             torch_dtype=torch.float16, 
         )
         
@@ -110,10 +128,19 @@ class SD15DDPOModel(BaseModel):
     https://github.com/Stability-AI/generative-models
     """
     def __init__(self):
-        self.model_name = "SDXL"
+        super().__init__()
+        self.model_name = "SD15_DDPO"
+        self.default_model_id = "sd-legacy/stable-diffusion-v1-5"
+        
+        # 加载配置文件
+        self.load_local_config()
+        
+        # 获取模型路径（配置文件或HuggingFace）
+        model_path = self.get_model_path(self.default_model_id, "SD15_DDPO_MODEL_PATH")
+        
         from diffusers import StableDiffusionPipeline
         self.pipe = StableDiffusionPipeline.from_pretrained(
-            "sd-legacy/stable-diffusion-v1-5", 
+            model_path, 
             torch_dtype=torch.float16, 
         )
         self.pipe.load_lora_weights("/home/muzammal/Projects/TRIG/scripts/save/checkpoints/checkpoint_13/pytorch_lora_weights.safetensors")
@@ -134,17 +161,28 @@ class PixartSigmaModel(BaseModel):
     https://github.com/PixArt-alpha/PixArt-sigma
     """
     def __init__(self):
+        super().__init__()
         self.model_name = "PixArt_Sigma"
+        self.default_transformer_id = "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
+        self.default_pipeline_id = "PixArt-alpha/pixart_sigma_sdxlvae_T5_diffusers"
+        
+        # 加载配置文件
+        self.load_local_config()
+        
+        # 获取模型路径（配置文件或HuggingFace）
+        transformer_path = self.get_model_path(self.default_transformer_id, "PIXART_TRANSFORMER_PATH")
+        pipeline_path = self.get_model_path(self.default_pipeline_id, "PIXART_PIPELINE_PATH")
+        
         weight_dtype = torch.float16
         from diffusers import Transformer2DModel, PixArtSigmaPipeline
         transformer = Transformer2DModel.from_pretrained(
-            "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS",
+            transformer_path,
             subfolder='transformer',
             torch_dtype=weight_dtype,
             use_safetensors=True,
         )
         self.pipe = PixArtSigmaPipeline.from_pretrained(
-            "PixArt-alpha/pixart_sigma_sdxlvae_T5_diffusers",
+            pipeline_path,
             transformer=transformer,
             torch_dtype=weight_dtype,
             use_safetensors=True,
@@ -163,10 +201,19 @@ class SanaModel(BaseModel):
     https://github.com/NVlabs/Sana
     """
     def __init__(self):
+        super().__init__()
         self.model_name = "Sana"
+        self.default_model_id = "Efficient-Large-Model/Sana_1600M_1024px_MultiLing_diffusers"
+        
+        # 加载配置文件
+        self.load_local_config()
+        
+        # 获取模型路径（配置文件或HuggingFace）
+        model_path = self.get_model_path(self.default_model_id, "SANA_MODEL_PATH")
+        
         from diffusers import SanaPipeline
         self.pipe = SanaPipeline.from_pretrained(
-            "Efficient-Large-Model/Sana_1600M_1024px_MultiLing_diffusers", 
+            model_path, 
             variant="fp16", 
             torch_dtype=torch.float16,
         )
@@ -188,11 +235,19 @@ class FLUXModel(BaseModel):
     https://github.com/black-forest-labs/flux
     """
     def __init__(self):
+        super().__init__()
         self.model_name = "FLUX"
-        self.model_id = "black-forest-labs/FLUX.1-dev"
+        self.default_model_id = "black-forest-labs/FLUX.1-dev"
+        
+        # 加载配置文件
+        self.load_local_config()
+        
+        # 获取模型路径（配置文件或HuggingFace）
+        model_path = self.get_model_path(self.default_model_id, "FLUX_MODEL_PATH")
+        
         from diffusers import FluxPipeline
         self.pipe = FluxPipeline.from_pretrained(
-            "black-forest-labs/FLUX.1-dev", 
+            model_path, 
             torch_dtype=torch.bfloat16
         ).to(device)
 
@@ -217,12 +272,20 @@ class FLUXFTModel(BaseModel):
     https://github.com/black-forest-labs/flux
     """
     def __init__(self):
-        self.model_name = "FLUX"
-        self.model_id = "black-forest-labs/FLUX.1-dev"
+        super().__init__()
+        self.model_name = "FLUX_FT"
+        self.default_model_id = "black-forest-labs/FLUX.1-dev"
+        
+        # 加载配置文件
+        self.load_local_config()
+        
+        # 获取模型路径（配置文件或HuggingFace）
+        model_path = self.get_model_path(self.default_model_id, "FLUX_FT_MODEL_PATH")
+        
         lora_path = "/home/muzammal/Projects/TRIG/trig/ft/flux_ft/pytorch_lora_weights.safetensors"
         from diffusers import FluxPipeline
         self.pipe = FluxPipeline.from_pretrained(
-            "black-forest-labs/FLUX.1-dev", 
+            model_path, 
             torch_dtype=torch.bfloat16
         ).to(device)
         self.pipe.load_lora_weights(lora_path)
@@ -249,11 +312,19 @@ class SD35Model(BaseModel):
     https://github.com/Stability-AI/sd3.5
     """
     def __init__(self):
+        super().__init__()
         self.model_name = "SD3.5"
-        self.model_id = "stabilityai/stable-diffusion-3.5-large"
+        self.default_model_id = "stabilityai/stable-diffusion-3.5-large"
+        
+        # 加载配置文件
+        self.load_local_config()
+        
+        # 获取模型路径（配置文件或HuggingFace）
+        model_path = self.get_model_path(self.default_model_id, "SD35_MODEL_PATH")
+        
         from diffusers import StableDiffusion3Pipeline
         self.pipe = StableDiffusion3Pipeline.from_pretrained(
-            "stabilityai/stable-diffusion-3.5-large", 
+            model_path, 
             torch_dtype=torch.bfloat16
         )
         self.pipe = self.pipe.to(device)
@@ -268,21 +339,30 @@ class SD35Model(BaseModel):
 
 class JanusFlowModel(BaseModel):
     def __init__(self):
+        super().__init__()
         self.model_name = "janus-flow"
-        self.model_id = "deepseek-ai/JanusFlow-1.3B"
-        self.vae_id = "stabilityai/sdxl-vae"
+        self.default_model_id = "deepseek-ai/JanusFlow-1.3B"
+        self.default_vae_id = "stabilityai/sdxl-vae"
+        
+        # 加载配置文件
+        self.load_local_config()
+        
+        # 获取模型路径（配置文件或HuggingFace）
+        model_path = self.get_model_path(self.default_model_id, "JANUS_FLOW_MODEL_PATH")
+        vae_path = self.get_model_path(self.default_vae_id, "JANUS_FLOW_VAE_PATH")
+        
         from trig.models.janusflow.models import VLChatProcessor
         from diffusers.models import AutoencoderKL
-        self.vl_chat_processor = VLChatProcessor.from_pretrained(self.model_id)
+        self.vl_chat_processor = VLChatProcessor.from_pretrained(model_path)
         self.tokenizer = self.vl_chat_processor.tokenizer
 
         self.vl_gpt = AutoModelForCausalLM.from_pretrained(
-            self.model_id, trust_remote_code=True
+            model_path, trust_remote_code=True
         )
 
         self.vl_gpt = self.vl_gpt.to(torch.bfloat16).cuda().eval()
 
-        self.vae = AutoencoderKL.from_pretrained(self.vae_id)
+        self.vae = AutoencoderKL.from_pretrained(vae_path)
         self.vae = self.vae.to(torch.bfloat16).cuda().eval()
 
     @torch.inference_mode()
@@ -383,14 +463,22 @@ class JanusFlowModel(BaseModel):
 
 class JanusProModel(BaseModel):
     def __init__(self):
+        super().__init__()
         self.model_name = "janus-pro"
-        self.model_id = "deepseek-ai/Janus-Pro-7B"
+        self.default_model_id = "deepseek-ai/Janus-Pro-7B"
+        
+        # 加载配置文件
+        self.load_local_config()
+        
+        # 获取模型路径（配置文件或HuggingFace）
+        model_path = self.get_model_path(self.default_model_id, "JANUS_PRO_MODEL_PATH")
+        
         from trig.models.janus.models import MultiModalityCausalLM, VLChatProcessor
-        self.vl_chat_processor = VLChatProcessor.from_pretrained(self.model_id)
+        self.vl_chat_processor = VLChatProcessor.from_pretrained(model_path)
         self.tokenizer = self.vl_chat_processor.tokenizer
 
         self.vl_gpt: MultiModalityCausalLM = AutoModelForCausalLM.from_pretrained(
-            self.model_id, trust_remote_code=True
+            model_path, trust_remote_code=True
         )
 
         self.vl_gpt = self.vl_gpt.to(torch.bfloat16).cuda().eval()
@@ -475,12 +563,20 @@ class SD35DTMModel(BaseModel):
     https://github.com/Stability-AI/sd3.5
     """
     def __init__(self):
-        self.model_name = "SD3.5"
-        self.model_id = "stabilityai/stable-diffusion-3.5-large"
+        super().__init__()
+        self.model_name = "SD3.5_DTM"
+        self.default_model_id = "stabilityai/stable-diffusion-3.5-large"
+        
+        # 加载配置文件
+        self.load_local_config()
+        
+        # 获取模型路径（配置文件或HuggingFace）
+        model_path = self.get_model_path(self.default_model_id, "SD35_DTM_MODEL_PATH")
+        
         from diffusers import StableDiffusion3Pipeline
         
         self.pipe = StableDiffusion3Pipeline.from_pretrained(
-            "stabilityai/stable-diffusion-3.5-large", 
+            model_path, 
             torch_dtype=torch.bfloat16
         )
         self.pipe = self.pipe.to(device)
@@ -593,18 +689,24 @@ class SD35DTMModel(BaseModel):
         return modified_prompt if modified_prompt else prompt
 
 class FLUXDTMModel(BaseModel):
-
-
     """
-    Stable Diffusion 3.5 with Finu-tuning with DTM
-    https://github.com/Stability-AI/sd3.5
+    FLUX with DTM optimization
+    https://github.com/black-forest-labs/flux
     """
     def __init__(self):
-        self.model_name = "FLUX"
-        self.model_id = "black-forest-labs/FLUX.1-dev"
+        super().__init__()
+        self.model_name = "FLUX_DTM"
+        self.default_model_id = "black-forest-labs/FLUX.1-dev"
+        
+        # 加载配置文件
+        self.load_local_config()
+        
+        # 获取模型路径（配置文件或HuggingFace）
+        model_path = self.get_model_path(self.default_model_id, "FLUX_DTM_MODEL_PATH")
+        
         from diffusers import FluxPipeline
         self.pipe = FluxPipeline.from_pretrained(
-            "black-forest-labs/FLUX.1-dev", 
+            model_path, 
             torch_dtype=torch.bfloat16
         ).to(device)
         self.DTM_3d35 = {
@@ -724,17 +826,24 @@ class FLUXDTMModel(BaseModel):
         return modified_prompt if modified_prompt else prompt
 
 class SanaDTMModel(BaseModel):
-
-
     """
-    Stable Diffusion 3.5 with Finu-tuning with DTM
-    https://github.com/Stability-AI/sd3.5
+    Sana with DTM optimization
+    https://github.com/NVlabs/Sana
     """
     def __init__(self):
-        self.model_name = "Sana"
+        super().__init__()
+        self.model_name = "Sana_DTM"
+        self.default_model_id = "Efficient-Large-Model/Sana_1600M_1024px_MultiLing_diffusers"
+        
+        # 加载配置文件
+        self.load_local_config()
+        
+        # 获取模型路径（配置文件或HuggingFace）
+        model_path = self.get_model_path(self.default_model_id, "SANA_DTM_MODEL_PATH")
+        
         from diffusers import SanaPipeline
         self.pipe = SanaPipeline.from_pretrained(
-            "Efficient-Large-Model/Sana_1600M_1024px_MultiLing_diffusers", 
+            model_path, 
             variant="fp16", 
             torch_dtype=torch.float16,
         )
@@ -859,12 +968,20 @@ class SD35DTMDimModel(BaseModel):
     https://github.com/Stability-AI/sd3.5
     """
     def __init__(self):
-        self.model_name = "SD3.5"
-        self.model_id = "stabilityai/stable-diffusion-3.5-large"
+        super().__init__()
+        self.model_name = "SD3.5_DTM_DIM"
+        self.default_model_id = "stabilityai/stable-diffusion-3.5-large"
+        
+        # 加载配置文件
+        self.load_local_config()
+        
+        # 获取模型路径（配置文件或HuggingFace）
+        model_path = self.get_model_path(self.default_model_id, "SD35_DTM_DIM_MODEL_PATH")
+        
         from diffusers import StableDiffusion3Pipeline
         
         self.pipe = StableDiffusion3Pipeline.from_pretrained(
-            "stabilityai/stable-diffusion-3.5-large", 
+            model_path, 
             torch_dtype=torch.bfloat16
         )
         self.pipe = self.pipe.to(device)
@@ -1002,14 +1119,23 @@ class SD35DTMDimModel(BaseModel):
 
 class SanaDTMDimModel(BaseModel):
     """
-    Stable Diffusion 3.5 with Dimensional Fine-tuning with DTM
-    https://github.com/Stability-AI/sd3.5
+    Sana with Dimensional Fine-tuning with DTM
+    https://github.com/NVlabs/Sana
     """
     def __init__(self):
-        self.model_name = "Sana"
+        super().__init__()
+        self.model_name = "Sana_DTM_DIM"
+        self.default_model_id = "Efficient-Large-Model/Sana_1600M_1024px_MultiLing_diffusers"
+        
+        # 加载配置文件
+        self.load_local_config()
+        
+        # 获取模型路径（配置文件或HuggingFace）
+        model_path = self.get_model_path(self.default_model_id, "SANA_DTM_DIM_MODEL_PATH")
+        
         from diffusers import SanaPipeline
         self.pipe = SanaPipeline.from_pretrained(
-            "Efficient-Large-Model/Sana_1600M_1024px_MultiLing_diffusers", 
+            model_path, 
             variant="fp16", 
             torch_dtype=torch.float16,
         )

@@ -43,16 +43,7 @@ class Generator:
 
             # check details
             total_len = len(prompts_data)
-            uni_len = sum(
-                1
-                for prompt in prompts_data
-                if "parent_dataset" in prompt
-                and len(prompt["parent_dataset"]) == 2
-                and prompt["parent_dataset"][0].startswith("<")
-                and prompt["parent_dataset"][0].endswith(">")
-                and prompt["parent_dataset"][1] == "Origin"
-            )
-            print(total_len, uni_len)
+            print(total_len)
 
             return prompts_data
         else:
@@ -160,6 +151,8 @@ class Generator:
                 "t2i_dtm": lambda: model.generate(prompt, dimensions),
                 "p2p_dtm": lambda: model.generate_p2p(prompt, image, dimensions),
                 "s2p_dtm": lambda: model.generate_s2p(prompt, item, image, dimensions),
+                # for multilingual generation
+                "t2i_ml": lambda: model.generate(prompt),
             }
             image = task_mapping[task]()
 

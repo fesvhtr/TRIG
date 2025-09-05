@@ -88,3 +88,4 @@ dataset/Trig/Trig-text-to-image/*.json
 dataset/Trig/Trig-image-editing/*.json
 
 dataset/Trig/HF/
+dataset/TRIG-multilingual/
