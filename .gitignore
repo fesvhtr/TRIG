@@ -66,6 +66,8 @@ dataset/Trig/Trig-subject-driven/Subjects200K/
 dataset/Trig/Trig-subject-driven/images_right_half/
 data/result
 data/ssrencoder
+data/hf
+
 hf_cache
 dataset/Trig/Trig-image-editing/toxicity_images
 dataset/Trig/Trig-image-editing/image-editing-images
