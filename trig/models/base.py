@@ -10,36 +10,20 @@ class BaseModel(ABC):
         pass
     
     def get_model_path(self, default_model_id: str, config_key: str) -> str:
-        """
-        获取模型路径，优先使用配置文件中的本地路径，否则使用默认的HuggingFace模型ID
-        
-        Args:
-            default_model_id: 默认的HuggingFace模型ID
-            config_key: 配置文件中的键名
-            
-        Returns:
-            模型路径（本地路径或HuggingFace模型ID）
-        """
-        # 检查配置文件中的路径
+        # 优先检查配置文件中的路径
         if hasattr(self, '_local_config') and config_key in self._local_config:
             local_path = self._local_config[config_key]
             if os.path.exists(local_path):
                 print(f"Using local model path from config: {local_path}")
                 return local_path
             else:
-                print(f"Warning: Local path {local_path} from config does not exist, using default")
+                print(f"Warning: Local path {local_path} from config does not exist, falling back to HuggingFace")
         
-        # 默认使用HuggingFace模型ID
+        # 如果没有配置文件或配置中没有该路径，使用HuggingFace模型ID
         print(f"Using HuggingFace model: {default_model_id}")
         return default_model_id
     
     def load_local_config(self, config_path: str = None):
-        """
-        加载本地模型配置文件
-        
-        Args:
-            config_path: 配置文件路径，如果不提供则使用默认路径
-        """
         if not hasattr(self, '_local_config'):
             self._local_config = {}
         

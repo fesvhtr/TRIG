@@ -1,7 +1,7 @@
 name: "test"
 task: "t2i_ml"
 
-prompt_path: "/home/muzammal/Projects/TRIG/dataset/TRIG-multilingual/text-to-image-multilingual.json"
+prompt_path: "$WORK/fmohamma/TRIG/dataset/TRIG-multilingualtext-to-image-multilingual.json"
 
 generation:
   models: ["flux"]
