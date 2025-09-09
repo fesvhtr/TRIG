@@ -131,9 +131,12 @@ class Generator:
             if "image_path" in self.config:
                 # if use json (not recommended), image is a path to the image
                 image = os.path.join(self.config["image_path"], prompt_data["img_id"])
-            else:
+            elif "image" in prompt_data:
                 # from HF dataset, image is a PIL Image object
                 image = prompt_data["image"].convert("RGB")
+            else:
+                # no image available, leave empty
+                image = None
 
             prompt = prompt_data["prompt"]
             if "dimensions" in prompt_data:
