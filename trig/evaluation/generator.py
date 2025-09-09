@@ -38,7 +38,7 @@ class Generator:
     def load_prompts(self):
         if "prompt_path" in self.config:
             # Not recommended, use datasets instead
-            with open(self.config["prompt_path"], 'r') as file:
+            with open(self.config["prompt_path"], 'r', encoding='utf-8') as file:
                 prompts_data = json.load(file)
 
             # check details
