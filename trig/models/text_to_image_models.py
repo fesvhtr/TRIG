@@ -222,11 +222,13 @@ class SanaModel(BaseModel):
         self.pipe.vae.to(torch.bfloat16)
         self.pipe.text_encoder.to(torch.bfloat16)
 
-    def generate(self, prompt):
-        image = self.pipe(prompt=prompt, height=1024, width=1024, guidance_scale=4.5, num_inference_steps=20,
-                     generator=torch.Generator(device="cuda").manual_seed(42))[0]
-        image = image[0]
-        return image
+    def generate(self, prompt, num_images_per_prompt=1):
+        images = self.pipe(prompt=prompt, height=1024, width=1024, guidance_scale=4.5, num_inference_steps=20,
+                     num_images_per_prompt=num_images_per_prompt,
+                     generator=torch.Generator(device="cuda").manual_seed(42)).images
+        
+        # 如果只生成一张图，返回单张图片；否则返回列表
+        return images[0] if num_images_per_prompt == 1 else images
 
 
 class FLUXModel(BaseModel):
@@ -340,10 +342,13 @@ class SD35Model(BaseModel):
         # uncomment if you want to use less GPU memory
         # self.enable_model_cpu_offload()
 
-    def generate(self, prompt):
-        image = self.pipe(prompt=prompt, prompt_3=prompt, num_inference_steps=28, guidance_scale=4.5,
-        max_sequence_length=512, generator=torch.Generator(device="cpu").manual_seed(42)).images[0]
-        return image
+    def generate(self, prompt, num_images_per_prompt=1):
+        images = self.pipe(prompt=prompt, prompt_3=prompt, num_inference_steps=28, guidance_scale=4.5,
+        max_sequence_length=512, num_images_per_prompt=num_images_per_prompt,
+        generator=torch.Generator(device="cuda").manual_seed(42)).images
+        
+        # 如果只生成一张图，返回单张图片；否则返回列表
+        return images[0] if num_images_per_prompt == 1 else images
 
 
 class JanusFlowModel(BaseModel):
@@ -882,8 +887,7 @@ class SanaDTMModel(BaseModel):
     def generate(self, prompt):
         prompt = self.change(prompt, self.DTM_3d35)
         image = self.pipe(prompt=prompt, height=1024, width=1024, guidance_scale=4.5, num_inference_steps=20,
-                     generator=torch.Generator(device="cuda").manual_seed(42))[0]
-        image = image[0]
+                     generator=torch.Generator(device="cuda").manual_seed(42)).images[0]
         return image
 
 
@@ -1176,8 +1180,7 @@ class SanaDTMDimModel(BaseModel):
     def generate(self, prompt, dimension):
         prompt = self.change(prompt, self.DTM_3d35, dimension)
         image = self.pipe(prompt=prompt, height=1024, width=1024, guidance_scale=4.5, num_inference_steps=20,
-                generator=torch.Generator(device="cuda").manual_seed(42))[0]
-        image = image[0]
+                generator=torch.Generator(device="cuda").manual_seed(42)).images[0]
         return image
 
     def send_request_with_retry(self, msg, max_retries=3, delay=2):
