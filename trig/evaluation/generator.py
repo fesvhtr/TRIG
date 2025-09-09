@@ -65,7 +65,7 @@ class Generator:
             description_data = json.load(file)
         return description_data
 
-    def generate_batch_models(self, start_idx=None, end_idx=None, batch_size=4):
+    def generate_batch_models(self, start_idx=None, end_idx=None, batch_size=1):
         # FIXME: multiprocessing not working
         # with multiprocessing.Pool() as pool:
         #     pool.map(self.generate_single_model, self.config["generation"]["models"])
