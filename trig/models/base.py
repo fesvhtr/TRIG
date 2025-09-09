@@ -40,7 +40,17 @@ class BaseModel(ABC):
                     line = line.strip()
                     if line and not line.startswith('#') and '=' in line:
                         key, value = line.split('=', 1)
-                        self._local_config[key.strip()] = value.strip()
+                        key = key.strip()
+                        value = value.strip()
+                        
+                        # 展开环境变量和配置文件中的变量
+                        value = os.path.expandvars(value)
+                        
+                        # 替换配置文件中定义的变量（如$ROOT_PATH）
+                        for config_key, config_value in self._local_config.items():
+                            value = value.replace(f'${config_key}', config_value)
+                        
+                        self._local_config[key] = value
         else:
             print(f"No local config found at: {config_path}")
         
