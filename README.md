@@ -1,7 +1,7 @@
 # TRIG
 [![paper](https://img.shields.io/badge/cs.CV-2507.22100-b31b1b?logo=arxiv&logoColor=red)](https://arxiv.org/abs/2507.22100)
 [![Dataset](https://img.shields.io/badge/Dataset-TRIG-orange)](https://huggingface.co/datasets/TRIG-bench/TRIG)
-[![Collection](https://img.shields.io/badge/Collection-Download-blue)](https://huggingface.co/collections/TRIG-bench/trigv1-6862b38b91af9bec3a4a05cb)   
+[![Collection](https://img.shields.io/badge/Collection-Download-blue)](https://huggingface.co/collections/TRIG-bench/trig-6862b38b91af9bec3a4a05cb)   
 Trade-offs and Relationships in Image Generation: How Do Different Evaluation Dimensions Interact?
 
 ## TODO

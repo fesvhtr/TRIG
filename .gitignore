@@ -91,3 +91,6 @@ dataset/Trig/Trig-image-editing/*.json
 
 dataset/Trig/HF/
 dataset/TRIG-multilingual/
+
+config/local_models.env
+leo.sh

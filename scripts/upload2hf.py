@@ -2,9 +2,9 @@ from huggingface_hub import HfApi
 
 api = HfApi()
 api.upload_file(
-    path_in_repo="flux_ft_72B_filtered_ids.json", 
-    path_or_fileobj="/home/muzammal/Projects/TRIG/trig/ft/flux_ft_72B_filtered_ids.json",  
-    repo_id="TRIG-bench/flux_ft_train", 
+    path_in_repo="text-to-image-multilingual.json", 
+    path_or_fileobj="/home/muzammal/Projects/TRIG/dataset/TRIG-multilingual/text-to-image-multilingual.json",  
+    repo_id="TRIG-bench/TRIG-multilingual", 
     repo_type="dataset" 
 )
 
