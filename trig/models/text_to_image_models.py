@@ -254,17 +254,25 @@ class FLUXModel(BaseModel):
         # uncomment if you want to use less GPU memory
         # self.pipe.enable_model_cpu_offload()
     
-    def generate(self, prompt):
-        image = self.pipe(
-            prompt,
+    def generate(self, prompt, batch_size=1):
+        # 统一处理：将单个prompt也转为列表
+        if isinstance(prompt, str):
+            prompts = [prompt]  # 单个prompt转为单元素列表
+        else:
+            prompts = prompt  # 如果已经是列表，直接使用
+        
+        images = self.pipe(
+            prompts,
             height=1024,
             width=1024,
             guidance_scale=3.5,
             num_inference_steps=50,
             max_sequence_length=512,
             generator=torch.Generator(device="cpu").manual_seed(0)
-        ).images[0]
-        return image   
+        ).images
+        
+        # 如果输入是单个prompt，返回单张图片；否则返回列表
+        return images[0] if isinstance(prompt, str) else images   
 
 class FLUXFTModel(BaseModel):
     """

@@ -65,12 +65,12 @@ class Generator:
             description_data = json.load(file)
         return description_data
 
-    def generate_batch_models(self, start_idx=None, end_idx=None):
+    def generate_batch_models(self, start_idx=None, end_idx=None, batch_size=1):
         # FIXME: multiprocessing not working
         # with multiprocessing.Pool() as pool:
         #     pool.map(self.generate_single_model, self.config["generation"]["models"])
         for model_name in self.config["generation"]["models"]:
-            self.generate_single_model(model_name, start_idx, end_idx)
+            self.generate_single_model(model_name, start_idx, end_idx, batch_size)
 
     def save_image(self, image, output_path, filename):
         file_path = os.path.join(output_path, f"{filename}.png")
@@ -86,7 +86,7 @@ class Generator:
         except Exception as e:
             print(f"Failed to save image: {filename}, Error: {e}")
 
-    def generate_single_model(self, model_name, start_idx=None, end_idx=None):
+    def generate_single_model(self, model_name, start_idx=None, end_idx=None, batch_size=4):
         model_class = import_model(model_name)
         model = model_class()
         task  = self.config["task"]
@@ -104,62 +104,89 @@ class Generator:
                 end_idx = len(self.prompts_data)
             self.prompts_data = self.prompts_data[start_idx:end_idx]
 
+        # 如果batch_size > 1且任务是t2i，使用批处理
+        if batch_size > 1 and task in ["t2i", "t2i_ml"]:
+            self.generate_t2i_batch(model, output_path, file_list, batch_size)
+        else:
+            # 原有的单个处理逻辑
+            for prompt_data in tqdm(self.prompts_data):
+                # Align HF dataset format
+                if prompt_data["data_id"] in file_list:
+                    continue
+                
+                if "image_path" in self.config:
+                    # if use json (not recommended), image is a path to the image
+                    image = os.path.join(self.config["image_path"], prompt_data["img_id"])
+                elif "image" in prompt_data:
+                    # from HF dataset, image is a PIL Image object
+                    image = prompt_data["image"].convert("RGB")
+                else:
+                    # no image available, leave empty
+                    image = None
+
+                prompt = prompt_data["prompt"]
+                if "dimensions" in prompt_data:
+                    dimensions = prompt_data["dimensions"]
+                item = prompt_data["item"] if "item" in prompt_data else None
+
+                #  deprecated
+                # if model_name == "flowedit":
+                #     src_prompt = description_data[prompt_data["img_id"]]
+
+                task_mapping = {
+                    "t2i": lambda: model.generate(prompt),
+                    "p2p": lambda: model.generate_p2p(prompt, image),
+                    "s2p": lambda: model.generate_s2p(prompt, item, image),
+                    "t2i_dtm": lambda: model.generate(prompt, dimensions),
+                    "p2p_dtm": lambda: model.generate_p2p(prompt, image, dimensions),
+                    "s2p_dtm": lambda: model.generate_s2p(prompt, item, image, dimensions),
+                    # for multilingual generation
+                    "t2i_ml": lambda: model.generate(prompt),
+                }
+                image = task_mapping[task]()
+
+                self.save_image(image, output_path, prompt_data["data_id"])
+
+    def generate_t2i_batch(self, model, output_path, file_list, batch_size):
+        """T2I任务的批处理生成"""
+        batch_prompts = []
+        batch_data_ids = []
+        
         for prompt_data in tqdm(self.prompts_data):
-            # TODO: Align HF dataset format
+            # 跳过已存在的文件
             if prompt_data["data_id"] in file_list:
                 continue
-
-            # if  "IQ-R_R-T" in prompt_data["data_id"] and model_name=='dalle3':
-            #     continue
-
-            # if prompt_data["parent_dataset"][0].startswith("<") and prompt_data["parent_dataset"][0].endswith(
-            #         ">") and prompt_data["parent_dataset"][1] == "Origin":
-            #     parent_dim1 = prompt_data["parent_dataset"][0].split(", ")[0]
-            #     parent_dim2 = prompt_data["parent_dataset"][0].split(", ")[1]
-            #     parent_dim = f"{parent_dim1[1:]}_{parent_dim2[:-1]}"
-            #     idx = prompt_data['data_id'].split('_')[-1]
-
-            #     if os.path.exists(
-            #             os.path.join(output_path, f'{parent_dim}_{idx}.png')):
-            #         shutil.copy(os.path.join(output_path, f'{parent_dim}_{idx}.png'),
-            #                     os.path.join(output_path, f"{prompt_data['data_id']}.png"))
-            #     else:
-            #         print(f"Parent image not found: {parent_dim}_{idx}.png")
-            #         continue
-
+                
+            batch_prompts.append(prompt_data["prompt"])
+            batch_data_ids.append(prompt_data["data_id"])
             
-            if "image_path" in self.config:
-                # if use json (not recommended), image is a path to the image
-                image = os.path.join(self.config["image_path"], prompt_data["img_id"])
-            elif "image" in prompt_data:
-                # from HF dataset, image is a PIL Image object
-                image = prompt_data["image"].convert("RGB")
-            else:
-                # no image available, leave empty
-                image = None
-
-            prompt = prompt_data["prompt"]
-            if "dimensions" in prompt_data:
-                dimensions = prompt_data["dimensions"]
-            item = prompt_data["item"] if "item" in prompt_data else None
-
-            #  deprecated
-            # if model_name == "flowedit":
-            #     src_prompt = description_data[prompt_data["img_id"]]
-
-            task_mapping = {
-                "t2i": lambda: model.generate(prompt),
-                "p2p": lambda: model.generate_p2p(prompt, image),
-                "s2p": lambda: model.generate_s2p(prompt, item, image),
-                "t2i_dtm": lambda: model.generate(prompt, dimensions),
-                "p2p_dtm": lambda: model.generate_p2p(prompt, image, dimensions),
-                "s2p_dtm": lambda: model.generate_s2p(prompt, item, image, dimensions),
-                # for multilingual generation
-                "t2i_ml": lambda: model.generate(prompt),
-            }
-            image = task_mapping[task]()
-
-            self.save_image(image, output_path, prompt_data["data_id"])
+            # 当达到批处理大小或是最后一批时，进行生成
+            if len(batch_prompts) == batch_size or prompt_data == self.prompts_data[-1]:
+                try:
+                    # 批处理生成
+                    generated_images = model.generate(batch_prompts, batch_size=len(batch_prompts))
+                    
+                    # 保存生成的图像
+                    if isinstance(generated_images, list):
+                        for i, img in enumerate(generated_images):
+                            self.save_image(img, output_path, batch_data_ids[i])
+                    else:
+                        # 单张图像的情况
+                        self.save_image(generated_images, output_path, batch_data_ids[0])
+                        
+                except Exception as e:
+                    print(f"Batch generation failed: {e}")
+                    # 回退到单个处理
+                    for i, prompt in enumerate(batch_prompts):
+                        try:
+                            img = model.generate(prompt)
+                            self.save_image(img, output_path, batch_data_ids[i])
+                        except Exception as single_e:
+                            print(f"Single generation failed for {batch_data_ids[i]}: {single_e}")
+                
+                # 清空批处理缓存
+                batch_prompts = []
+                batch_data_ids = []
 
 
 if __name__ == "__main__":
