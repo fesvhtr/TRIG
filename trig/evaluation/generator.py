@@ -65,7 +65,7 @@ class Generator:
             description_data = json.load(file)
         return description_data
 
-    def generate_batch_models(self, start_idx=None, end_idx=None, batch_size=1):
+    def generate_batch_models(self, start_idx=None, end_idx=None, batch_size=4):
         # FIXME: multiprocessing not working
         # with multiprocessing.Pool() as pool:
         #     pool.map(self.generate_single_model, self.config["generation"]["models"])
@@ -86,7 +86,7 @@ class Generator:
         except Exception as e:
             print(f"Failed to save image: {filename}, Error: {e}")
 
-    def generate_single_model(self, model_name, start_idx=None, end_idx=None, batch_size=4):
+    def generate_single_model(self, model_name, start_idx=None, end_idx=None, batch_size=1):
         model_class = import_model(model_name)
         model = model_class()
         task  = self.config["task"]

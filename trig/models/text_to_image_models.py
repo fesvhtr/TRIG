@@ -268,7 +268,7 @@ class FLUXModel(BaseModel):
             guidance_scale=3.5,
             num_inference_steps=50,
             max_sequence_length=512,
-            generator=torch.Generator(device="cpu").manual_seed(0)
+            generator=torch.Generator(device="cpu").manual_seed(42)
         ).images
         
         # 如果输入是单个prompt，返回单张图片；否则返回列表
@@ -309,7 +309,7 @@ class FLUXFTModel(BaseModel):
             guidance_scale=3.5,
             num_inference_steps=50,
             max_sequence_length=512,
-            generator=torch.Generator(device="cpu").manual_seed(0)
+            generator=torch.Generator(device="cpu").manual_seed(42)
         ).images[0]
         return image   
 
@@ -341,7 +341,8 @@ class SD35Model(BaseModel):
         # self.enable_model_cpu_offload()
 
     def generate(self, prompt):
-        image = self.pipe(prompt=prompt, prompt_3=prompt, num_inference_steps=28, guidance_scale=4.5,max_sequence_length=512).images[0]
+        image = self.pipe(prompt=prompt, prompt_3=prompt, num_inference_steps=28, guidance_scale=4.5,
+        max_sequence_length=512, generator=torch.Generator(device="cpu").manual_seed(42)).images[0]
         return image
 
 
@@ -745,7 +746,7 @@ class FLUXDTMModel(BaseModel):
             guidance_scale=3.5,
             num_inference_steps=50,
             max_sequence_length=512,
-            generator=torch.Generator(device="cpu").manual_seed(0)
+            generator=torch.Generator(device="cpu").manual_seed(42)
         ).images[0]
         return image   
 
