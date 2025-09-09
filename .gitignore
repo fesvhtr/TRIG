@@ -75,6 +75,7 @@ dataset/Trig/Trig-subject-driven/toxicity_images
 dataset/Trig/Trig-subject-driven/subject-driven-images
 config/eval.yaml
 config/gen.yaml
+config/gen_leo.yaml
 wandb/
 scripts/wandb
 scripts/save
