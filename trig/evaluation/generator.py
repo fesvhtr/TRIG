@@ -61,7 +61,7 @@ class Generator:
 
     def load_descriptions(self, description_file):
         # deprecated
-        with open(description_file, 'r') as file:
+        with open(description_file, 'r', encoding='utf-8') as file:
             description_data = json.load(file)
         return description_data
 
