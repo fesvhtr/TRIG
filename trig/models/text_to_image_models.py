@@ -9,6 +9,9 @@ from trig.models.base import BaseModel
 import time
 from openai import OpenAI
 from trig.config import gpt_logit_dimension_msg, DIM_NAME_DICT
+import tempfile
+import os
+from PIL import Image
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class DALLE3Model(BaseModel):
@@ -193,7 +196,6 @@ class PixartSigmaModel(BaseModel):
         image = self.pipe(prompt).images[0]
         return image
 
-
 class SanaModel(BaseModel):
     """
     ICLR 2025
@@ -203,7 +205,7 @@ class SanaModel(BaseModel):
     def __init__(self):
         super().__init__()
         self.model_name = "Sana"
-        self.default_model_id = "Efficient-Large-Model/Sana_1600M_1024px_MultiLing_diffusers"
+        self.default_model_id = "Efficient-Large-Model/SANA1.5_4.8B_1024px"
         
         # 加载配置文件
         self.load_local_config()
@@ -214,8 +216,7 @@ class SanaModel(BaseModel):
         from diffusers import SanaPipeline
         self.pipe = SanaPipeline.from_pretrained(
             model_path, 
-            variant="fp16", 
-            torch_dtype=torch.float16,
+            torch_dtype=torch.bfloat16,
         )
         self.pipe.to(device)
 
@@ -229,7 +230,6 @@ class SanaModel(BaseModel):
         
         # 如果只生成一张图，返回单张图片；否则返回列表
         return images[0] if num_images_per_prompt == 1 else images
-
 
 class FLUXModel(BaseModel):
     """
@@ -315,7 +315,6 @@ class FLUXFTModel(BaseModel):
         ).images[0]
         return image   
 
-
 class SD35Model(BaseModel):
     """
     Stable Diffusion 3.5
@@ -349,7 +348,6 @@ class SD35Model(BaseModel):
         
         # 如果只生成一张图，返回单张图片；否则返回列表
         return images[0] if num_images_per_prompt == 1 else images
-
 
 class JanusFlowModel(BaseModel):
     def __init__(self):
@@ -473,8 +471,6 @@ class JanusFlowModel(BaseModel):
         prompt = sft_format + self.vl_chat_processor.image_gen_tag
         image = self.janus_generate(self.vl_gpt, self.vl_chat_processor, prompt)
         return image
-
-
 class JanusProModel(BaseModel):
     def __init__(self):
         super().__init__()
@@ -570,6 +566,217 @@ class JanusProModel(BaseModel):
         image = self.janus_generate(self.vl_gpt, self.vl_chat_processor, prompt)
         return image
 
+class AltDiffusionModel(BaseModel):
+    def __init__(self):
+        super().__init__()
+        self.model_name = "AltDiffusion"
+        
+        try:
+            from flagai.auto_model.auto_loader import AutoLoader
+            from flagai.model.predictor.predictor import Predictor
+        except ImportError:
+            raise ImportError("FlagAI is required for AltDiffusion model. Please install it with: pip install flagai")
+        
+        self.load_local_config()
+        self.model_dir = self.get_model_path("./checkpoints", "ALTDIFFUSION_MODEL_PATH")
+        
+        self.loader = AutoLoader(
+            task_name="text2img", 
+            model_name="AltDiffusion-m18",
+            model_dir=self.model_dir,
+            use_fp16=False
+        )
+        
+        self.model = self.loader.get_model()
+        self.model.eval()
+        self.model.to(device)
+        self.predictor = Predictor(self.model)
+
+    def generate(self, prompt):
+
+        temp_file = None
+        try:
+            # 创建临时文件
+            temp_file = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
+            temp_file.close()
+            
+            # 使用预测器生成图像并保存到临时文件
+            self.predictor.predict_generate_images(prompt, out_path=temp_file.name)
+            
+            # 读取临时文件并返回PIL Image
+            image = Image.open(temp_file.name)
+            return image
+            
+        except Exception as e:
+            print(f"Error generating image with {self.model_name}: {e}")
+            return None
+        finally:
+            # 清理临时文件
+            if temp_file and os.path.exists(temp_file.name):
+                os.unlink(temp_file.name)
+
+class PEADiffusionModel(BaseModel):
+    def __init__(self):
+        super().__init__()
+        self.model_name = "PEADiffusion"
+        
+        try:
+            from diffusers import FluxPipeline, AutoencoderKL
+            from diffusers.image_processor import VaeImageProcessor
+            from transformers import T5ForConditionalGeneration, AutoTokenizer
+            import torch.nn as nn
+        except ImportError:
+            raise ImportError("Required packages not available. Please install diffusers and transformers")
+        
+        self.load_local_config()
+        
+        # 模型配置
+        self.dtype = torch.bfloat16
+        self.ckpt_id = "black-forest-labs/FLUX.1-schnell"
+        self.text_encoder_ckpt_id = 'google/byt5-xxl'
+        
+        # 获取模型路径
+        flux_path = self.get_model_path(self.ckpt_id, "PEADIFFUSION_FLUX_PATH")
+        t5_path = self.get_model_path(self.text_encoder_ckpt_id, "PEADIFFUSION_T5_PATH")
+        proj_path = self.get_model_path("diffusion_pytorch_model.bin", "PEADIFFUSION_PROJ_PATH")
+        
+        # MLP投影层
+        class MLP(nn.Module):
+            def __init__(self, in_dim=4096, out_dim=4096, hidden_dim=4096, out_dim1=768, use_residual=True):
+                super().__init__()
+                self.layernorm = nn.LayerNorm(in_dim)
+                self.projector = nn.Sequential(
+                    nn.Linear(in_dim, hidden_dim, bias=False),
+                    nn.GELU(),
+                    nn.Linear(hidden_dim, hidden_dim, bias=False),
+                    nn.GELU(),
+                    nn.Linear(hidden_dim, out_dim, bias=False),
+                )
+                self.fc = nn.Linear(out_dim, out_dim1)
+            
+            def forward(self, x):
+                x = self.layernorm(x)
+                x = self.projector(x)
+                x2 = nn.GELU()(x)
+                x1 = self.fc(x2)
+                x1 = torch.mean(x1, 1)
+                return x1, x2
+        
+        # 初始化组件
+        self.proj_t5 = MLP(in_dim=4672, out_dim=4096, hidden_dim=4096, out_dim1=768).to(device=device, dtype=self.dtype)
+        self.text_encoder_t5 = T5ForConditionalGeneration.from_pretrained(t5_path).get_encoder().to(device=device, dtype=self.dtype)
+        self.tokenizer_t5 = AutoTokenizer.from_pretrained(t5_path)
+        
+        # 加载投影层权重
+        state_dict = torch.load(proj_path, map_location="cpu")
+        state_dict_new = {}
+        for k, v in state_dict.items():
+            k_new = k.replace("module.", "")
+            state_dict_new[k_new] = v
+        self.proj_t5.load_state_dict(state_dict_new)
+        
+        # 初始化pipeline
+        self.pipeline = FluxPipeline.from_pretrained(
+            flux_path, text_encoder=None, text_encoder_2=None,
+            tokenizer=None, tokenizer_2=None, vae=None,
+            torch_dtype=self.dtype
+        ).to(device)
+        
+        # 初始化VAE
+        self.vae = AutoencoderKL.from_pretrained(
+            flux_path, 
+            subfolder="vae",
+            torch_dtype=self.dtype
+        ).to(device)
+        
+        vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels))
+        self.image_processor = VaeImageProcessor(vae_scale_factor=vae_scale_factor)
+        
+        print(f"PEADiffusion model loaded successfully on {device}")
+
+    def generate(self, prompt, **kwargs):
+        try:
+            with torch.no_grad():
+                # 文本编码
+                text_inputs = self.tokenizer_t5(
+                    prompt,
+                    padding="max_length",
+                    max_length=256,
+                    truncation=True,
+                    add_special_tokens=True,
+                    return_tensors="pt",
+                ).input_ids.to(device)
+                
+                text_embeddings = self.text_encoder_t5(text_inputs)[0]
+                pooled_prompt_embeds, prompt_embeds = self.proj_t5(text_embeddings)
+                
+                # 图像生成
+                height, width = kwargs.get('height', 1024), kwargs.get('width', 1024)
+                num_inference_steps = kwargs.get('num_inference_steps', 28)
+                guidance_scale = kwargs.get('guidance_scale', 1)
+                
+                latents = self.pipeline(
+                    prompt_embeds=prompt_embeds, 
+                    pooled_prompt_embeds=pooled_prompt_embeds,
+                    num_inference_steps=num_inference_steps, 
+                    guidance_scale=guidance_scale, 
+                    height=height, 
+                    width=width,
+                    output_type="latent",
+                ).images
+                
+                # VAE解码
+                vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels))
+                latents = FluxPipeline._unpack_latents(latents, height, width, vae_scale_factor)
+                latents = (latents / self.vae.config.scaling_factor) + self.vae.config.shift_factor
+                image = self.vae.decode(latents, return_dict=False)[0]
+                image = self.image_processor.postprocess(image, output_type="pil")
+                
+                return image[0]
+                
+        except Exception as e:
+            print(f"Error generating image with {self.model_name}: {e}")
+            return None
+
+class MuLanModel(BaseModel):
+    def __init__(self):
+        super().__init__()
+        self.model_name = "MuLan"
+        
+        try:
+            from diffusers import PixArtAlphaPipeline, Transformer2DModel
+            import mulankit
+        except ImportError:
+            raise ImportError("Required packages not available. Please install diffusers and mulankit with: pip install mulankit")
+        
+        self.load_local_config()
+        
+        # 获取模型路径
+        base_model_path = self.get_model_path('PixArt-alpha/PixArt-XL-2-1024-MS', "MULAN_BASE_MODEL_PATH")
+        adapter_path = self.get_model_path('mulanai/mulan-lang-adapter::pixart.pth', "MULAN_ADAPTER_PATH")
+        transformer_path = self.get_model_path('mulanai/mulan-pixart', "MULAN_TRANSFORMER_PATH")
+        
+        # 加载基础模型
+        self.pipe = PixArtAlphaPipeline.from_pretrained(base_model_path)
+        
+        # 应用MuLan语言适配器
+        self.pipe = mulankit.transform(self.pipe, adapter_path)
+        
+        # 加载MuLan transformer
+        self.pipe.transformer = Transformer2DModel.from_pretrained(transformer_path, subfolder='pixart-alpha-1024-ms')
+        
+        # 移动到设备并设置数据类型
+        self.pipe = self.pipe.to(device, dtype=torch.float16)
+        
+        print(f"MuLan model loaded successfully on {device}")
+
+    def generate(self, prompt):
+        try:
+            image = self.pipe(prompt,height=1024, width=1024, generator=torch.manual_seed(42)).images[0]
+            return image
+        except Exception as e:
+            print(f"Error generating image with {self.model_name}: {e}")
+            return None
 
 class SD35DTMModel(BaseModel):
     """

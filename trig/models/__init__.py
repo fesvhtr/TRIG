@@ -41,6 +41,10 @@ AVAILABLE_Model = {
     'sana_dtm_dim': 'text_to_image_models.SanaDTMDimModel',
     'xflux_dtm_dim': 'subject_driven_models.XFluxDTMDimModel',
     'hqedit_dtm_dim': 'image_editing_models.HQEditDTMDimModel',
+    # Multilingual models
+    'altdiffusion': 'text_to_image_models.AltDiffusionModel',
+    'mulan': 'text_to_image_models.MuLanModel',
+    'peadiffusion': 'text_to_image_models.PEADiffusionModel',
 }
 
 def import_model(model_name):
