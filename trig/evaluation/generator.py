@@ -110,17 +110,21 @@ class Generator:
         file_list = os.listdir(output_path)
         file_list = [os.path.splitext(f)[0] for f in file_list]
 
+        prompts_data = self.prompts_data
         if start_idx is not None and end_idx is not None:
-            if end_idx > len(self.prompts_data):
-                end_idx = len(self.prompts_data)
-            self.prompts_data = self.prompts_data[start_idx:end_idx]
+            end_idx = min(end_idx, len(prompts_data))
+            if hasattr(prompts_data, "select"):
+                # HF Dataset: slicing returns a dict of columns, so use select() instead
+                prompts_data = prompts_data.select(range(start_idx, end_idx))
+            else:
+                prompts_data = prompts_data[start_idx:end_idx]
 
         # 如果batch_size > 1且任务是t2i，使用批处理
         if batch_size > 1 and task in ["t2i", "t2i_ml"]:
-            self.generate_t2i_batch(model, output_path, file_list, batch_size)
+            self.generate_t2i_batch(model, output_path, file_list, batch_size, prompts_data)
         else:
             # 原有的单个处理逻辑
-            for prompt_data in tqdm(self.prompts_data):
+            for prompt_data in tqdm(prompts_data):
                 # Align HF dataset format
                 if prompt_data["data_id"] in file_list:
                     continue
@@ -158,12 +162,15 @@ class Generator:
 
                 self.save_image(image, output_path, prompt_data["data_id"])
 
-    def generate_t2i_batch(self, model, output_path, file_list, batch_size):
+    def generate_t2i_batch(self, model, output_path, file_list, batch_size, prompts_data=None):
         """T2I任务的批处理生成"""
+        if prompts_data is None:
+            prompts_data = self.prompts_data
         batch_prompts = []
         batch_data_ids = []
         
-        for prompt_data in tqdm(self.prompts_data):
+        n_total = len(prompts_data)
+        for idx, prompt_data in enumerate(tqdm(prompts_data)):
             # 跳过已存在的文件
             if prompt_data["data_id"] in file_list:
                 continue
@@ -172,7 +179,7 @@ class Generator:
             batch_data_ids.append(prompt_data["data_id"])
             
             # 当达到批处理大小或是最后一批时，进行生成
-            if len(batch_prompts) == batch_size or prompt_data == self.prompts_data[-1]:
+            if len(batch_prompts) == batch_size or idx == n_total - 1:
                 try:
                     # 批处理生成
                     generated_images = model.generate(batch_prompts, batch_size=len(batch_prompts))

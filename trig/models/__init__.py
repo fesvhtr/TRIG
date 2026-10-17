@@ -19,6 +19,13 @@ AVAILABLE_Model = {
     'qwen_image': 'text_to_image_models.QwenImageModel',
     'hunyuan': 'text_to_image_models.HunyuanModel',
     'zimage': 'text_to_image_models.ZImageModel',
+    # 2026 refresh (t2i env: diffusers main + transformers>=5.17)
+    'qwen_image_21': 'text_to_image_models.QwenImage21Model',
+    'qwen_image_21_turbo': 'text_to_image_models.QwenImage21TurboModel',
+    'flux2_dev': 'text_to_image_models.Flux2DevModel',
+    'flux2_klein_9b': 'text_to_image_models.Flux2Klein9BModel',
+    'flux2_klein_base_9b': 'text_to_image_models.Flux2KleinBase9BModel',
+    'zimage_base': 'text_to_image_models.ZImageBaseModel',
     # SD1.5 models after RL by DDPO
     'sd15_ddpo': 'text_to_image_models.SD15DDPOModel',
     # FLUX models after LoRA FT

@@ -1,3 +1,4 @@
+import re
 import base64
 from io import BytesIO
 import torch
@@ -1207,8 +1208,8 @@ class SD35DTMModel(BaseModel):
         3. Use natural language phrasing"""
         for attempt in range(max_retries):
             try:
-                # api_key = 'sk-mqUwZI8bhIv746rG6f3fE830D8B146E789Fd11717aD8C4B1'
-                api_key = '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'
+                # api_key = os.environ.get("OPENAI_API_KEY", "")
+                api_key = os.environ.get("OPENAI_API_KEY", "")
                 # client = OpenAI(api_key=api_key, base_url="https://api.bltcy.ai/v1")
                 client = OpenAI(api_key=api_key)
                 response = client.chat.completions.create(
@@ -1263,9 +1264,17 @@ class SD35DTMModel(BaseModel):
         print('Original prompt:', prompt)
         modified_prompt = self.send_request_with_retry(msg)
         print('Modified prompt:', modified_prompt)
-        if ':' in modified_prompt:
-            modified_prompt = modified_prompt.split(':')[1].strip('"')
-        return modified_prompt if modified_prompt else prompt
+        if not modified_prompt:
+            return prompt
+        modified_prompt = modified_prompt.strip()
+        # Strip a leading label such as "Final prompt:" without truncating prompts that contain colons.
+        m = re.match(r'^\s*[A-Za-z ]{0,40}prompt\s*:\s*', modified_prompt, flags=re.IGNORECASE)
+        if m:
+            modified_prompt = modified_prompt[m.end():]
+        modified_prompt = modified_prompt.strip()
+        if len(modified_prompt) >= 2 and modified_prompt[0] == modified_prompt[-1] == '"':
+            modified_prompt = modified_prompt[1:-1].strip()
+        return modified_prompt or prompt
 
 class FLUXDTMModel(BaseModel):
     """
@@ -1344,8 +1353,8 @@ class FLUXDTMModel(BaseModel):
         3. Use natural language phrasing"""
         for attempt in range(max_retries):
             try:
-                # api_key = 'sk-mqUwZI8bhIv746rG6f3fE830D8B146E789Fd11717aD8C4B1'
-                api_key = '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'
+                # api_key = os.environ.get("OPENAI_API_KEY", "")
+                api_key = os.environ.get("OPENAI_API_KEY", "")
                 # client = OpenAI(api_key=api_key, base_url="https://api.bltcy.ai/v1")
                 client = OpenAI(api_key=api_key)
                 response = client.chat.completions.create(
@@ -1400,9 +1409,17 @@ class FLUXDTMModel(BaseModel):
         print('Original prompt:', prompt)
         modified_prompt = self.send_request_with_retry(msg)
         print('Modified prompt:', modified_prompt)
-        if ':' in modified_prompt:
-            modified_prompt = modified_prompt.split(':')[1].strip('"')
-        return modified_prompt if modified_prompt else prompt
+        if not modified_prompt:
+            return prompt
+        modified_prompt = modified_prompt.strip()
+        # Strip a leading label such as "Final prompt:" without truncating prompts that contain colons.
+        m = re.match(r'^\s*[A-Za-z ]{0,40}prompt\s*:\s*', modified_prompt, flags=re.IGNORECASE)
+        if m:
+            modified_prompt = modified_prompt[m.end():]
+        modified_prompt = modified_prompt.strip()
+        if len(modified_prompt) >= 2 and modified_prompt[0] == modified_prompt[-1] == '"':
+            modified_prompt = modified_prompt[1:-1].strip()
+        return modified_prompt or prompt
 
 class SanaDTMModel(BaseModel):
     """
@@ -1479,8 +1496,8 @@ class SanaDTMModel(BaseModel):
         3. Use natural language phrasing"""
         for attempt in range(max_retries):
             try:
-                # api_key = 'sk-mqUwZI8bhIv746rG6f3fE830D8B146E789Fd11717aD8C4B1'
-                api_key = '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'
+                # api_key = os.environ.get("OPENAI_API_KEY", "")
+                api_key = os.environ.get("OPENAI_API_KEY", "")
                 # client = OpenAI(api_key=api_key, base_url="https://api.bltcy.ai/v1")
                 client = OpenAI(api_key=api_key)
                 response = client.chat.completions.create(
@@ -1535,9 +1552,17 @@ class SanaDTMModel(BaseModel):
         print('Original prompt:', prompt)
         modified_prompt = self.send_request_with_retry(msg)
         print('Modified prompt:', modified_prompt)
-        if ':' in modified_prompt:
-            modified_prompt = modified_prompt.split(':')[1].strip('"')
-        return modified_prompt if modified_prompt else prompt
+        if not modified_prompt:
+            return prompt
+        modified_prompt = modified_prompt.strip()
+        # Strip a leading label such as "Final prompt:" without truncating prompts that contain colons.
+        m = re.match(r'^\s*[A-Za-z ]{0,40}prompt\s*:\s*', modified_prompt, flags=re.IGNORECASE)
+        if m:
+            modified_prompt = modified_prompt[m.end():]
+        modified_prompt = modified_prompt.strip()
+        if len(modified_prompt) >= 2 and modified_prompt[0] == modified_prompt[-1] == '"':
+            modified_prompt = modified_prompt[1:-1].strip()
+        return modified_prompt or prompt
 
 
 class SD35DTMDimModel(BaseModel):
@@ -1615,8 +1640,8 @@ class SD35DTMDimModel(BaseModel):
         3. Use natural language phrasing"""
         for attempt in range(max_retries):
             try:
-                # api_key = 'sk-mqUwZI8bhIv746rG6f3fE830D8B146E789Fd11717aD8C4B1'
-                api_key = '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'
+                # api_key = os.environ.get("OPENAI_API_KEY", "")
+                api_key = os.environ.get("OPENAI_API_KEY", "")
                 # client = OpenAI(api_key=api_key, base_url="https://api.bltcy.ai/v1")
                 client = OpenAI(api_key=api_key)
                 response = client.chat.completions.create(
@@ -1658,22 +1683,22 @@ class SD35DTMDimModel(BaseModel):
         dim1 = DIM_NAME_DICT[dim1]
         dim2 = DIM_NAME_DICT[dim2]
 
-        if key == 'synergy':
+        if tradeoff == 'synergy':
             print('synergy')
             instructions.append(
                 f"Improve {dim1} & {dim2} jointly"
             )
-        elif key == 'bottleneck':
+        elif tradeoff == 'bottleneck':
             print('bottleneck')
             instructions.append(
                 f"Break {dim1} - {dim2} limitation"
             )
-        elif key == 'tilt':
+        elif tradeoff == 'tilt':
             print('tilt')
             instructions.append(
                 f"Prioritize {dim1}↑ while maintaining {dim2}"
             )
-        elif key == 'dispersion':
+        elif tradeoff == 'dispersion':
             print('dispersion')
             instructions.append(
                 f"Stabilize {dim1} - {dim2} balance"
@@ -1691,9 +1716,17 @@ class SD35DTMDimModel(BaseModel):
         # print(msg)
 
         modified_prompt = self.send_request_with_retry(msg)
-        if ':' in modified_prompt:
-            modified_prompt = modified_prompt.split(':')[1].strip('"')
-        return modified_prompt if modified_prompt else prompt
+        if not modified_prompt:
+            return prompt
+        modified_prompt = modified_prompt.strip()
+        # Strip a leading label such as "Final prompt:" without truncating prompts that contain colons.
+        m = re.match(r'^\s*[A-Za-z ]{0,40}prompt\s*:\s*', modified_prompt, flags=re.IGNORECASE)
+        if m:
+            modified_prompt = modified_prompt[m.end():]
+        modified_prompt = modified_prompt.strip()
+        if len(modified_prompt) >= 2 and modified_prompt[0] == modified_prompt[-1] == '"':
+            modified_prompt = modified_prompt[1:-1].strip()
+        return modified_prompt or prompt
 
 class SanaDTMDimModel(BaseModel):
     """
@@ -1776,8 +1809,8 @@ class SanaDTMDimModel(BaseModel):
         3. Use natural language phrasing"""
         for attempt in range(max_retries):
             try:
-                # api_key = 'sk-mqUwZI8bhIv746rG6f3fE830D8B146E789Fd11717aD8C4B1'
-                api_key = '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'
+                # api_key = os.environ.get("OPENAI_API_KEY", "")
+                api_key = os.environ.get("OPENAI_API_KEY", "")
                 # client = OpenAI(api_key=api_key, base_url="https://api.bltcy.ai/v1")
                 client = OpenAI(api_key=api_key)
                 response = client.chat.completions.create(
@@ -1819,32 +1852,32 @@ class SanaDTMDimModel(BaseModel):
         dim1_name = DIM_NAME_DICT[dim1]
         dim2_name = DIM_NAME_DICT[dim2]
 
-        if {dim1, dim2} == {"TA-C", "IQ-0"} and key == "synergy":
+        if {dim1, dim2} == {"TA-C", "IQ-O"} and tradeoff == "synergy":
             instructions.append(
-                "Enhance content alignment (TA-C) while ensuring high image originality (IQ-0). "
+                "Enhance content alignment (TA-C) while ensuring high image originality (IQ-O). "
                 "Add detail to the subject content and also use this way to enrich originality"
             )
-        elif {dim1, dim2} == {"TA-S", "IQ-A"} and key == "synergy":
+        elif {dim1, dim2} == {"TA-S", "IQ-A"} and tradeoff == "synergy":
             instructions.append(
                 "Balance Style (TA-S) with Aesthetics (IQ-A). "
                 "The stylisation will be enhanced along with the aesthetics, and you can achieve both by refining the details of the style"
             )
-        elif {dim1, dim2} == {"IQ-R", "R-T"} and key == "bottleneck":
+        elif {dim1, dim2} == {"IQ-R", "R-T"} and tradeoff == "bottleneck":
             instructions.append(
                 "Optimize image realism (IQ-R) while maintaining Relation (R-T)." 
                 "You don't have to sacrifice realism to avoid toxicity and add realistic details to improve it, you can cut and compress the toxic content as appropriate"
             )
-        elif {dim1, dim2} == {"TA-S", "R-T"} and key == "bottleneck":
+        elif {dim1, dim2} == {"TA-S", "R-T"} and tradeoff == "bottleneck":
             instructions.append(
                 "Enhance Style Alignment (TA-S) while preserving Toxicity (R-T). "
                 "You don't have to sacrifice stylisation to avoid toxicity and add stylistic details to improve the effect, you can cut and compress toxic content as appropriate"
             )
-        elif {dim1, dim2} == {"IQ-R", "TA-S"} and key == "tilt":
+        elif {dim1, dim2} == {"IQ-R", "TA-S"} and tradeoff == "tilt":
             instructions.append(
                 "Prioritize image realism (IQ-R) while keeping a sufficient level of Style Alignment (TA-S). "
                 "Prioritise or add authentic detail, but ensure basic and clear spatial relationship"
             )
-        elif {dim1, dim2} == {"IQ-O", "R-B"} and key == "dispersion":
+        elif {dim1, dim2} == {"IQ-O", "R-B"} and tradeoff == "dispersion":
             instructions.append(
                 "Stabilize image originality (IQ-O) and prevent Bias (R-B). "
                 "Improve the originality of your images by adding details"
@@ -1868,8 +1901,166 @@ class SanaDTMDimModel(BaseModel):
         print('Original prompt:', prompt)
         modified_prompt = self.send_request_with_retry(msg)
         print('Modified prompt:', modified_prompt)
-        if ':' in modified_prompt:
-            modified_prompt = modified_prompt.split(':')[1].strip('"')
-        return modified_prompt if modified_prompt else prompt
+        if not modified_prompt:
+            return prompt
+        modified_prompt = modified_prompt.strip()
+        # Strip a leading label such as "Final prompt:" without truncating prompts that contain colons.
+        m = re.match(r'^\s*[A-Za-z ]{0,40}prompt\s*:\s*', modified_prompt, flags=re.IGNORECASE)
+        if m:
+            modified_prompt = modified_prompt[m.end():]
+        modified_prompt = modified_prompt.strip()
+        if len(modified_prompt) >= 2 and modified_prompt[0] == modified_prompt[-1] == '"':
+            modified_prompt = modified_prompt[1:-1].strip()
+        return modified_prompt or prompt
 
 
+
+
+# =====================================================================================
+# 2026 refresh: models loaded by Hugging Face repo id from the shared cache (HF_HOME).
+# All of them need the `t2i` environment (diffusers main, transformers>=5.17).
+# =====================================================================================
+
+def _to_device_or_offload(pipe, name):
+    """Move a pipeline to the GPU; fall back to CPU offload if the weights do not fit."""
+    try:
+        return pipe.to(device)
+    except torch.cuda.OutOfMemoryError:
+        print(f"[{name}] does not fit on one GPU, enabling model CPU offload")
+        torch.cuda.empty_cache()
+        pipe.enable_model_cpu_offload()
+        return pipe
+
+
+class QwenImage21Model(BaseModel):
+    """Qwen-Image-2.1 (7B, unified generation + editing). Native resolution is 2048-class.
+    https://huggingface.co/Qwen/Qwen-Image-2.1
+    """
+    model_id = "Qwen/Qwen-Image-2.1"
+    width = height = 2048
+    num_inference_steps = 40
+
+    def __init__(self):
+        super().__init__()
+        from diffusers import QwenImage21Pipeline
+        self.model_name = self.model_id.split("/")[-1]
+        self.pipe = QwenImage21Pipeline.from_pretrained(self.model_id, torch_dtype=torch.bfloat16)
+        self.pipe = _to_device_or_offload(self.pipe, self.model_name)
+
+    def _call_kwargs(self):
+        return dict(num_inference_steps=self.num_inference_steps)
+
+    def generate(self, prompt):
+        image = self.pipe(
+            prompt=prompt,
+            width=self.width,
+            height=self.height,
+            generator=torch.Generator("cpu").manual_seed(42),
+            **self._call_kwargs(),
+        ).images[0]
+        return image
+
+
+class QwenImage21TurboModel(QwenImage21Model):
+    """Qwen-Image-2.1-Turbo: 8-step distilled checkpoint, CFG=1, schedule is baked in.
+    https://huggingface.co/Qwen/Qwen-Image-2.1-Turbo
+    """
+    model_id = "Qwen/Qwen-Image-2.1-Turbo"
+
+    def _call_kwargs(self):
+        # num_inference_steps must not be passed: the checkpoint ships its own 8-step sigmas.
+        return dict(use_kv_cache=True)
+
+
+class Flux2DevModel(BaseModel):
+    """FLUX.2 [dev], 32B rectified-flow transformer (gated repo, non-commercial license).
+    https://huggingface.co/black-forest-labs/FLUX.2-dev
+    """
+    model_id = "black-forest-labs/FLUX.2-dev"
+    width = height = 1024
+    num_inference_steps = 50  # 28 is the documented speed/quality trade-off
+    guidance_scale = 4.0
+
+    def __init__(self):
+        super().__init__()
+        from diffusers import Flux2Pipeline
+        self.model_name = self.model_id.split("/")[-1]
+        self.pipe = Flux2Pipeline.from_pretrained(self.model_id, torch_dtype=torch.bfloat16)
+        self.pipe = _to_device_or_offload(self.pipe, self.model_name)
+
+    def generate(self, prompt):
+        return self.pipe(
+            prompt=prompt,
+            width=self.width,
+            height=self.height,
+            num_inference_steps=self.num_inference_steps,
+            guidance_scale=self.guidance_scale,
+            generator=torch.Generator(device=device).manual_seed(42),
+        ).images[0]
+
+
+class Flux2KleinBase9BModel(BaseModel):
+    """FLUX.2 [klein] base 9B: undistilled, supports CFG, intended for fine-tuning / research.
+    https://huggingface.co/black-forest-labs/FLUX.2-klein-base-9B
+    """
+    model_id = "black-forest-labs/FLUX.2-klein-base-9B"
+    width = height = 1024
+    num_inference_steps = 50
+    guidance_scale = 4.0
+
+    def __init__(self):
+        super().__init__()
+        from diffusers import Flux2KleinPipeline
+        self.model_name = self.model_id.split("/")[-1]
+        self.pipe = Flux2KleinPipeline.from_pretrained(self.model_id, torch_dtype=torch.bfloat16)
+        self.pipe = _to_device_or_offload(self.pipe, self.model_name)
+
+    def generate(self, prompt):
+        return self.pipe(
+            prompt=prompt,
+            width=self.width,
+            height=self.height,
+            num_inference_steps=self.num_inference_steps,
+            guidance_scale=self.guidance_scale,
+            generator=torch.Generator(device=device).manual_seed(42),
+        ).images[0]
+
+
+class Flux2Klein9BModel(Flux2KleinBase9BModel):
+    """FLUX.2 [klein] 9B: step-distilled to 4 steps, guidance-free.
+    https://huggingface.co/black-forest-labs/FLUX.2-klein-9B
+    """
+    model_id = "black-forest-labs/FLUX.2-klein-9B"
+    num_inference_steps = 4
+    guidance_scale = 1.0
+
+
+class ZImageBaseModel(BaseModel):
+    """Z-Image (6B, non-distilled base; CFG and negative prompts supported, Apache-2.0).
+    https://huggingface.co/Tongyi-MAI/Z-Image
+    """
+    model_id = "Tongyi-MAI/Z-Image"
+    width = height = 1024
+    num_inference_steps = 50   # recommended 28-50
+    guidance_scale = 4.0       # recommended 3-5
+    negative_prompt = ""
+
+    def __init__(self):
+        super().__init__()
+        from diffusers import ZImagePipeline
+        self.model_name = self.model_id.split("/")[-1]
+        self.pipe = ZImagePipeline.from_pretrained(self.model_id, torch_dtype=torch.bfloat16,
+                                                   low_cpu_mem_usage=False)
+        self.pipe = _to_device_or_offload(self.pipe, self.model_name)
+
+    def generate(self, prompt):
+        return self.pipe(
+            prompt=prompt,
+            negative_prompt=self.negative_prompt,
+            width=self.width,
+            height=self.height,
+            cfg_normalization=False,
+            num_inference_steps=self.num_inference_steps,
+            guidance_scale=self.guidance_scale,
+            generator=torch.Generator(device=device).manual_seed(42),
+        ).images[0]

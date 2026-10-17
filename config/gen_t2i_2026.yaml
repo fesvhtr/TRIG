@@ -1,0 +1,7 @@
+# Generate the TRIG text-to-image split with the 2026 model set (t2i environment).
+name: "t2i_2026"
+task: "t2i"
+dataset_name: "RISys-Lab/TRIG"
+generation:
+  # one model per job is recommended; see doc/support_list.md for aliases
+  models: ["zimage_base"]

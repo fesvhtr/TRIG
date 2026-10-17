@@ -70,12 +70,16 @@ class Evaluator:
         dimensions = base_name.split("_")[:-1]
         return dimensions
 
-    def read_results(self, image_dir=None, save_file=None):
+    def result_path(self, image_dir=None, save_file=None):
+        """Single source of truth for where a result file lives (read and save must agree)."""
         if save_file is not None:
-            output_path = os.path.join(project_root, save_file)
-        else:
-            save_name = image_dir.split("/")[-1]
-            output_path = os.path.join(project_root, self.config['evaluation']['result_dir'], f"{save_name}.json")
+            return os.path.join(project_root, save_file)
+        save_name = os.path.basename(os.path.normpath(image_dir))
+        return os.path.join(project_root, self.config['evaluation']['result_dir'],
+                            self.config["task"], f"{save_name}.json")
+
+    def read_results(self, image_dir=None, save_file=None):
+        output_path = self.result_path(image_dir, save_file)
         if not os.path.exists(output_path):
             return {}
         else:
@@ -84,11 +88,8 @@ class Evaluator:
         
 
     def save_results(self, results, image_dir=None, save_file=None):
-        if save_file is not None:
-            output_path = os.path.join(project_root, save_file)
-        else:
-            save_name = image_dir.split("/")[-1]
-            output_path = os.path.join(project_root, self.config['evaluation']['result_dir'], self.config["task"], f"{save_name}.json")
+        output_path = self.result_path(image_dir, save_file)
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
         with open(output_path, "w") as f:
             json.dump(results, f, indent=4)
         print(f"Results Saved:'{output_path}'")
@@ -151,7 +152,10 @@ class Evaluator:
 
         
         if isinstance(image_dirs, list):
-            result_files = self.config["evaluation"]["result_files"]
+            result_files = self.config["evaluation"].get("result_files")
+            if result_files is None:
+                # default: result_dir/<task>/<image_dir basename>.json
+                result_files = [None] * len(image_dirs)
             assert len(result_files) == len(image_dirs), "Number of result_files should be equal to number of image_dirs"
             for dir, result_file in zip(image_dirs, result_files):
                 print(f"dir is a list, Evaluating images in '{dir}'...")

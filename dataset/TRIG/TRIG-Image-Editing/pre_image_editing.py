@@ -222,7 +222,7 @@ def send_request(messages, max_retries=5, delay=2):
     for attempt in range(max_retries):
         try:
             print("Sending request...")
-            api_key = 'sk-mqUwZI8bhIv746rG6f3fE830D8B146E789Fd11717aD8C4B1'
+            api_key = os.environ.get("OPENAI_API_KEY", "")
             client = OpenAI(api_key=api_key, base_url="https://api.bltcy.ai/v1")
             
             response = client.chat.completions.create(
@@ -398,7 +398,7 @@ async def async_process_data(args, data_list):
     DIM_DESC = dim_file['DIM_DESC']
     CORE_CONCEPTS = dim_file['CORE_CONCEPTS']
 
-    api_key = 'sk-mqUwZI8bhIv746rG6f3fE830D8B146E789Fd11717aD8C4B1'
+    api_key = os.environ.get("OPENAI_API_KEY", "")
     client = AsyncOpenAI(api_key=api_key, base_url="https://api.bltcy.ai/v1")
 
     tasks = [

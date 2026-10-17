@@ -24,7 +24,7 @@ CUDA_VISIBLE_DEVICES=3 python ddpo_trl_sd15.py \
     --per_prompt_stat_tracking_buffer_size=32 \
     --tracker_project_name="stable_diffusion_training" \
     --log_with="wandb"
-    --hf_user_access_token="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"
+    --hf_user_access_token="<HF_TOKEN>"
 """
 
 import os

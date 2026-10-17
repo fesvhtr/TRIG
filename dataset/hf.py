@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
 
 # # 替换为你的 Hugging Face 访问令牌
-# token = "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"
+# token = "<HF_TOKEN>"
 # login(token)
 
 # repo_id = "yzwang/X2I-subject-driven"

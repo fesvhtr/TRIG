@@ -238,7 +238,7 @@ def send_request_with_retry(client, messages, max_retries=5, delay=2):
     for attempt in range(max_retries):
         try:
             if client == 'openai':
-                api_key = "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"
+                api_key = os.environ.get("OPENAI_API_KEY", "")
                 client = OpenAI(api_key=api_key)    
                 response = client.chat.completions.create(
                     model="gpt-4o",
@@ -246,7 +246,7 @@ def send_request_with_retry(client, messages, max_retries=5, delay=2):
                 )
             elif client == 'deepseek':
                 url = 'https://api.siliconflow.cn/v1/'
-                api_key = 'sk-etvcyglszmhlxhumibhwxeqksqazvltcvcjbmjhtgdcjtfln'
+                api_key = os.environ.get("OPENAI_API_KEY", "")
                 client = OpenAI(base_url=url, api_key=api_key)
                 response = client.chat.completions.create(
                     model="deepseek-ai/DeepSeek-V3",

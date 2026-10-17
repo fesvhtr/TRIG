@@ -15,6 +15,8 @@ if __name__ == "__main__":
         default="config/flux.yaml",
         help="Path to the YAML configuration file."
     )
+    parser.add_argument("--start_idx", type=int, default=None, help="Override config start_idx")
+    parser.add_argument("--end_idx", type=int, default=None, help="Override config end_idx")
     args = parser.parse_args()
     
     config_path = args.config
@@ -22,8 +24,8 @@ if __name__ == "__main__":
     # read yaml file in config folder
     with open(config_path, "r") as file:
         config = yaml.safe_load(file)
-    start_idx = config["start_idx"] if "start_idx" in config else None
-    end_idx = config["end_idx"] if "end_idx" in config else None
+    start_idx = args.start_idx if args.start_idx is not None else config.get("start_idx")
+    end_idx = args.end_idx if args.end_idx is not None else config.get("end_idx")
 
     # step 1: generate images
     if "generation" in config:

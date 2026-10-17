@@ -1,5 +1,6 @@
+import os
 # replace with your own API key
-API_KEY = "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"
+API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
 # system msg and dim prompt for gpt logit metric, modify the scales to change the scoring granularity
 gpt_logit_system_msg = {

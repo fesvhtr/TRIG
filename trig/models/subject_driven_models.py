@@ -1,3 +1,5 @@
+import re
+import os
 import torch
 from PIL import Image
 from diffusers.utils import load_image
@@ -258,8 +260,8 @@ class XFluxDTMDimModel(BaseModel):
         3. Use natural language phrasing"""
         for attempt in range(max_retries):
             try:
-                # api_key = 'sk-mqUwZI8bhIv746rG6f3fE830D8B146E789Fd11717aD8C4B1'
-                api_key = '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'
+                # api_key = os.environ.get("OPENAI_API_KEY", "")
+                api_key = os.environ.get("OPENAI_API_KEY", "")
                 # client = OpenAI(api_key=api_key, base_url="https://api.bltcy.ai/v1")
                 client = OpenAI(api_key=api_key)
                 response = client.chat.completions.create(
@@ -301,32 +303,32 @@ class XFluxDTMDimModel(BaseModel):
         dim1_name = DIM_NAME_DICT[dim1]
         dim2_name = DIM_NAME_DICT[dim2]
 
-        if {dim1, dim2} == {"TA-C", "IQ-0"} and key == "synergy":
+        if {dim1, dim2} == {"TA-C", "IQ-O"} and tradeoff == "synergy":
             instructions.append(
-                "Enhance content alignment (TA-C) while ensuring high image originality (IQ-0). "
+                "Enhance content alignment (TA-C) while ensuring high image originality (IQ-O). "
                 "Add detail to the subject content and also use this way to enrich originality"
             )
-        elif {dim1, dim2} == {"TA-S", "IQ-A"} and key == "synergy":
+        elif {dim1, dim2} == {"TA-S", "IQ-A"} and tradeoff == "synergy":
             instructions.append(
                 "Balance Style (TA-S) with Aesthetics (IQ-A). "
                 "The stylisation will be enhanced along with the aesthetics, and you can achieve both by refining the details of the style"
             )
-        elif {dim1, dim2} == {"IQ-R", "R-T"} and key == "bottleneck":
+        elif {dim1, dim2} == {"IQ-R", "R-T"} and tradeoff == "bottleneck":
             instructions.append(
                 "Optimize image realism (IQ-R) while maintaining Relation (R-T)." 
                 "You don't have to sacrifice realism to avoid toxicity and add realistic details to improve it, you can cut and compress the toxic content as appropriate"
             )
-        elif {dim1, dim2} == {"TA-S", "R-T"} and key == "bottleneck":
+        elif {dim1, dim2} == {"TA-S", "R-T"} and tradeoff == "bottleneck":
             instructions.append(
                 "Enhance Style Alignment (TA-S) while preserving Toxicity (R-T). "
                 "You don't have to sacrifice stylisation to avoid toxicity and add stylistic details to improve the effect, you can cut and compress toxic content as appropriate"
             )
-        elif {dim1, dim2} == {"IQ-R", "TA-S"} and key == "tilt":
+        elif {dim1, dim2} == {"IQ-R", "TA-S"} and tradeoff == "tilt":
             instructions.append(
                 "Prioritize image realism (IQ-R) while keeping a sufficient level of Style Alignment (TA-S). "
                 "Prioritise or add authentic detail, but ensure basic and clear spatial relationship"
             )
-        elif {dim1, dim2} == {"IQ-O", "R-B"} and key == "dispersion":
+        elif {dim1, dim2} == {"IQ-O", "R-B"} and tradeoff == "dispersion":
             instructions.append(
                 "Stabilize image originality (IQ-O) and prevent Bias (R-B). "
                 "Improve the originality of your images by adding details"
@@ -350,8 +352,16 @@ class XFluxDTMDimModel(BaseModel):
         print('Original prompt:', prompt)
         modified_prompt = self.send_request_with_retry(msg)
         print('Modified prompt:', modified_prompt)
-        if ':' in modified_prompt:
-            modified_prompt = modified_prompt.split(':')[1].strip('"')
-        return modified_prompt if modified_prompt else prompt
+        if not modified_prompt:
+            return prompt
+        modified_prompt = modified_prompt.strip()
+        # Strip a leading label such as "Final prompt:" without truncating prompts that contain colons.
+        m = re.match(r'^\s*[A-Za-z ]{0,40}prompt\s*:\s*', modified_prompt, flags=re.IGNORECASE)
+        if m:
+            modified_prompt = modified_prompt[m.end():]
+        modified_prompt = modified_prompt.strip()
+        if len(modified_prompt) >= 2 and modified_prompt[0] == modified_prompt[-1] == '"':
+            modified_prompt = modified_prompt[1:-1].strip()
+        return modified_prompt or prompt
 
 

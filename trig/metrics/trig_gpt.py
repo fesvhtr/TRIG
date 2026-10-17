@@ -1,3 +1,4 @@
+import os
 ## This file could still be used but deprecated, please use the trig_api.py file instead and setup with gpt model
 
 import openai
@@ -113,7 +114,7 @@ class TRIGGPTMetric(BaseMetric):
 
 
 if __name__ == "__main__":
-    API_KEY = "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"
+    API_KEY = os.environ.get("OPENAI_API_KEY", "")
     # Example usage
     metric = TRIGGPTMetric(API_KEY, top_logprobs=5, dimension='TA-C')
     image_path = r"/home/muzammal/Projects/TRIG/demo.jpg"

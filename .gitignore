@@ -109,3 +109,6 @@ trig_multilingual/rebuttal
 *.pdf
 
 data/models
+# cluster job logs and runtime endpoint file
+slurm_logs/
+data/judge_endpoint.txt

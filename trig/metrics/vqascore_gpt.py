@@ -1,3 +1,4 @@
+import os
 # modified from t2v metric: https://github.com/linzhiqiu/t2v_metrics
 from typing import List, Optional, Tuple, Union
 import torch
@@ -121,7 +122,7 @@ class VQAScoreGPTMetric(BaseMetric):
         return results
 
 if __name__ == '__main__':
-    API_KEY = "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"
+    API_KEY = os.environ.get("OPENAI_API_KEY", "")
     # Example usage
     metric = VQAScoreGPTMetric(openai_key=API_KEY)
     image_path = r"/home/muzammal/Projects/TRIG/demo.jpg"

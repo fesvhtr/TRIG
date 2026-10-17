@@ -7,7 +7,7 @@ import io
 import imghdr
 
 # 设置 OpenAI API Key（替换为你的 API Key）
-api_key = 'sk-mqUwZI8bhIv746rG6f3fE830D8B146E789Fd11717aD8C4B1'
+api_key = os.environ.get("OPENAI_API_KEY", "")
 client = OpenAI(api_key=api_key, base_url="https://api.bltcy.ai/v1")
 
 

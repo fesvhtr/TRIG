@@ -1,5 +1,5 @@
 export MODEL_NAME="black-forest-labs/FLUX.1-dev"
-export WANDB_API_KEY="da3ef2608ceaa362d6e40d1d92b4e4e6ebbe9f82"
+export WANDB_API_KEY="${WANDB_API_KEY:?set WANDB_API_KEY in your environment}"
 export CUDA_VISIBLE_DEVICES=2,3
 accelerate launch --config_file ./accelerate.yaml train_lora_flux_advanced.py \
   --pretrained_model_name_or_path=$MODEL_NAME \

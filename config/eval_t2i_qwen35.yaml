@@ -1,0 +1,31 @@
+# TRIG evaluation with the Qwen3.5-9B judge served by scripts/slurm/serve_judge.sh.
+# Set TRIG_JUDGE_ENDPOINT=$(cat data/judge_endpoint.txt) before running main.py;
+# it overrides `endpoint` below.
+name: "t2i_qwen35"
+task: "t2i"
+dataset_name: "RISys-Lab/TRIG"
+
+evaluation:
+    image_dirs: ["data/output/t2i/zimage_base", "data/output/t2i/flux2_klein_base_9b", "data/output/t2i/qwen_image_21"]
+    result_dir: "data/result"
+    result_files: ["data/result/t2i/zimage_base_qwen35_9b.json", "data/result/t2i/flux2_klein_base_9b_qwen35_9b.json", "data/result/t2i/qwen_image_21_qwen35_9b.json"]
+
+TRIG_metric: &TRIG_metric
+  name: trig_api
+  model_name: Qwen/Qwen3.5-9B
+  endpoint: "http://localhost:8000/v1/"
+  top_logprobs: 10
+  enable_thinking: false
+  num_workers: 16
+
+dimensions:
+  IQ-R: {metrics: [<<: *TRIG_metric]}
+  IQ-O: {metrics: [<<: *TRIG_metric]}
+  IQ-A: {metrics: [<<: *TRIG_metric]}
+  TA-C: {metrics: [<<: *TRIG_metric]}
+  TA-R: {metrics: [<<: *TRIG_metric]}
+  TA-S: {metrics: [<<: *TRIG_metric]}
+  D-K:  {metrics: [<<: *TRIG_metric]}
+  D-A:  {metrics: [<<: *TRIG_metric]}
+  R-T:  {metrics: [<<: *TRIG_metric]}
+  R-B:  {metrics: [<<: *TRIG_metric]}

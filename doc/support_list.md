@@ -1,4 +1,8 @@
 ## Supported Models
+
+### Judges (TRIGScore)
+Default judge: `Qwen/Qwen3.5-9B` served with vLLM (`scripts/slurm/serve_judge.sh`). Thinking is disabled per request. Any OpenAI-compatible VLM endpoint works through `trig_api`.
+
 ### General Models
 1. [OneDiffusion](https://arxiv.org/abs/2411.16318)  
 Alias: onediffusion  
@@ -38,6 +42,17 @@ Class: text_to_image_models.JanusFlowModel
 9. [Qwen-Image](https://arxiv.org/abs/2508.02324)  
 Alias: qwen_image  
 Class: text_to_image_models.QwenImageModel
+### 2026 refresh (diffusers main, `venv/t2i`)
+| Alias | Model | Notes |
+|---|---|---|
+| `qwen_image_21` | [Qwen-Image-2.1](https://huggingface.co/Qwen/Qwen-Image-2.1) | 7B unified gen+edit, 40 steps, 2048×2048 native |
+| `qwen_image_21_turbo` | [Qwen-Image-2.1-Turbo](https://huggingface.co/Qwen/Qwen-Image-2.1-Turbo) | 8-step distilled, CFG=1 |
+| `flux2_dev` | [FLUX.2 [dev]](https://huggingface.co/black-forest-labs/FLUX.2-dev) | 32B, gated, 50 steps, cfg 4 |
+| `flux2_klein_base_9b` | [FLUX.2 klein base 9B](https://huggingface.co/black-forest-labs/FLUX.2-klein-base-9B) | undistilled, CFG, fine-tunable |
+| `flux2_klein_9b` | [FLUX.2 klein 9B](https://huggingface.co/black-forest-labs/FLUX.2-klein-9B) | 4-step distilled |
+| `zimage_base` | [Z-Image](https://huggingface.co/Tongyi-MAI/Z-Image) | 6B undistilled, Apache-2.0, 50 steps, cfg 4 |
+
+All of these load by repo id from `HF_HOME=/dpc/kuin0164/zsc/hf_home`; no local path config needed.
 ### TRIG Models
 1. SD1.5 models after RL by DDPO  
 Alias: sd15_ddpo  

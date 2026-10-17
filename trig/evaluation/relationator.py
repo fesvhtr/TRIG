@@ -98,7 +98,8 @@ class Relationator:
                 
             pareto_points.sort()
             x, y = zip(*pareto_points)
-            area = np.trapz(y, x)
+            _trapz = getattr(np, "trapezoid", None) or np.trapz  # np.trapz is deprecated in NumPy 2
+            area = _trapz(y, x)
             max_area = np.max(scores1) * np.max(scores2)
             return area / max_area if max_area > 0 else 0.0
         except:
@@ -262,8 +263,9 @@ class Relationator:
             above_count = np.sum(tradeoff_scores2 > pred_y)
             below_count = np.sum(tradeoff_scores2 <= pred_y)
             
-            # 计算大数/小数的比例，判断主导关系
-            ratio = max(above_count, below_count) / min(above_count, below_count)
+            # 计算大数/小数的比例，判断主导关系（一侧为 0 时视为无穷大，避免除零）
+            smaller = min(above_count, below_count)
+            ratio = max(above_count, below_count) / smaller if smaller > 0 else float("inf")
             dominance_ratio = 1 / self.insight_thresholds["dominance_ratio"]  # 例如 1/0.5 = 2
             if ratio > dominance_ratio:  # 使用配置文件中的阈值
                 if above_count > below_count:

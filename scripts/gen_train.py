@@ -36,7 +36,7 @@ def extract_sentences(data: Any) -> List[str]:
     
     raise ValueError(f"不支持的输入类型: {type(data)}")
 
-API_KEY = "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"
+API_KEY = os.environ.get("OPENAI_API_KEY", "")
 client = openai.Client(api_key=API_KEY)
 
 with open("/home/muzammal/Projects/TRIG/dataset/Trig/Trig-text-to-image/text-to-imgae-without-m-e-v8.json", "r") as f:

@@ -66,21 +66,16 @@ conda activate trig
 conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
 pip install -r requirements.txt
 ```
-We recommand to use TRIG score by [vllm](https://github.com/vllm-project/vllm). Please install with
+We recommend serving the TRIGScore judge with [vllm](https://github.com/vllm-project/vllm). The default judge is now **Qwen/Qwen3.5-9B** (natively multimodal; Qwen2.5-VL, LLaVA-OneVision and GPT-4o remain supported).
 ```
-# for Qwen2.5vl, please update your transformers
-pip install transformers -U
-pip install accelerate
-pip install 'vllm>=0.7.2'
+# Qwen3.5-9B (default). Thinking is disabled per request by the metric, no reasoning parser needed.
+vllm serve Qwen/Qwen3.5-9B --port 8000 --host 0.0.0.0 --dtype bfloat16 --max-model-len 32768 --limit-mm-per-prompt '{"image": 2}'
+# On the cluster: sbatch scripts/slurm/serve_judge.sh ; then export TRIG_JUDGE_ENDPOINT=$(cat data/judge_endpoint.txt)
 ```
-Then deploy the selected VLM models, currently the TRIG score support GPT series, Qwen2.5-VL series, and LLaVA-NeXT Series. For more information, please visit vllm document.
-```
-# use Qwen2.5-VL-7B
-vllm serve Qwen/Qwen2.5-VL-7B-Instruct --port 8000 --device cuda --host 0.0.0.0 --dtype bfloat16 --limit-mm-per-prompt image=5,video=5
+`TRIG_JUDGE_ENDPOINT` overrides the `endpoint` field of every `trig_api` metric, so yaml files do not need to be edited per node. Rating tokens are matched by prefix, so the metric is robust to tokenizer differences (e.g. `terr|ible` vs `ter|rible`).
 
-# or use Qwen2.5-VL-72B with quantize version
-vllm serve Qwen/Qwen2-VL-72B-Instruct-AWQ --dtype float16 --port 8000 --gpu-memory-utilization 0.85 --tensor-parallel-size 2 --quantization awq --limit_mm_per_prompt image=4
-```
+### 2026 generation models
+`qwen_image_21`, `qwen_image_21_turbo`, `flux2_dev`, `flux2_klein_base_9b`, `flux2_klein_9b`, `zimage_base` (see `doc/support_list.md`). They require diffusers from git main and transformers>=5.17; on the cluster use `/dpc/kuin0164/zsc/venv/t2i`. Smoke test: `sbatch scripts/slurm/smoke_gen.sh zimage_base flux2_klein_base_9b qwen_image_21`.
 
 ## Getting Started
 ### Auto Evaluation pipeline on TRIG Benchmark

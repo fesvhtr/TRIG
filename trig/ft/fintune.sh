@@ -1,7 +1,7 @@
 export MODEL_NAME="/home/yanzhonghao/data/model_hub/FLUX.1-dev"
 export DATASET_NAME="/home/yanzhonghao/data/dataset_hub/3d_icon"
 export OUTPUT_DIR="/home/yanzhonghao/data/experiments/3d-icon-Flux-LoRA"
-export WANDB_API_KEY="8910b96be5c09b0604a0e905be81ec0463f4828a"
+export WANDB_API_KEY="${WANDB_API_KEY:?set WANDB_API_KEY in your environment}"
 
 accelerate launch --config_file ./accelerate.yaml train_lora_flux_advanced.py.py \
   --pretrained_model_name_or_path=$MODEL_NAME \
