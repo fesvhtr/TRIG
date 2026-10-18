@@ -3,9 +3,9 @@
 [![Benchmark](https://img.shields.io/badge/Dataset-TRIG-orange)](https://huggingface.co/datasets/RISys-Lab/TRIG)
 [![Collection](https://img.shields.io/badge/Collection-HF-blue)](https://huggingface.co/collections/RISys-Lab/trig-benchmark)
 
-- **Trade-offs and Relationships in Image Generation: How Do Different Evaluation Dimensions Interact? (ICCV 2025)**  
+- **[ICCV 2025] Trade-offs and Relationships in Image Generation: How Do Different Evaluation Dimensions Interact? **  
 For this TRIG benchmark, please check this main folder and [🤗 RISys-Lab/TRIG](https://huggingface.co/datasets/RISys-Lab/TRIG)
-- **LingT2I: On the Limitations of Cross-Lingual Consistency in Multilingual Text-to-image Generation. (ACM MM 2026)**  
+- **[ACM MM 2026] LingT2I: On the Limitations of Cross-Lingual Consistency in Multilingual Text-to-image Generation.**  
 For this new multilingual benchmark, please check the [LingT2I Repository](https://github.com/RISys-Lab/LingT2I) and [🤗 RISys-Lab/LingT2I](https://huggingface.co/datasets/RISys-Lab/LingT2I).
 
 ## TODO
