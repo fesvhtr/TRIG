@@ -1,6 +1,6 @@
 """Stratified sample of TRIG text-to-image prompts for the dimension diagnostic.
 
-Drops every subset that involves the excluded dimensions (default R-T, R-B) and takes
+Drops every subset that involves the excluded dimensions (trig.config_judge_v2.EXCLUDED_DIMS) and takes
 `--per-pair` prompts from each remaining dimension pair with a fixed seed.
 
     python scripts/diag/sample_prompts.py --per-pair 7 --out data/diag/prompts.jsonl
@@ -9,9 +9,13 @@ import argparse
 import json
 import os
 import random
+import sys
 from collections import defaultdict
 
 from datasets import load_dataset
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from trig.config_judge_v2 import EXCLUDED_DIMS  # noqa: E402
 
 
 def subset_of(row):
@@ -26,7 +30,7 @@ def main():
     ap.add_argument("--dataset", default="RISys-Lab/TRIG")
     ap.add_argument("--split", default="text_to_image")
     ap.add_argument("--per-pair", type=int, default=7, help="prompts per dimension pair; 0 = take all (full benchmark run)")
-    ap.add_argument("--exclude", nargs="*", default=["R-T", "R-B"])
+    ap.add_argument("--exclude", nargs="*", default=list(EXCLUDED_DIMS))
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--out", default="data/diag/prompts.jsonl")
     args = ap.parse_args()

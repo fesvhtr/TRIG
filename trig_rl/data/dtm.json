@@ -11,32 +11,6 @@
     "data/diag/scores/qwen_image_21__v1*.jsonl"
   ],
   "pairs": {
-    "D-K_D-A": {
-      "n": 200,
-      "mean_a": 0.6,
-      "mean_b": 0.64,
-      "synergy_density": 0.09,
-      "bottleneck_density": 0.2,
-      "corr": 0.8,
-      "above": 75,
-      "below": 67,
-      "ratio": 1.12,
-      "type": "undefined",
-      "dominant": null
-    },
-    "IQ-A_D-A": {
-      "n": 200,
-      "mean_a": 0.77,
-      "mean_b": 0.64,
-      "synergy_density": 0.23,
-      "bottleneck_density": 0.01,
-      "corr": 0.3,
-      "above": 86,
-      "below": 68,
-      "ratio": 1.26,
-      "type": "dispersion",
-      "dominant": null
-    },
     "IQ-A_D-K": {
       "n": 300,
       "mean_a": 0.72,
@@ -88,19 +62,6 @@
       "ratio": 1.62,
       "type": "tilt",
       "dominant": "TA-S"
-    },
-    "IQ-O_D-A": {
-      "n": 200,
-      "mean_a": 0.63,
-      "mean_b": 0.64,
-      "synergy_density": 0.04,
-      "bottleneck_density": 0.04,
-      "corr": 0.54,
-      "above": 107,
-      "below": 77,
-      "ratio": 1.39,
-      "type": "dispersion",
-      "dominant": null
     },
     "IQ-O_D-K": {
       "n": 300,
@@ -166,19 +127,6 @@
       "ratio": 1.98,
       "type": "tilt",
       "dominant": "TA-S"
-    },
-    "IQ-R_D-A": {
-      "n": 200,
-      "mean_a": 0.54,
-      "mean_b": 0.65,
-      "synergy_density": 0.03,
-      "bottleneck_density": 0.08,
-      "corr": -0.38,
-      "above": 97,
-      "below": 82,
-      "ratio": 1.18,
-      "type": "dispersion",
-      "dominant": null
     },
     "IQ-R_D-K": {
       "n": 300,
@@ -258,19 +206,6 @@
       "type": "tilt",
       "dominant": "TA-S"
     },
-    "TA-C_D-A": {
-      "n": 200,
-      "mean_a": 0.71,
-      "mean_b": 0.65,
-      "synergy_density": 0.27,
-      "bottleneck_density": 0.15,
-      "corr": 0.87,
-      "above": 57,
-      "below": 59,
-      "ratio": 1.04,
-      "type": "undefined",
-      "dominant": null
-    },
     "TA-C_D-K": {
       "n": 300,
       "mean_a": 0.66,
@@ -304,19 +239,6 @@
       "type": "synergy",
       "dominant": null
     },
-    "TA-R_D-A": {
-      "n": 200,
-      "mean_a": 0.7,
-      "mean_b": 0.66,
-      "synergy_density": 0.24,
-      "bottleneck_density": 0.12,
-      "corr": 0.82,
-      "above": 65,
-      "below": 62,
-      "ratio": 1.05,
-      "type": "undefined",
-      "dominant": null
-    },
     "TA-R_D-K": {
       "n": 300,
       "mean_a": 0.71,
@@ -338,19 +260,6 @@
       "bottleneck_density": 0.06,
       "corr": 0.7,
       "type": "synergy",
-      "dominant": null
-    },
-    "TA-S_D-A": {
-      "n": 200,
-      "mean_a": 0.82,
-      "mean_b": 0.68,
-      "synergy_density": 0.26,
-      "bottleneck_density": 0.05,
-      "corr": 0.62,
-      "above": 82,
-      "below": 57,
-      "ratio": 1.44,
-      "type": "dispersion",
       "dominant": null
     },
     "TA-S_D-K": {

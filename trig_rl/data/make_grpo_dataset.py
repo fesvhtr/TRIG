@@ -16,14 +16,16 @@ from collections import defaultdict
 from datasets import load_dataset
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from rewards.relations import DTM  # noqa: E402
+from trig.config_judge_v2 import EXCLUDED_DIMS  # noqa: E402
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dataset", default="RISys-Lab/TRIG")
     ap.add_argument("--split", default="text_to_image")
-    ap.add_argument("--exclude", nargs="*", default=["R-T", "R-B"])
+    ap.add_argument("--exclude", nargs="*", default=list(EXCLUDED_DIMS))
     ap.add_argument("--dtm", default=None)
     ap.add_argument("--test-per-pair", type=int, default=20)
     ap.add_argument("--seed", type=int, default=0)

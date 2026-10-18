@@ -39,6 +39,10 @@ The judge itself (scale, prompts, client) lives in `trig/judge.py` and is shared
    Reward variants are switched in the `rewards:` block: Pareto-GRPO (default), two per-dimension rewards with `gdpo` (Multi-GRPO baseline), or the relation scalar.
 5. **Evaluate**: regenerate the TRIG test prompts with the LoRA and score all dimensions with `scripts/diag/judge_protocols.py`; compare DTMs with `build_dtm.py`.
 
+## Dimensions
+
+Seven dimensions, 21 pairs: IQ-R, IQ-O, IQ-A, TA-C, TA-R, TA-S, D-K (`trig.config_judge_v2.DIMS`). R-T, R-B and D-A from the paper are excluded everywhere (`EXCLUDED_DIMS`); every loader filters on it.
+
 ## Relation rules (from the DTM)
 
 | relation | reward scalar (`combine`) | DPO pair rule (on top of Pareto dominance by ≥ eps) |

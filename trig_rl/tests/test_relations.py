@@ -40,7 +40,7 @@ def test_pareto():
 def test_dtm_and_judge():
     d = DTM({"IQ-R_TA-S": {"type": "tilt", "dominant": "TA-S"}})
     assert d.relation("IQ-R", "TA-S") == ("tilt", 1) and d.relation("TA-S", "IQ-R") == ("tilt", 0)
-    assert d.relation("D-K", "D-A", default="undefined") == ("undefined", None)
+    assert d.relation("D-K", "TA-C", default="undefined") == ("undefined", None)
     class T:
         def __init__(s, t, lp): s.token, s.logprob = t, lp
     assert token_to_rating_word("Ter") == "terrible" and token_to_rating_word("<think>") is None

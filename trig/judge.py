@@ -27,6 +27,7 @@ from trig.utils.utils import image_data_url
 RATING_WORDS = ["terrible", "bad", "medium", "good", "excellent"]   # worst -> best
 RATING_WEIGHTS = {w: i / (len(RATING_WORDS) - 1) for i, w in enumerate(RATING_WORDS)}
 IMAGE_ONLY_DIMS = config_judge_v2.IMAGE_ONLY                          # {"IQ-R", "IQ-O", "IQ-A"}
+DIMS, EXCLUDED_DIMS, pair_allowed = config_judge_v2.DIMS, config_judge_v2.EXCLUDED_DIMS, config_judge_v2.pair_allowed
 PROTOCOLS = ("baseline", "v1", "v2")
 _LEADING_SPACE_MARKS = ("Ġ", "▁", " ", "_")
 

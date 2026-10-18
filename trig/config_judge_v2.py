@@ -64,11 +64,16 @@ DIMENSIONS = {
         "Ask: the prompt relies on specialised, technical, scientific, historical or cultural knowledge. Is that knowledge depicted correctly?\n"
         "Check: identify the knowledge claims in the prompt (how a mechanism works, what a species, artifact, symbol, uniform, instrument, landmark or process actually looks like, correct structure and parts); verify each against the image; wrong facts, impossible mechanisms, mixed-up referents and invented details count against the image.\n"
         "Does NOT count: generic prompt adherence that needs no special knowledge, beauty, style, realism of rendering.")),
-    "D-A": dict(name="Ambiguity handling (abstract or open prompt turned into a coherent interpretation)", criteria=(
-        "Ask: the prompt is abstract, metaphorical or open-ended. Does the image commit to a clear, purposeful visual interpretation of it?\n"
-        "Check: there is an identifiable idea connecting the image to the prompt's concept; the interpretation is readable without the caption; it goes beyond literal keyword illustration or generic decorative imagery; the image remains coherent rather than a confused collage.\n"
-        "Does NOT count: beauty, realism, originality for its own sake, exact literal matching of every word in the prompt.")),
 }
+
+DIMS = tuple(DIMENSIONS)                       # the 7 benchmark dimensions (2026 refresh)
+EXCLUDED_DIMS = ("R-T", "R-B", "D-A")          # paper dimensions no longer evaluated or trained on
+
+
+def pair_allowed(pair, exclude=EXCLUDED_DIMS):
+    """pair: "A_B" or (A, B)."""
+    dims = pair.split("_") if isinstance(pair, str) else pair
+    return not any(d in exclude for d in dims)
 
 
 def system_message(dim):
