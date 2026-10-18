@@ -226,61 +226,24 @@ class Relationator:
         return metrics
 
     def determine_relationship_code(self, dim_pair):
-        """按照优先级顺序判断关系模式"""
+        """Relation code for one pair: 0 synergy, 3 bottleneck, 2 X dominates Y, -2 Y dominates X,
+        1 dispersion (trade-off), -1 undefined. Rules live in trig.evaluation.relation_rules."""
+        from trig.evaluation.relation_rules import classify_pair
+
         scores1 = np.array([v[0] for v in self.data[dim_pair].values()])
         scores2 = np.array([v[1] for v in self.data[dim_pair].values()])
-        
-        # 1. 计算各区域密度
-        synergy_mask = (scores1 > self.thresholds["synergy"]) & \
-                    (scores2 > self.thresholds["synergy"])
-        bottleneck_mask = (scores1 < self.thresholds["bottleneck"]) & \
-                        (scores2 < self.thresholds["bottleneck"])
-        tradeoff_mask = ~(synergy_mask | bottleneck_mask)
-        
-        synergy_density = np.mean(synergy_mask)
-        bottleneck_density = np.mean(bottleneck_mask)
-        
-        # 2. 按优先级判断模式
-        # 优先级1：正向协同
-        if synergy_density >= self.insight_thresholds["synergy_density"]:
-            return 0  # 协同
-        
-        # 优先级2：系统瓶颈
-        if bottleneck_density >= self.insight_thresholds["bottleneck_density"]:
-            return 3  # 瓶颈
-        
-        # 优先级3：维度主导
-        if np.sum(tradeoff_mask) >= 10:  # 确保有足够的点进行分析
-            # 只分析博弈区域的点
-            tradeoff_scores1 = scores1[tradeoff_mask]
-            tradeoff_scores2 = scores2[tradeoff_mask]
-            
-            # 拟合回归线
-            reg = LinearRegression().fit(tradeoff_scores1.reshape(-1,1), tradeoff_scores2)
-            pred_y = reg.predict(tradeoff_scores1.reshape(-1,1))
-            
-            # 计算点在回归线上下的数量
-            above_count = np.sum(tradeoff_scores2 > pred_y)
-            below_count = np.sum(tradeoff_scores2 <= pred_y)
-            
-            # 计算大数/小数的比例，判断主导关系（一侧为 0 时视为无穷大，避免除零）
-            smaller = min(above_count, below_count)
-            ratio = max(above_count, below_count) / smaller if smaller > 0 else float("inf")
-            dominance_ratio = 1 / self.insight_thresholds["dominance_ratio"]  # 例如 1/0.5 = 2
-            if ratio > dominance_ratio:  # 使用配置文件中的阈值
-                if above_count > below_count:
-                    return -2  # Y主导X（上方点数多）
-                else:
-                    return 2   # X主导Y（下方点数多）
-        
-        # 优先级4：零和博弈
-        # 只考虑相关系数
-        corr = self.get_correlation_method()(scores1, scores2)
-        if corr < self.insight_thresholds["tradeoff_corr"]:  # 例如 -0.6
-            return 1  # 零和博弈
-        
-        # 如果没有匹配任何模式
-        return -1  # 未定义
+        thresholds = {
+            "synergy": self.thresholds["synergy"], "bottleneck": self.thresholds["bottleneck"],
+            "synergy_density": self.insight_thresholds["synergy_density"],
+            "bottleneck_density": self.insight_thresholds["bottleneck_density"],
+            # config stores the inverse ratio (0.5 means a 2:1 majority)
+            "dominance_ratio": 1 / self.insight_thresholds["dominance_ratio"],
+            "tradeoff_corr": self.insight_thresholds["tradeoff_corr"],
+        }
+        rel, dominant, _ = classify_pair(scores1, scores2, thresholds, corr_fn=self.get_correlation_method())
+        if rel == "tilt":
+            return 2 if dominant == 0 else -2
+        return {"synergy": 0, "bottleneck": 3, "dispersion": 1, "undefined": -1}[rel]
 
     def generate_insights(self, individual_metrics, correlation_matrix, quadrant_analysis, relationship_codes):
         """Generate insights from analysis results."""

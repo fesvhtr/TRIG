@@ -1,0 +1,85 @@
+# TRIG relation-aware GRPO on Qwen-Image-2.1 (LoRA) with Flow-Factory's `grpo` trainer.
+# Keys that merely restate Flow-Factory defaults are omitted; see
+# third_party/Flow-Factory/examples/grpo/lora/qwen_image_2_1/default.yaml for the full list.
+# Run from the TRIG root (venv/ff, PYTHONPATH=<TRIG root>); the judge is served separately
+# (trig_rl/scripts/train_grpo.sh), reached through TRIG_JUDGE_ENDPOINT / TRIG_JUDGE_MODEL.
+launcher: "accelerate"
+config_file: trig_rl/third_party/Flow-Factory/config/deepspeed/deepspeed_zero2.yaml
+num_processes: 3            # training GPUs; the judge takes one more on the same node
+main_process_port: 29500
+mixed_precision: "bf16"
+
+data:
+  datasets:
+    - name: trig
+      dataset_dir: "trig_rl/data/grpo"      # make_grpo_dataset.py --dtm ... (rows carry pair/relation/dominant)
+      train: {weight: 1}
+      eval: {max_dataset_size: 96}          # eval renders 1024px/40 steps + judge calls; keep it small
+  dataloader_num_workers: 8
+  force_reprocess: false
+
+model:
+  finetune_type: "lora"
+  lora_rank: 64
+  lora_alpha: 128
+  model_name_or_path: "Qwen/Qwen-Image-2.1"
+  model_type: "qwen-image-2.1"
+  resume_path: null                       # set to the offline-DPO LoRA to warm-start
+
+log:
+  run_name: "trig_grpo_pareto_qwen_image_21"
+  project: "TRIG-RL"
+  logging_backend: "tensorboard"
+  save_dir: "trig_rl/saves/"
+  save_freq: 20
+
+train:
+  trainer_type: "grpo"
+  max_epochs: 200
+  kl_type: "v-based"
+  kl_beta: 0.01
+  resolution: 512                         # rollout resolution (what the judge sees)
+  num_inference_steps: 10
+  guidance_scale: 1.0
+  use_kv_cache: true
+  group_size: 8
+  global_std: false
+  unique_sample_num_per_epoch: 24
+  ema_decay: 0.9
+  ema_update_interval: 4
+  enable_gradient_checkpointing: true
+  seed: 42
+
+scheduler:
+  dynamics_type: "Flow-SDE"
+  noise_level: 1.0
+  sde_steps: [1, 2, 3]
+
+eval:
+  resolution: 1024
+  guidance_scale: 1.0
+  num_inference_steps: 40
+  eval_freq: 20
+  seed: 42
+
+# Training reward. Variants: (A, default) Pareto-GRPO below; (B) Multi-GRPO baseline = the two
+# eval_rewards entries copied here (gdpo normalises each per group); (C) relation scalar only =
+# trig_rl.rewards.trig_judge.TRIGPairReward.
+rewards:
+  - name: "trig_pareto"
+    reward_model: "trig_rl.rewards.trig_judge.TRIGParetoGroupReward"
+    device: "cpu"
+    dtype: float32
+    protocol: "v2"
+    front_weight: 0.7
+    score_log: "trig_rl/saves/trig_grpo_pareto_qwen_image_21/judge_scores.jsonl"
+    async_reward: true
+    num_workers: 4
+
+eval_rewards:
+  - {name: "trig_dim_a", reward_model: "trig_rl.rewards.trig_judge.TRIGDimReward", dim_index: 0, device: "cpu", dtype: float32, protocol: "v2"}
+  - {name: "trig_dim_b", reward_model: "trig_rl.rewards.trig_judge.TRIGDimReward", dim_index: 1, device: "cpu", dtype: float32, protocol: "v2"}
+
+optimizers:
+  - name: default
+    learning_rate: 3.0e-4

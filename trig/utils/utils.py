@@ -21,6 +21,18 @@ def load_config(config_path):
         return yaml.safe_load(f)
 
 
+def image_data_url(image_input, max_side=None):
+    """Data URL for an image path or PIL image, optionally downscaled to ``max_side`` pixels."""
+    if max_side:
+        img = Image.open(image_input) if isinstance(image_input, str) else image_input
+        if max(img.size) > max_side:
+            img = img.copy()
+            img.thumbnail((max_side, max_side))
+            image_input = img
+    enc = encode_image(image_input)
+    return f"data:image/{enc['type']};base64,{enc['base64']}"
+
+
 def encode_image(image_input):
     image = {}
     

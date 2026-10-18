@@ -13,9 +13,8 @@ evaluation:
 TRIG_metric: &TRIG_metric
   name: trig_api
   model_name: Qwen/Qwen3.5-9B
-  endpoint: "http://localhost:8000/v1/"
-  top_logprobs: 10
-  enable_thinking: false
+  endpoint: "http://localhost:8000/v1/"   # overridden by TRIG_JUDGE_ENDPOINT
+  protocol: baseline                       # baseline | v1 | v2
   num_workers: 16
 
 dimensions:

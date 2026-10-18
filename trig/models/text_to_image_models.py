@@ -15,6 +15,21 @@ import os
 from PIL import Image
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+
+def _clean_rewritten_prompt(text, fallback):
+    """Prompt returned by the DTM rewriter: strip a leading 'Final prompt:' label and wrapping
+    quotes without truncating prompts that contain colons; fall back to the original on failure."""
+    if not text:
+        return fallback
+    text = text.strip()
+    m = re.match(r'^\s*[A-Za-z ]{0,40}prompt\s*:\s*', text, flags=re.IGNORECASE)
+    if m:
+        text = text[m.end():].strip()
+    if len(text) >= 2 and text[0] == text[-1] == '"':
+        text = text[1:-1].strip()
+    return text or fallback
+
+
 class DALLE3Model(BaseModel):
     """
     DALLE3 from OpenAI
@@ -1208,7 +1223,6 @@ class SD35DTMModel(BaseModel):
         3. Use natural language phrasing"""
         for attempt in range(max_retries):
             try:
-                # api_key = os.environ.get("OPENAI_API_KEY", "")
                 api_key = os.environ.get("OPENAI_API_KEY", "")
                 # client = OpenAI(api_key=api_key, base_url="https://api.bltcy.ai/v1")
                 client = OpenAI(api_key=api_key)
@@ -1264,17 +1278,7 @@ class SD35DTMModel(BaseModel):
         print('Original prompt:', prompt)
         modified_prompt = self.send_request_with_retry(msg)
         print('Modified prompt:', modified_prompt)
-        if not modified_prompt:
-            return prompt
-        modified_prompt = modified_prompt.strip()
-        # Strip a leading label such as "Final prompt:" without truncating prompts that contain colons.
-        m = re.match(r'^\s*[A-Za-z ]{0,40}prompt\s*:\s*', modified_prompt, flags=re.IGNORECASE)
-        if m:
-            modified_prompt = modified_prompt[m.end():]
-        modified_prompt = modified_prompt.strip()
-        if len(modified_prompt) >= 2 and modified_prompt[0] == modified_prompt[-1] == '"':
-            modified_prompt = modified_prompt[1:-1].strip()
-        return modified_prompt or prompt
+        return _clean_rewritten_prompt(modified_prompt, prompt)
 
 class FLUXDTMModel(BaseModel):
     """
@@ -1353,7 +1357,6 @@ class FLUXDTMModel(BaseModel):
         3. Use natural language phrasing"""
         for attempt in range(max_retries):
             try:
-                # api_key = os.environ.get("OPENAI_API_KEY", "")
                 api_key = os.environ.get("OPENAI_API_KEY", "")
                 # client = OpenAI(api_key=api_key, base_url="https://api.bltcy.ai/v1")
                 client = OpenAI(api_key=api_key)
@@ -1409,17 +1412,7 @@ class FLUXDTMModel(BaseModel):
         print('Original prompt:', prompt)
         modified_prompt = self.send_request_with_retry(msg)
         print('Modified prompt:', modified_prompt)
-        if not modified_prompt:
-            return prompt
-        modified_prompt = modified_prompt.strip()
-        # Strip a leading label such as "Final prompt:" without truncating prompts that contain colons.
-        m = re.match(r'^\s*[A-Za-z ]{0,40}prompt\s*:\s*', modified_prompt, flags=re.IGNORECASE)
-        if m:
-            modified_prompt = modified_prompt[m.end():]
-        modified_prompt = modified_prompt.strip()
-        if len(modified_prompt) >= 2 and modified_prompt[0] == modified_prompt[-1] == '"':
-            modified_prompt = modified_prompt[1:-1].strip()
-        return modified_prompt or prompt
+        return _clean_rewritten_prompt(modified_prompt, prompt)
 
 class SanaDTMModel(BaseModel):
     """
@@ -1496,7 +1489,6 @@ class SanaDTMModel(BaseModel):
         3. Use natural language phrasing"""
         for attempt in range(max_retries):
             try:
-                # api_key = os.environ.get("OPENAI_API_KEY", "")
                 api_key = os.environ.get("OPENAI_API_KEY", "")
                 # client = OpenAI(api_key=api_key, base_url="https://api.bltcy.ai/v1")
                 client = OpenAI(api_key=api_key)
@@ -1552,17 +1544,7 @@ class SanaDTMModel(BaseModel):
         print('Original prompt:', prompt)
         modified_prompt = self.send_request_with_retry(msg)
         print('Modified prompt:', modified_prompt)
-        if not modified_prompt:
-            return prompt
-        modified_prompt = modified_prompt.strip()
-        # Strip a leading label such as "Final prompt:" without truncating prompts that contain colons.
-        m = re.match(r'^\s*[A-Za-z ]{0,40}prompt\s*:\s*', modified_prompt, flags=re.IGNORECASE)
-        if m:
-            modified_prompt = modified_prompt[m.end():]
-        modified_prompt = modified_prompt.strip()
-        if len(modified_prompt) >= 2 and modified_prompt[0] == modified_prompt[-1] == '"':
-            modified_prompt = modified_prompt[1:-1].strip()
-        return modified_prompt or prompt
+        return _clean_rewritten_prompt(modified_prompt, prompt)
 
 
 class SD35DTMDimModel(BaseModel):
@@ -1640,7 +1622,6 @@ class SD35DTMDimModel(BaseModel):
         3. Use natural language phrasing"""
         for attempt in range(max_retries):
             try:
-                # api_key = os.environ.get("OPENAI_API_KEY", "")
                 api_key = os.environ.get("OPENAI_API_KEY", "")
                 # client = OpenAI(api_key=api_key, base_url="https://api.bltcy.ai/v1")
                 client = OpenAI(api_key=api_key)
@@ -1716,17 +1697,7 @@ class SD35DTMDimModel(BaseModel):
         # print(msg)
 
         modified_prompt = self.send_request_with_retry(msg)
-        if not modified_prompt:
-            return prompt
-        modified_prompt = modified_prompt.strip()
-        # Strip a leading label such as "Final prompt:" without truncating prompts that contain colons.
-        m = re.match(r'^\s*[A-Za-z ]{0,40}prompt\s*:\s*', modified_prompt, flags=re.IGNORECASE)
-        if m:
-            modified_prompt = modified_prompt[m.end():]
-        modified_prompt = modified_prompt.strip()
-        if len(modified_prompt) >= 2 and modified_prompt[0] == modified_prompt[-1] == '"':
-            modified_prompt = modified_prompt[1:-1].strip()
-        return modified_prompt or prompt
+        return _clean_rewritten_prompt(modified_prompt, prompt)
 
 class SanaDTMDimModel(BaseModel):
     """
@@ -1809,7 +1780,6 @@ class SanaDTMDimModel(BaseModel):
         3. Use natural language phrasing"""
         for attempt in range(max_retries):
             try:
-                # api_key = os.environ.get("OPENAI_API_KEY", "")
                 api_key = os.environ.get("OPENAI_API_KEY", "")
                 # client = OpenAI(api_key=api_key, base_url="https://api.bltcy.ai/v1")
                 client = OpenAI(api_key=api_key)
@@ -1901,166 +1871,82 @@ class SanaDTMDimModel(BaseModel):
         print('Original prompt:', prompt)
         modified_prompt = self.send_request_with_retry(msg)
         print('Modified prompt:', modified_prompt)
-        if not modified_prompt:
-            return prompt
-        modified_prompt = modified_prompt.strip()
-        # Strip a leading label such as "Final prompt:" without truncating prompts that contain colons.
-        m = re.match(r'^\s*[A-Za-z ]{0,40}prompt\s*:\s*', modified_prompt, flags=re.IGNORECASE)
-        if m:
-            modified_prompt = modified_prompt[m.end():]
-        modified_prompt = modified_prompt.strip()
-        if len(modified_prompt) >= 2 and modified_prompt[0] == modified_prompt[-1] == '"':
-            modified_prompt = modified_prompt[1:-1].strip()
-        return modified_prompt or prompt
+        return _clean_rewritten_prompt(modified_prompt, prompt)
 
 
 
 
 # =====================================================================================
-# 2026 refresh: models loaded by Hugging Face repo id from the shared cache (HF_HOME).
-# All of them need the `t2i` environment (diffusers main, transformers>=5.17).
+# 2026 refresh: diffusers text-to-image models loaded by Hugging Face repo id from the shared
+# cache (HF_HOME). They need the `t2i` environment (diffusers main, transformers>=5.17).
 # =====================================================================================
 
-def _to_device_or_offload(pipe, name):
-    """Move a pipeline to the GPU; fall back to CPU offload if the weights do not fit."""
-    try:
-        return pipe.to(device)
-    except torch.cuda.OutOfMemoryError:
-        print(f"[{name}] does not fit on one GPU, enabling model CPU offload")
-        torch.cuda.empty_cache()
-        pipe.enable_model_cpu_offload()
-        return pipe
-
-
-class QwenImage21Model(BaseModel):
-    """Qwen-Image-2.1 (7B, unified generation + editing). Native resolution is 2048-class.
-    https://huggingface.co/Qwen/Qwen-Image-2.1
-    """
-    model_id = "Qwen/Qwen-Image-2.1"
-    width = height = 2048
-    num_inference_steps = 40
+class _DiffusersT2IModel(BaseModel):
+    """Base for diffusers pipelines: subclasses declare the pipeline class, repo id and call
+    kwargs. ``generate`` accepts one prompt or a list (the evaluator's batch path) and per-sample
+    seeds, so every subclass supports batched generation."""
+    pipeline_cls = ""
+    model_id = ""
+    width = height = 1024            # TRIG protocol resolution
+    from_pretrained_kwargs: dict = {}
+    call_kwargs: dict = {}           # steps / guidance / model-specific flags
+    generator_device = "cpu"
+    cpu_offload = False              # set True for checkpoints that do not fit one GPU
 
     def __init__(self):
         super().__init__()
-        from diffusers import QwenImage21Pipeline
+        import diffusers
         self.model_name = self.model_id.split("/")[-1]
-        self.pipe = QwenImage21Pipeline.from_pretrained(self.model_id, torch_dtype=torch.bfloat16)
-        self.pipe = _to_device_or_offload(self.pipe, self.model_name)
+        pipe = getattr(diffusers, self.pipeline_cls).from_pretrained(self.model_id, torch_dtype=torch.bfloat16, **self.from_pretrained_kwargs)
+        self.pipe = pipe.enable_model_cpu_offload() or pipe if self.cpu_offload else pipe.to(device)
 
-    def _call_kwargs(self):
-        return dict(num_inference_steps=self.num_inference_steps)
+    def generate(self, prompt, seed=42, seeds=None, batch_size=None):
+        prompts = [prompt] if isinstance(prompt, str) else list(prompt)
+        seeds = list(seeds) if seeds is not None else [seed] * len(prompts)
+        gens = [torch.Generator(self.generator_device).manual_seed(int(s)) for s in seeds]
+        images = self.pipe(prompt=prompts, width=self.width, height=self.height, generator=gens, **self.call_kwargs).images
+        return images[0] if isinstance(prompt, str) else images
 
-    def generate(self, prompt):
-        image = self.pipe(
-            prompt=prompt,
-            width=self.width,
-            height=self.height,
-            generator=torch.Generator("cpu").manual_seed(42),
-            **self._call_kwargs(),
-        ).images[0]
-        return image
+
+class QwenImage21Model(_DiffusersT2IModel):
+    """Qwen-Image-2.1 (7B, unified generation + editing). https://huggingface.co/Qwen/Qwen-Image-2.1"""
+    pipeline_cls = "QwenImage21Pipeline"
+    model_id = "Qwen/Qwen-Image-2.1"
+    call_kwargs = dict(num_inference_steps=40)
 
 
 class QwenImage21TurboModel(QwenImage21Model):
-    """Qwen-Image-2.1-Turbo: 8-step distilled checkpoint, CFG=1, schedule is baked in.
-    https://huggingface.co/Qwen/Qwen-Image-2.1-Turbo
-    """
+    """8-step distilled checkpoint; its schedule is baked in, so no num_inference_steps."""
     model_id = "Qwen/Qwen-Image-2.1-Turbo"
-
-    def _call_kwargs(self):
-        # num_inference_steps must not be passed: the checkpoint ships its own 8-step sigmas.
-        return dict(use_kv_cache=True)
+    call_kwargs = dict(use_kv_cache=True)
 
 
-class Flux2DevModel(BaseModel):
-    """FLUX.2 [dev], 32B rectified-flow transformer (gated repo, non-commercial license).
-    https://huggingface.co/black-forest-labs/FLUX.2-dev
-    """
+class Flux2DevModel(_DiffusersT2IModel):
+    """FLUX.2 [dev], 32B (gated, non-commercial). https://huggingface.co/black-forest-labs/FLUX.2-dev"""
+    pipeline_cls = "Flux2Pipeline"
     model_id = "black-forest-labs/FLUX.2-dev"
-    width = height = 1024
-    num_inference_steps = 50  # 28 is the documented speed/quality trade-off
-    guidance_scale = 4.0
-
-    def __init__(self):
-        super().__init__()
-        from diffusers import Flux2Pipeline
-        self.model_name = self.model_id.split("/")[-1]
-        self.pipe = Flux2Pipeline.from_pretrained(self.model_id, torch_dtype=torch.bfloat16)
-        self.pipe = _to_device_or_offload(self.pipe, self.model_name)
-
-    def generate(self, prompt):
-        return self.pipe(
-            prompt=prompt,
-            width=self.width,
-            height=self.height,
-            num_inference_steps=self.num_inference_steps,
-            guidance_scale=self.guidance_scale,
-            generator=torch.Generator(device=device).manual_seed(42),
-        ).images[0]
+    generator_device = device
+    call_kwargs = dict(num_inference_steps=50, guidance_scale=4.0)   # 28 steps is the documented trade-off
 
 
-class Flux2KleinBase9BModel(BaseModel):
-    """FLUX.2 [klein] base 9B: undistilled, supports CFG, intended for fine-tuning / research.
-    https://huggingface.co/black-forest-labs/FLUX.2-klein-base-9B
-    """
+class Flux2KleinBase9BModel(_DiffusersT2IModel):
+    """FLUX.2 [klein] base 9B: undistilled, CFG, fine-tunable. https://huggingface.co/black-forest-labs/FLUX.2-klein-base-9B"""
+    pipeline_cls = "Flux2KleinPipeline"
     model_id = "black-forest-labs/FLUX.2-klein-base-9B"
-    width = height = 1024
-    num_inference_steps = 50
-    guidance_scale = 4.0
-
-    def __init__(self):
-        super().__init__()
-        from diffusers import Flux2KleinPipeline
-        self.model_name = self.model_id.split("/")[-1]
-        self.pipe = Flux2KleinPipeline.from_pretrained(self.model_id, torch_dtype=torch.bfloat16)
-        self.pipe = _to_device_or_offload(self.pipe, self.model_name)
-
-    def generate(self, prompt):
-        return self.pipe(
-            prompt=prompt,
-            width=self.width,
-            height=self.height,
-            num_inference_steps=self.num_inference_steps,
-            guidance_scale=self.guidance_scale,
-            generator=torch.Generator(device=device).manual_seed(42),
-        ).images[0]
+    generator_device = device
+    call_kwargs = dict(num_inference_steps=50, guidance_scale=4.0)
 
 
 class Flux2Klein9BModel(Flux2KleinBase9BModel):
-    """FLUX.2 [klein] 9B: step-distilled to 4 steps, guidance-free.
-    https://huggingface.co/black-forest-labs/FLUX.2-klein-9B
-    """
+    """FLUX.2 [klein] 9B: step-distilled to 4 steps, guidance-free."""
     model_id = "black-forest-labs/FLUX.2-klein-9B"
-    num_inference_steps = 4
-    guidance_scale = 1.0
+    call_kwargs = dict(num_inference_steps=4, guidance_scale=1.0)
 
 
-class ZImageBaseModel(BaseModel):
-    """Z-Image (6B, non-distilled base; CFG and negative prompts supported, Apache-2.0).
-    https://huggingface.co/Tongyi-MAI/Z-Image
-    """
+class ZImageBaseModel(_DiffusersT2IModel):
+    """Z-Image (6B, non-distilled base, Apache-2.0). https://huggingface.co/Tongyi-MAI/Z-Image"""
+    pipeline_cls = "ZImagePipeline"
     model_id = "Tongyi-MAI/Z-Image"
-    width = height = 1024
-    num_inference_steps = 50   # recommended 28-50
-    guidance_scale = 4.0       # recommended 3-5
-    negative_prompt = ""
-
-    def __init__(self):
-        super().__init__()
-        from diffusers import ZImagePipeline
-        self.model_name = self.model_id.split("/")[-1]
-        self.pipe = ZImagePipeline.from_pretrained(self.model_id, torch_dtype=torch.bfloat16,
-                                                   low_cpu_mem_usage=False)
-        self.pipe = _to_device_or_offload(self.pipe, self.model_name)
-
-    def generate(self, prompt):
-        return self.pipe(
-            prompt=prompt,
-            negative_prompt=self.negative_prompt,
-            width=self.width,
-            height=self.height,
-            cfg_normalization=False,
-            num_inference_steps=self.num_inference_steps,
-            guidance_scale=self.guidance_scale,
-            generator=torch.Generator(device=device).manual_seed(42),
-        ).images[0]
+    generator_device = device
+    from_pretrained_kwargs = dict(low_cpu_mem_usage=False)
+    call_kwargs = dict(negative_prompt="", cfg_normalization=False, num_inference_steps=50, guidance_scale=4.0)

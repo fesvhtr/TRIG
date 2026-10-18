@@ -1,0 +1,3 @@
+[submodule "trig_rl/third_party/Flow-Factory"]
+	path = trig_rl/third_party/Flow-Factory
+	url = https://github.com/X-GenGroup/Flow-Factory.git

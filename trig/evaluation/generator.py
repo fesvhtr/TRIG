@@ -108,7 +108,7 @@ class Generator:
         if not os.path.exists(output_path):
             os.makedirs(output_path)
         file_list = os.listdir(output_path)
-        file_list = [os.path.splitext(f)[0] for f in file_list]
+        file_list = {os.path.splitext(f)[0] for f in file_list}
 
         prompts_data = self.prompts_data
         if start_idx is not None and end_idx is not None:
@@ -162,10 +162,8 @@ class Generator:
 
                 self.save_image(image, output_path, prompt_data["data_id"])
 
-    def generate_t2i_batch(self, model, output_path, file_list, batch_size, prompts_data=None):
+    def generate_t2i_batch(self, model, output_path, file_list, batch_size, prompts_data):
         """T2I任务的批处理生成"""
-        if prompts_data is None:
-            prompts_data = self.prompts_data
         batch_prompts = []
         batch_data_ids = []
         

@@ -1,0 +1,52 @@
+# TRIG relation-aware offline DPO on Qwen-Image-2.1 (LoRA), Flow-Factory `offline-dpo` trainer.
+# Preference manifest from trig_rl/data/make_dpo_pairs.py. Defaults omitted (see
+# third_party/Flow-Factory/examples/offline_dpo/lora/sd3_5/default.yaml).
+launcher: "accelerate"
+config_file: trig_rl/third_party/Flow-Factory/config/deepspeed/deepspeed_zero2.yaml
+num_processes: 2
+main_process_port: 29501
+mixed_precision: "bf16"
+
+data:
+  datasets:
+    - name: trig_pairs
+      dataset_dir: "trig_rl/data/dpo_pairs"
+      train: {weight: 1}
+  preprocessing_batch_size: 4
+  dataloader_num_workers: 4
+  force_reprocess: false
+
+model:
+  finetune_type: "lora"
+  lora_rank: 64
+  lora_alpha: 128
+  model_name_or_path: "Qwen/Qwen-Image-2.1"
+  model_type: "qwen-image-2.1"
+
+log:
+  run_name: "trig_offline_dpo_qwen_image_21"
+  project: "TRIG-RL"
+  logging_backend: "tensorboard"
+  save_dir: "trig_rl/saves/"
+  save_freq: 1                            # offline cycle = data epoch; save every epoch
+
+train:
+  trainer_type: "offline-dpo"
+  max_epochs: 3
+  resolution: 1024                        # manifest images are 1024x1024
+  guidance_scale: 1.0
+  per_device_batch_size: 1
+  gradient_accumulation_steps: 8
+  beta: 2000.0                            # tune on implicit_accuracy
+  enable_gradient_checkpointing: true
+  seed: 42
+
+scheduler:
+  dynamics_type: "ODE"
+
+eval:
+  eval_freq: 0
+
+optimizers:
+  - name: default
+    learning_rate: 1.0e-5
