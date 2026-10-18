@@ -10,10 +10,11 @@ For this new multilingual benchmark, please check the [LingT2I Repository](https
 
 ## Update
 
-1. [x] Release the TRIG dataset and evaluation pipeline.
-2. [x] Release the Finetune pipeline and experiments.
-3. [x] Release the Multilingual Evaluation Benchmark.
-3. [x] Release the LingT2I paper.
+1. [x] **2025-07** Release the TRIG dataset and evaluation pipeline ([arXiv 2507.22100](https://arxiv.org/abs/2507.22100), ICCV 2025).
+2. [x] **2025-08** Release the Finetune pipeline and experiments ([FLUX LoRA](https://huggingface.co/RISys-Lab/FLUX_FT_LoRA_TRIG_epoch10), [training set](https://huggingface.co/datasets/RISys-Lab/flux_ft_train)).
+3. [x] **2025-09** Release the Multilingual Evaluation Benchmark ([🤗 RISys-Lab/LingT2I](https://huggingface.co/datasets/RISys-Lab/LingT2I); parquet workflow 2026-04).
+4. [x] **2026-08** Release the LingT2I paper ([arXiv 2608.11002](https://arxiv.org/abs/2608.11002), ACM MM 2026).
+5. [x] **2026-10** Refresh: Qwen3.5-9B judge with `baseline` / `v1` / `v2` protocols, 2026 text-to-image models (Qwen-Image-2.1, FLUX.2, Z-Image), and the `trig_rl/` training layer (Flow-Factory based DPO / GRPO).
 
 ## Quick Start
 ### TRIG Benchmark
